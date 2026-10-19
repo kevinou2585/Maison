@@ -1,0 +1,179 @@
+// Ma maison : synchronisation de chaque appli avec la feuille Google du Drive (voir google/Code.gs).
+// Chaque appli garde ses données dans le téléphone (marche sans internet) et échange ses changements
+// avec la feuille : la modification la plus récente gagne, élément par élément.
+(() => {
+  const CFG = 'maison:drive';
+  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsJson = (k, d) => { try { return JSON.parse(lsGet(k)) || d; } catch (e) { return d; } };
+  const SET = Storage.prototype.setItem, DEL = Storage.prototype.removeItem;
+  const lsSet = (k, v) => { try { SET.call(localStorage, k, v); return true; } catch (e) { return false; } };
+  const cfg = () => lsJson(CFG, {});
+  const relie = () => { const c = cfg(); return !!(c.url && c.cle); };
+
+  // Avant la toute première synchro d'un appareil, ce qu'il écrit tout seul au démarrage ne doit pas
+  // écraser le Drive : ces écritures ont l'heure 0 tant que personne n'a touché l'écran.
+  let touche = false;
+  ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { touche = true; }, {capture: true, passive: true}));
+
+  const moteurs = [];
+  const ecoute = new Set();
+  let etat = 'off';
+  function statut(s) { etat = s; ecoute.forEach(f => { try { f(s); } catch (e) {} }); }
+
+  async function appel(c, corps, params) {
+    const r = corps
+      ? await fetch(c.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({cle: c.cle, qui: c.qui || ''}, corps))})
+      : await fetch(c.url + (c.url.includes('?') ? '&' : '?') + new URLSearchParams(Object.assign({cle: c.cle}, params)));
+    const o = await r.json();
+    if (!o.ok) throw new Error(o.err || 'erreur');
+    return o;
+  }
+
+  const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0; return String(h); };
+
+  // m : nom du module ; a : {get(id), put(rec), dirty(), tables(), recu(ids, premier)}
+  function moteur(m, a) {
+    const MK = 'maison:sync:' + m;
+    const meta = lsJson(MK, {r: 0, sale: {}, h: '', init: false});
+    const svMeta = () => lsSet(MK, JSON.stringify(meta));
+    let minuteur = null, enCours = false, encore = false;
+    const e = {
+      m, meta,
+      // Nouvelle feuille Google : on repart de zéro et on lui envoie tout.
+      neuf() { meta.r = 0; meta.h = ''; meta.init = false; meta.sale = {}; a.ids().forEach(id => { meta.sale[id] = 1; }); svMeta(); },
+      sale(id) { meta.sale[id] = 1; svMeta(); e.bientot(); },
+      poids() { return meta.init || touche ? Date.now() : 0; },
+      bientot(ms) { clearTimeout(minuteur); minuteur = setTimeout(e.cycle, ms == null ? 1200 : ms); },
+      async cycle() {
+        if (!relie()) { statut('off'); return; }
+        if (!navigator.onLine) { statut('horsligne'); return; }
+        if (enCours) { encore = true; return; }
+        enCours = true; statut('sync');
+        const c = cfg();
+        if (meta.u && meta.u !== c.url) e.neuf();
+        meta.u = c.url;
+        try {
+          // 1. Recevoir ce que les autres ont changé
+          const p = await appel(c, null, {m, r: meta.init ? meta.r : 0});
+          const recus = [];
+          p.recs.forEach(rec => {
+            const loc = a.get(rec.id);
+            const t = loc ? +loc.t || 0 : -1;
+            if ((+rec.t || 0) > t || (!meta.init && t <= 0)) {
+              if (a.put(rec) !== false) recus.push(rec.id);
+              delete meta.sale[rec.id];
+            }
+          });
+          const premier = !meta.init;
+          meta.r = p.r; meta.init = true; svMeta();
+          if (recus.length && a.recu) a.recu(recus, premier);
+          // 2. Envoyer les miens (et les onglets lisibles s'ils ont changé)
+          const ids = Object.keys(meta.sale), recs = ids.map(id => a.get(id)).filter(Boolean);
+          let tables = null, h = meta.h;
+          try { tables = a.tables ? a.tables() : null; } catch (err) { tables = null; }
+          if (tables) { h = hash(JSON.stringify(tables)); if (h === meta.h) tables = null; }
+          if (recs.length || tables) {
+            const envoi = {}; recs.forEach(r => { envoi[r.id] = +r.t || 0; });
+            const o = await appel(c, {m, recs, tables});
+            ids.forEach(id => { const r = a.get(id); if (!r || (+r.t || 0) === envoi[id]) delete meta.sale[id]; });
+            meta.h = h;
+            if (o.r === meta.r + recs.length) meta.r = o.r; // personne d'autre n'a écrit entre-temps
+            svMeta();
+          }
+          statut('ok');
+          lsSet('maison:derniere', String(Date.now()));
+        } catch (err) {
+          statut(/mot de passe/.test(err.message) ? 'cle' : 'erreur');
+        } finally {
+          enCours = false;
+          if (encore) { encore = false; e.bientot(300); }
+        }
+      }
+    };
+    moteurs.push(e);
+    setTimeout(e.cycle, 50);
+    return e;
+  }
+
+  // Applis Courses et To-Do : une liste d'éléments {id, type, ..., t, del}
+  function store(m, opt) {
+    const K = 'maison:' + m;
+    let D = lsJson(K, {});
+    const sv = () => lsSet(K, JSON.stringify(D));
+    (opt.graines || []).forEach(g => { if (!D[g.id]) D[g.id] = Object.assign({t: 1}, g); });
+    const e = moteur(m, {
+      ids: () => Object.keys(D),
+      get: id => D[id] || null,
+      put: rec => { D[rec.id] = rec; sv(); },
+      tables: () => opt.tables ? opt.tables(Object.values(D).filter(r => !r.del)) : null,
+      recu: () => { opt.recu && opt.recu(); }
+    });
+    sv();
+    return {
+      tous: type => Object.values(D).filter(r => !r.del && (!type || r.type === type)),
+      get: id => (D[id] && !D[id].del) ? D[id] : null,
+      put(rec) { rec.t = Date.now(); D[rec.id] = rec; sv(); e.sale(rec.id); return rec; },
+      del(id) { if (!D[id]) return; D[id] = {id, type: D[id].type, del: 1, t: Date.now()}; sv(); e.sale(id); },
+      id: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      synchro: () => e.cycle()
+    };
+  }
+
+  // Jardin du Bonheur : chaque clé du stockage du jardin est un élément.
+  function jardin(opt) {
+    const TK = 'maison:jardin:t', T = lsJson(TK, {});
+    const svT = () => lsSet(TK, JSON.stringify(T));
+    const garde = k => typeof k === 'string' && opt.cles.test(k);
+    let e = null;
+    const get = id => { const v = lsGet(id); if (v == null && T[id] == null) return null; return v == null ? {id, del: 1, t: T[id] || 0} : {id, v, t: T[id] || 0}; };
+    Storage.prototype.setItem = function (k, v) {
+      const avant = this === localStorage && garde(k) ? lsGet(k) : undefined;
+      SET.call(this, k, v);
+      if (avant !== undefined && avant !== String(v)) { T[k] = e.poids(); svT(); e.sale(k); }
+    };
+    Storage.prototype.removeItem = function (k) {
+      const avait = this === localStorage && garde(k) && lsGet(k) != null;
+      DEL.call(this, k);
+      if (avait) { T[k] = e.poids(); svT(); e.sale(k); }
+    };
+    e = moteur('jardin', {
+      ids: () => { const o = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (garde(k)) o.push(k); } } catch (err) {} return o; },
+      get,
+      put(rec) {
+        if (rec.del) DEL.call(localStorage, rec.id);
+        else if (!lsSet(rec.id, rec.v)) { opt.plein && opt.plein(); return false; }
+        T[rec.id] = +rec.t || 0; svT();
+      },
+      tables: opt.tables,
+      recu: opt.recu
+    });
+    // Clés déjà présentes sur cet appareil (sauvegarde importée avant la synchro) : à envoyer.
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (garde(k) && T[k] == null) { T[k] = 0; e.meta.sale[k] = 1; } } svT(); } catch (err) {}
+    return {synchro: () => e.cycle()};
+  }
+
+  function toutSynchro() { moteurs.forEach(e => e.cycle()); }
+  setInterval(() => { if (document.visibilityState === 'visible') toutSynchro(); }, 15000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') toutSynchro(); });
+  addEventListener('online', toutSynchro);
+
+  // Petite pastille d'état, en haut à droite de chaque appli
+  function pastille(lien) {
+    const b = document.createElement('a');
+    b.id = 'maison-nuage'; b.href = lien || '../#drive';
+    const st = document.createElement('style');
+    st.textContent = '#maison-nuage{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:9999;font:600 12px system-ui,-apple-system,sans-serif;padding:5px 9px;border-radius:99px;background:rgba(255,255,255,.92);color:#2e4a35;border:1px solid #c9d6cb;text-decoration:none;box-shadow:0 1px 4px #0002}#maison-nuage.err{color:#a3261b;border-color:#e6b0aa}#maison-nuage.off{color:#6b6b6b}';
+    document.head.appendChild(st);
+    const txt = {off: ['☁️ Drive non relié', 'off'], sync: ['☁️ …', ''], ok: ['☁️ ✓', ''], horsligne: ['☁️ hors ligne', 'off'], erreur: ['☁️ erreur', 'err'], cle: ['☁️ mot de passe ?', 'err']};
+    const maj = s => { const [t, c] = txt[s] || txt.off; b.textContent = t; b.className = c; b.title = 'Sauvegarde Drive : ' + t; };
+    ecoute.add(maj); maj(relie() ? etat : 'off');
+    (document.body ? Promise.resolve() : new Promise(ok => document.addEventListener('DOMContentLoaded', ok))).then(() => document.body.appendChild(b));
+  }
+
+  window.Maison = {
+    cfg, relie, store, jardin, pastille, toutSynchro,
+    regler(c) { lsSet(CFG, JSON.stringify(c)); toutSynchro(); },
+    surStatut(f) { ecoute.add(f); f(relie() ? etat : 'off'); },
+    tester: async c => appel(c, null, {m: 'todo', r: 1e15})
+  };
+})();

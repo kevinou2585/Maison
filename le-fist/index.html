@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le Fist</title>
+<meta name="theme-color" content="#1d2a24">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icones/le-fist-192.png">
+<link rel="apple-touch-icon" href="../icones/maison-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma maison">
+<style>
+/* Pas de zoom quand on tape vite deux fois sur un bouton (iPhone) */
+html,body,button,a,input,label,select{touch-action:manipulation}
+.eps-retour{display:flex;align-items:center;max-width:680px;margin:0 auto;padding:10px 0 0;font:600 14px system-ui,-apple-system,sans-serif;color:var(--muted);text-decoration:none}
+:root{
+  --bg:#f2f1ec; --surface:#fff; --line:#dad7cc; --fg:#1b1d1a; --muted:#646a62;
+  --accent:#c8202b; --accent-fg:#fff; --green:#1f8a4c; --soft:#f6e3e3; --gold:#b98a10; --gold-soft:#f6ecc8;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#121614; --surface:#1b211d; --line:#2e3631; --fg:#ebeee9; --muted:#9ba59e;
+  --accent:#ef4a52; --accent-fg:#fff; --green:#3fbf7f; --soft:#3a1d20; --gold:#e8c14e; --gold-soft:#3a3216; color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0 auto;max-width:680px;padding:0 16px 32px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px}
+button:active{transform:scale(.97)}
+.prim{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.01em}
+h2{font-size:18px;margin:18px 0 8px}
+.sous{color:var(--muted);margin:0 0 14px}
+.carte{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.choix{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.choix button{min-width:0;padding:12px 2px;font-weight:700;font-size:19px;text-align:center;white-space:nowrap}
+.choix button.txt{font-size:14px;letter-spacing:-.01em}
+.choix button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.joueur{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.joueur input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.joueur button{padding:10px 12px}
+.bas{display:flex;gap:8px;margin-top:14px}
+.bas button{flex:1}
+.gros{font-size:19px;padding:14px}
+/* Partie */
+.tableau{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:10px 0}
+.pj{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:8px 10px;position:relative}
+.pj.actif{border-color:var(--accent);background:var(--soft)}
+.pj.fini{border-color:var(--green)}
+.pj .nom{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj .sc{font-size:34px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.pj .info{color:var(--muted);font-size:12px}
+.pj .vic{position:absolute;top:6px;right:8px;font-size:12px;color:var(--gold);font-weight:700}
+.tour{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.tour .qui{flex:1;font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl{width:56px;height:44px;border-radius:10px;border:1px dashed var(--line);display:grid;place-items:center;font-weight:700;font-variant-numeric:tabular-nums}
+.fl.ok{border-style:solid;background:var(--surface)}
+.reste{font-size:15px;color:var(--muted);margin-bottom:6px}
+.reste b{color:var(--fg);font-size:22px}
+.mult{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.mult button{font-weight:700}
+.mult button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.pave{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pave button{padding:12px 0;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.pave .spe{grid-column:span 1;font-size:15px}
+.pave .z{color:var(--muted)}
+.actions{display:flex;gap:8px;margin-top:10px}
+.actions button{flex:1}
+.msg{margin:8px 0;padding:10px 12px;border-radius:12px;font-weight:700;text-align:center}
+.msg.bust{background:var(--soft);color:var(--accent)}
+.msg.zero{background:var(--gold-soft);color:var(--gold)}
+.or{text-align:center}
+.or .big{font-size:56px;line-height:1}
+.or button{width:100%;margin-top:8px;font-size:19px;padding:14px}
+.lien{background:none;border:none;color:var(--muted);text-decoration:underline;padding:6px}
+.histo{color:var(--muted);font-size:13px;margin-top:14px}
+/* Cricket */
+.cri{width:100%;border-collapse:separate;border-spacing:0 4px;margin:8px 0;font-variant-numeric:tabular-nums}
+.cri th,.cri td{text-align:center;padding:4px 2px}
+.cri th{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.cri th.actif{color:var(--accent)}
+.cri td.num{font-weight:800;font-size:18px;width:52px;background:var(--surface);border-radius:10px}
+.cri td.num.mort{color:var(--muted);text-decoration:line-through}
+.cri td.mk{font-size:20px;font-weight:800}
+.cri td.mk.actif{background:var(--soft);border-radius:10px}
+.cri tr.pts td{font-size:22px;font-weight:800;padding-top:8px}
+.pave.cri-pave{grid-template-columns:repeat(4,1fr)}
+</style>
+</head>
+<body>
+<a class="eps-retour" href="../">‹ Ma maison</a>
+<main id="app"></main>
+<script>
+const KEY = 'le-fist-v1';
+let S = charger();
+let mult = 1;
+let pile = [];   // pour Annuler
+
+function charger(){
+  try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 1) return o; } catch(e){}
+  return {v:1, depart:301, noms:['',''], victoires:{}, partie:null};
+}
+function sauver(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+
+function afficher(){
+  const p = S.partie;
+  if (!p) return accueil();
+  if (p.etat === 'or') return flecheOr();
+  if (p.etat === 'fin') return fin();
+  if (p.mode === 'cricket') return jeuCricket();
+  jeu();
+}
+
+/* ---------- Réglage de la partie ---------- */
+function accueil(){
+  $('app').innerHTML = `
+  <h1>🎯 Le Fist</h1>
+  <p class="sous">Fléchettes entre collègues. 101, 301, 501 (pas besoin de finir en double) ou Cricket.</p>
+  <div class="carte">
+    <h2 style="margin-top:0">Départ</h2>
+    <div class="choix">${[101,301,501,'cricket'].map(n=>`<button data-dep="${n}" class="${S.depart===n?'on':''} ${n==='cricket'?'txt':''}">${n==='cricket'?'Cricket':n}</button>`).join('')}</div>
+    ${S.depart==='cricket'?'<p class="sous" style="margin:10px 0 0;font-size:14px">Ferme 15 à 20 et le Bull (3 touches chacun : simple 1, double 2, triple 3). Une fois fermé, chaque touche en plus marque des points tant qu\'un adversaire ne l\'a pas fermé. Gagne celui qui a tout fermé avec au moins autant de points que les autres.</p>':''}
+    <h2>Joueurs <span class="sous" style="font-weight:400;font-size:14px">(dans l'ordre de jeu)</span></h2>
+    <div id="joueurs">${S.noms.map((n,i)=>`
+      <div class="joueur"><input data-i="${i}" value="${esc(n)}" placeholder="Joueur ${i+1}" autocomplete="off">
+      <button data-monte="${i}" aria-label="Monter" ${i?'':'disabled'}>↑</button>
+      <button data-suppr="${i}" aria-label="Retirer" ${S.noms.length>1?'':'disabled'}>✕</button></div>`).join('')}</div>
+    <button id="ajout">+ Ajouter un joueur</button>
+    <div class="bas"><button class="prim gros" id="go">Lancer la partie</button></div>
+  </div>
+  ${Object.keys(S.victoires).length ? `<p class="histo">Victoires : ${Object.entries(S.victoires).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`${esc(n)} ${v}`).join(' · ')} <button class="lien" id="raz">remettre à zéro</button></p>`:''}`;
+  $('app').querySelectorAll('[data-dep]').forEach(b=>b.onclick=()=>{const d=b.dataset.dep;S.depart=d==='cricket'?d:+d;sauver();accueil();});
+  $('app').querySelectorAll('input[data-i]').forEach(inp=>inp.oninput=()=>{S.noms[+inp.dataset.i]=inp.value;sauver();});
+  $('app').querySelectorAll('[data-suppr]').forEach(b=>b.onclick=()=>{S.noms.splice(+b.dataset.suppr,1);sauver();accueil();});
+  $('app').querySelectorAll('[data-monte]').forEach(b=>b.onclick=()=>{const i=+b.dataset.monte;[S.noms[i-1],S.noms[i]]=[S.noms[i],S.noms[i-1]];sauver();accueil();});
+  $('ajout').onclick=()=>{S.noms.push('');sauver();accueil();const l=$('app').querySelectorAll('input[data-i]');l[l.length-1].focus();};
+  if ($('raz')) $('raz').onclick=()=>{ if(confirm('Remettre les victoires à zéro ?')){S.victoires={};sauver();accueil();} };
+  $('go').onclick=()=>nouvellePartie(S.noms.map((n,i)=>n.trim()||`Joueur ${i+1}`));
+}
+
+function nouvellePartie(noms){
+  if (S.depart === 'cricket'){
+    S.partie = {mode:'cricket', etat:'jeu', depart:'cricket', joueurs:noms.map(n=>({nom:n, m:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, pts:0, fl:0, tours:[]})),
+                cur:0, flech:[], tourNo:1, gagnant:null};
+    pile = []; mult = 1; sauver(); return afficher();
+  }
+  S.partie = {etat:'jeu', depart:S.depart, joueurs:noms.map(n=>({nom:n, score:S.depart, fl:0, tours:[]})),
+              cur:0, flech:[], tourNo:1, finis:[], gagnant:null};
+  pile = []; mult = 1; sauver(); afficher();
+}
+
+/* ---------- Partie ---------- */
+function snap(){ pile.push(JSON.stringify(S.partie)); if (pile.length>200) pile.shift(); }
+
+function jeu(msg){
+  const p = S.partie, j = p.joueurs[p.cur];
+  const dejaTour = p.flech.reduce((a,f)=>a+f.v,0);
+  const reste = j.score - dejaTour;
+  $('app').innerHTML = `
+  <div class="tableau">${p.joueurs.map((x,i)=>{
+    const moy = x.fl ? ((p.depart - x.score)/x.fl*3).toFixed(1) : '–';
+    const fini = p.finis.includes(i);
+    return `<div class="pj ${i===p.cur?'actif':''} ${fini?'fini':''}">
+      ${S.victoires[x.nom]?`<span class="vic">🏆 ${S.victoires[x.nom]}</span>`:''}
+      <div class="nom">${esc(x.nom)}</div>
+      <div class="sc">${i===p.cur ? reste : x.score}</div>
+      <div class="info">${fini?'À zéro ✓':`moy. ${moy} / 3 fl.`}</div></div>`;}).join('')}</div>
+  <div class="tour"><div class="qui">🎯 ${esc(j.nom)}</div>
+    ${[0,1,2].map(k=>`<div class="fl ${p.flech[k]?'ok':''}">${p.flech[k]?p.flech[k].t:''}</div>`).join('')}</div>
+  ${msg ? `<div class="msg ${msg.c}">${msg.t}</div>` : `<div class="reste">Tour ${p.tourNo} · il reste <b>${reste}</b></div>`}
+  <div class="mult">${[[1,'Simple'],[2,'Double'],[3,'Triple']].map(([m,t])=>`<button data-m="${m}" class="${mult===m?'on':''}">${t}</button>`).join('')}</div>
+  <div class="pave">${Array.from({length:20},(_,i)=>`<button data-n="${i+1}">${i+1}</button>`).join('')}
+    <button class="spe" data-n="25">25</button><button class="spe" data-n="50">Bull 50</button>
+    <button class="spe z" data-n="0">Raté</button><span></span><span></span></div>
+  <div class="actions"><button id="annule" ${pile.length?'':'disabled'}>↶ Annuler</button><button id="quitte">Arrêter la partie</button></div>`;
+  $('app').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mult=mult===+b.dataset.m&&mult!==1?1:+b.dataset.m;jeu(msg);});
+  $('app').querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>fleche(+b.dataset.n));
+  $('annule').onclick=annuler;
+  $('quitte').onclick=()=>{ if(confirm('Arrêter cette partie ?')){S.partie=null;sauver();afficher();} };
+}
+
+function fleche(n){
+  const p = S.partie; if (p.etat!=='jeu') return;
+  snap();
+  let m = mult; if (n===25 || n===50) m = 1; if (n===0) m = 1;
+  const v = n*m, t = n===0 ? '0' : n===50 ? 'Bull' : (m===3?'T':m===2?'D':'')+n;
+  mult = 1;
+  const j = p.joueurs[p.cur];
+  p.flech.push({v,t}); j.fl++;
+  const total = p.flech.reduce((a,f)=>a+f.v,0);
+  const reste = j.score - total;
+  let msg = null;
+  if (reste < 0){
+    j.tours.push({b:true}); msg = {c:'bust', t:`💥 Bust ! ${esc(j.nom)} reste à ${j.score}`};
+    finTour(msg); return;
+  }
+  if (reste === 0){
+    j.score = 0; j.tours.push({p:total}); p.finis.push(p.cur);
+    finTour({c:'zero', t:`🎯 ${esc(j.nom)} tombe pile à 0 !`}); return;
+  }
+  if (p.flech.length === 3){ j.score = reste; j.tours.push({p:total}); finTour(null); return; }
+  sauver(); jeu();
+}
+
+// Passe au joueur suivant. À la fin de la tournée, on regarde qui est tombé à 0.
+function finTour(msg){
+  const p = S.partie;
+  p.flech = [];
+  let i = p.cur + 1;
+  if (i >= p.joueurs.length){
+    if (p.finis.length === 1){ return gagne(p.finis[0]); }
+    if (p.finis.length > 1){ p.etat = 'or'; sauver(); return afficher(); }
+    i = 0; p.tourNo++;
+  }
+  p.cur = i;
+  sauver(); jeu(msg);
+}
+
+function gagne(i){
+  const p = S.partie; p.etat = 'fin'; p.gagnant = i;
+  const n = p.joueurs[i].nom; S.victoires[n] = (S.victoires[n]||0)+1;
+  sauver(); afficher();
+}
+
+function annuler(){
+  if (!pile.length) return;
+  const avant = JSON.parse(pile.pop());
+  // Une victoire comptée est retirée si on revient en arrière
+  if (S.partie.etat==='fin' && S.partie.gagnant!=null){
+    const n = S.partie.joueurs[S.partie.gagnant].nom; if (S.victoires[n]) { S.victoires[n]--; if(!S.victoires[n]) delete S.victoires[n]; }
+  }
+  S.partie = avant; mult = 1; sauver(); afficher();
+}
+
+/* ---------- Flèche en or ---------- */
+function flecheOr(){
+  const p = S.partie;
+  $('app').innerHTML = `
+  <div class="carte or">
+    <div class="big">🥇</div>
+    <h1>Flèche en or !</h1>
+    <p class="sous">${p.finis.map(i=>esc(p.joueurs[i].nom)).join(' et ')} sont tombés à 0 dans la même tournée.<br>Une seule flèche chacun : le plus proche du centre gagne.</p>
+    <h2>Qui est le plus proche du centre ?</h2>
+    ${p.finis.map(i=>`<button class="prim" data-g="${i}">${esc(p.joueurs[i].nom)}</button>`).join('')}
+    <div class="actions"><button id="annule">↶ Annuler la dernière flèche</button></div>
+  </div>`;
+  $('app').querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{snap();gagne(+b.dataset.g);});
+  $('annule').onclick=annuler;
+}
+
+/* ---------- Fin ---------- */
+function fin(){
+  const p = S.partie, g = p.joueurs[p.gagnant];
+  const autres = p.joueurs.filter((_,i)=>i!==p.gagnant).sort((a,b)=>p.mode==='cricket'?b.pts-a.pts:a.score-b.score);
+  $('app').innerHTML = `
+  <div class="carte or">
+    <div class="big">🏆</div>
+    <h1>${esc(g.nom)} gagne !</h1>
+    <p class="sous">${p.mode==='cricket'?`Cricket · ${g.pts} pts`:p.depart} en ${g.tours.length} tours (${g.fl} fléchettes)${S.victoires[g.nom]>1?` · ${S.victoires[g.nom]} victoires`:''}</p>
+    ${autres.length?`<p>${autres.map(x=>`${esc(x.nom)} : ${p.mode==='cricket'?x.pts+' pts':x.score}`).join(' · ')}</p>`:''}
+    <button class="prim" id="revanche">Revanche (le suivant commence)</button>
+    <button id="nouvelle">Nouvelle partie</button>
+    <div class="actions"><button id="annule">↶ Annuler la dernière flèche</button></div>
+  </div>`;
+  $('revanche').onclick=()=>{ const n=p.joueurs.map(x=>x.nom); n.push(n.shift()); S.depart=p.depart; nouvellePartie(n); };
+  $('nouvelle').onclick=()=>{ S.partie=null; sauver(); afficher(); };
+  $('annule').onclick=annuler;
+}
+
+/* ---------- Cricket ---------- */
+const CN = [20,19,18,17,16,15,25];
+const marque = n => n >= 3 ? 'Ⓧ' : n === 2 ? '✕' : n === 1 ? '/' : '';
+function jeuCricket(msg){
+  const p = S.partie, j = p.joueurs[p.cur];
+  const mort = c => p.joueurs.every(x => x.m[c] >= 3);
+  $('app').innerHTML = `
+  <table class="cri"><tr><th></th>${p.joueurs.map((x,i)=>`<th class="${i===p.cur?'actif':''}">${esc(x.nom)}${S.victoires[x.nom]?` 🏆${S.victoires[x.nom]}`:''}</th>`).join('')}</tr>
+  ${CN.map(c=>`<tr><td class="num ${mort(c)?'mort':''}">${c===25?'Bull':c}</td>${p.joueurs.map((x,i)=>`<td class="mk ${i===p.cur?'actif':''}">${marque(x.m[c])}</td>`).join('')}</tr>`).join('')}
+  <tr class="pts"><td class="num">Pts</td>${p.joueurs.map((x,i)=>`<td class="${i===p.cur?'actif':''}">${x.pts}</td>`).join('')}</tr></table>
+  <div class="tour"><div class="qui">🎯 ${esc(j.nom)}</div>
+    ${[0,1,2].map(k=>`<div class="fl ${p.flech[k]?'ok':''}">${p.flech[k]?p.flech[k].t:''}</div>`).join('')}</div>
+  ${msg ? `<div class="msg ${msg.c}">${msg.t}</div>` : `<div class="reste">Tour ${p.tourNo}</div>`}
+  <div class="mult">${[[1,'Simple'],[2,'Double'],[3,'Triple']].map(([m,t])=>`<button data-m="${m}" class="${mult===m?'on':''}">${t}</button>`).join('')}</div>
+  <div class="pave cri-pave">${[20,19,18,17,16,15].map(n=>`<button data-n="${n}">${n}</button>`).join('')}
+    <button class="spe" data-n="25">Bull 25</button><button class="spe" data-n="50">Bull 50</button>
+    <button class="spe z" data-n="0" style="grid-column:span 4">Raté / autre numéro</button></div>
+  <div class="actions"><button id="annule" ${pile.length?'':'disabled'}>↶ Annuler</button><button id="quitte">Arrêter la partie</button></div>`;
+  $('app').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mult=mult===+b.dataset.m&&mult!==1?1:+b.dataset.m;jeuCricket(msg);});
+  $('app').querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>flecheCricket(+b.dataset.n));
+  $('annule').onclick=annuler;
+  $('quitte').onclick=()=>{ if(confirm('Arrêter cette partie ?')){S.partie=null;sauver();afficher();} };
+}
+
+function flecheCricket(n){
+  const p = S.partie; if (p.etat!=='jeu') return;
+  snap();
+  let m = mult; mult = 1;
+  let c = n, touches = m;
+  if (n === 25){ c = 25; touches = 1; } else if (n === 50){ c = 25; touches = 2; } else if (n === 0){ c = 0; touches = 0; }
+  const t = n===0 ? '0' : n===50 ? 'Bull' : n===25 ? '25' : (m===3?'T':m===2?'D':'')+n;
+  const j = p.joueurs[p.cur]; j.fl++;
+  let gain = 0;
+  if (c){
+    const avant = j.m[c]; j.m[c] = Math.min(3, avant + touches);
+    const enTrop = avant + touches - 3;
+    // Les touches en plus marquent seulement si un adversaire n'a pas fermé ce numéro.
+    if (enTrop > 0 && p.joueurs.some(x => x !== j && x.m[c] < 3)) gain = Math.min(enTrop, touches) * c;
+    j.pts += gain;
+  }
+  p.flech.push({t, gain});
+  const ferme = CN.every(x => j.m[x] >= 3);
+  if (ferme && p.joueurs.every(x => x === j || j.pts >= x.pts)){ j.tours.push(1); return gagne(p.cur); }
+  if (p.flech.length === 3){
+    j.tours.push(1); p.flech = [];
+    p.cur = (p.cur + 1) % p.joueurs.length; if (p.cur === 0) p.tourNo++;
+    sauver(); return jeuCricket();
+  }
+  sauver(); jeuCricket(gain ? {c:'zero', t:`+${gain} pts pour ${esc(j.nom)}`} : null);
+}
+
+afficher();
+</script>
+<script>
+// Mise a jour automatique : on verifie a chaque ouverture et a chaque retour dans l'appli,
+// et on recharge une fois quand la nouvelle version est prete (les donnees restent sur le telephone).
+if ('serviceWorker' in navigator) {
+  const dejaPilote = !!navigator.serviceWorker.controller; let recharge = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (dejaPilote && !recharge) { recharge = true; location.reload(); } });
+  if (navigator.onLine) navigator.serviceWorker.register('../sw.js').then(reg => {
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && navigator.onLine) reg.update().catch(() => {}); });
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Courses</title>
+<meta name="theme-color" content="#d9773c">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icones/courses-192.png">
+<link rel="apple-touch-icon" href="../icones/maison-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma maison">
+<style>
+:root{--bg:#f7f4ef;--surface:#fff;--fg:#1f1b16;--muted:#6d655b;--line:#e2dacd;--accent:#d0652a;--soft:#fbe6d6;--ok:#2e7d32;--oksoft:#e2f1e3}
+@media (prefers-color-scheme:dark){:root{--bg:#15120f;--surface:#211c17;--fg:#f0e9e1;--muted:#a99d90;--line:#3a3129;--accent:#f08a4b;--soft:#3d2818;--ok:#7cc884;--oksoft:#1d3320;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body,button,a,input,select,label{touch-action:manipulation}
+body{margin:0 auto;max-width:760px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(90px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit}
+.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0}
+h1{font-size:26px;margin:4px 0 14px}
+h2{font-size:15px;margin:18px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer}
+button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+button.lien{border:0;background:none;padding:4px 6px;color:var(--muted);font-weight:600}
+input,select{font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--fg);min-width:0}
+.mags{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:600px){.mags{grid-template-columns:repeat(3,1fr)}}
+.mag{display:flex;flex-direction:column;gap:4px;padding:16px 14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;text-align:left;font-weight:400;min-height:96px}
+.mag b{font-size:18px}
+.mag span{color:var(--muted);font-size:13px}
+.mag.plein{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.mag .n{display:inline-block;background:var(--accent);color:#fff;border-radius:99px;padding:1px 8px;font-size:13px;font-weight:700;align-self:flex-start}
+.mag.ajout{align-items:center;justify-content:center;color:var(--muted);border-style:dashed;font-weight:600}
+.mode{display:grid;grid-template-columns:1fr 1fr;background:var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px;position:sticky;top:calc(4px + env(safe-area-inset-top,0px));z-index:5}
+.mode button{border:0;border-radius:9px;background:none;padding:10px}
+.mode button[aria-pressed=true]{background:var(--surface);box-shadow:0 1px 3px #0002}
+.ajout-art{display:flex;gap:6px;margin-bottom:6px}
+.ajout-art input{flex:1}
+.ajout-art select{max-width:38%}
+.cat{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}
+.cat>h3{margin:0;font-size:15px;padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.cat>h3 small{color:var(--muted);font-weight:500;margin-left:auto}
+.arts{display:flex;flex-wrap:wrap;gap:6px;padding:10px}
+.art{border-radius:99px;padding:8px 13px;font-weight:500;border:1px solid var(--line);background:var(--bg)}
+.art.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.art .q{font-weight:400;opacity:.85}
+.liste{list-style:none;margin:0;padding:0}
+.liste li{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+.liste li:last-child{border-bottom:0}
+.liste .bx{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-weight:900;color:#fff}
+.liste li.pris .bx{background:var(--ok);border-color:var(--ok)}
+.liste li.pris span{text-decoration:line-through;color:var(--muted)}
+.liste li span{flex:1;font-size:17px}
+.liste li small{color:var(--muted)}
+.vide{color:var(--muted);text-align:center;padding:30px 10px}
+.barre{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:center;z-index:6}
+.barre .tot{color:var(--muted);font-size:14px}
+.edit .art::after{content:" ✎";opacity:.6}
+dialog{border:0;border-radius:16px;padding:18px;width:min(420px,calc(100vw - 32px));background:var(--surface);color:var(--fg)}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 12px}
+dialog label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+dialog input,dialog select{width:100%}
+dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+dialog .suppr{margin-right:auto;color:#b3261e}
+.astuce{color:var(--muted);font-size:13px;margin:4px 0 0}
+</style>
+</head>
+<body>
+<a class="retour" href="../">‹ Ma maison</a>
+<main id="app"></main>
+<dialog id="dlg"><form method="dialog" id="dlg-f"></form></dialog>
+<script src="../sync.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const slug = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+// Pré-liste de départ : identifiants fixes, pour que chaque téléphone ait les mêmes éléments.
+const PRE = [
+  ['Dépôt Vrac', [
+    ['Épicerie sèche', 'Riz, Pâtes, Lentilles, Pois chiches, Flocons d\'avoine, Farine, Sucre, Quinoa, Couscous'],
+    ['Fruits secs et graines', 'Amandes, Noix, Noisettes, Raisins secs, Graines de tournesol, Graines de courge'],
+    ['Épices, thé et café', 'Sel, Poivre, Curry, Thé, Café, Chocolat'],
+    ['Huiles et vinaigres', 'Huile d\'olive, Huile de tournesol, Vinaigre'],
+    ['Entretien et hygiène', 'Savon, Shampoing, Lessive, Liquide vaisselle, Vinaigre blanc']]],
+  ['Croquet Nature', [
+    ['Fruits', 'Pommes, Poires, Bananes, Citrons, Oranges, Kiwis'],
+    ['Légumes', 'Carottes, Oignons, Ail, Pommes de terre, Salade, Tomates, Courgettes, Poireaux, Champignons'],
+    ['Frais', 'Lait, Beurre, Yaourts, Fromage, Œufs, Crème'],
+    ['Boulangerie', 'Pain, Pain de mie']]],
+  ['Spar', [
+    ['Fruits et légumes', 'Bananes, Pommes, Salade, Tomates, Oignons'],
+    ['Frais', 'Lait, Beurre, Œufs, Jambon, Fromage, Yaourts'],
+    ['Boulangerie', 'Pain, Croissants'],
+    ['Conserves', 'Tomates pelées, Thon, Maïs, Haricots verts, Petits pois, Sauce tomate'],
+    ['Boissons', 'Eau, Eau pétillante, Jus d\'orange'],
+    ['Hygiène', 'Papier toilette, Dentifrice, Mouchoirs']]],
+  ['Stock de Hâte', [
+    ['Conserves', 'Tomates pelées, Thon, Maïs, Haricots, Soupe'],
+    ['Boissons', 'Eau, Soda, Jus'],
+    ['Surgelés', 'Frites, Légumes surgelés, Glaces'],
+    ['Entretien', 'Lessive, Liquide vaisselle, Éponges, Sacs poubelle, Essuie-tout'],
+    ['Hygiène', 'Papier toilette, Gel douche, Dentifrice'],
+    ['Animaux', 'Croquettes chien, Friandises chien']]]
+];
+const GR = [];
+PRE.forEach(([mag, cats], mi) => {
+  const m = 'm-' + slug(mag);
+  GR.push({id: m, type: 'mag', nom: mag, ordre: mi});
+  cats.forEach(([cat, arts], ci) => {
+    const c = m + '-' + slug(cat);
+    GR.push({id: c, type: 'cat', mag: m, nom: cat, ordre: ci});
+    arts.split(', ').forEach(a => GR.push({id: c + '-' + slug(a), type: 'art', mag: m, cat: c, nom: a, achat: false, pris: false, qte: ''}));
+  });
+});
+
+const parOrdre = (a, b) => (a.ordre ?? 1e9) - (b.ordre ?? 1e9) || a.nom.localeCompare(b.nom, 'fr');
+const S = Maison.store('courses', {
+  graines: GR,
+  recu: () => rendre(),
+  tables(recs) {
+    const mags = recs.filter(r => r.type === 'mag').sort(parOrdre), cats = {};
+    recs.filter(r => r.type === 'cat').forEach(c => { cats[c.id] = c; });
+    const lignes = [];
+    mags.forEach(m => recs.filter(r => r.type === 'art' && r.mag === m.id)
+      .sort((a, b) => ((cats[a.cat] || {}).ordre ?? 1e9) - ((cats[b.cat] || {}).ordre ?? 1e9) || a.nom.localeCompare(b.nom, 'fr'))
+      .forEach(a => lignes.push([m.nom, (cats[a.cat] || {}).nom || '—', a.nom, a.qte || '', a.achat ? 'Oui' : '', a.achat && a.pris ? 'Oui' : ''])));
+    const t = ['Magasin', 'Catégorie', 'Article', 'Quantité', 'À acheter', 'Dans le caddie'];
+    return {'Courses – à acheter': [t, ...lignes.filter(l => l[4])], 'Courses – tous les articles': [t, ...lignes]};
+  }
+});
+
+let V = {mag: null, mode: 'liste', edit: false};
+try { V = Object.assign(V, JSON.parse(sessionStorage.getItem('courses:vue')) || {}); } catch (e) {}
+const garderVue = () => { try { sessionStorage.setItem('courses:vue', JSON.stringify(V)); } catch (e) {} };
+
+function rendre() {
+  if (V.mag && !S.get(V.mag)) V.mag = null;
+  garderVue();
+  if (!V.mag) return rendreMags();
+  rendreMag(S.get(V.mag));
+}
+
+function rendreMags() {
+  document.title = 'Courses';
+  const mags = S.tous('mag').sort(parOrdre);
+  $('app').innerHTML = `<h1>🧺 Courses</h1><div class="mags">` + mags.map(m => {
+    const n = S.tous('art').filter(a => a.mag === m.id && a.achat && !a.pris).length;
+    return `<button class="mag${n ? ' plein' : ''}" data-mag="${m.id}"><b>${esc(m.nom)}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
+  }).join('') + `<button class="mag ajout" data-a="nmag">＋ Nouveau magasin</button></div>
+  <p class="astuce">Prépare ta liste à la maison, puis passe en mode « Au magasin » pour cocher ce qui est dans le caddie. Les listes sont partagées avec les autres téléphones reliés au Drive.</p>`;
+}
+
+function rendreMag(m) {
+  document.title = m.nom + ' · Courses';
+  const cats = S.tous('cat').filter(c => c.mag === m.id).sort(parOrdre);
+  const arts = S.tous('art').filter(a => a.mag === m.id).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  const groupes = cats.map(c => [c, arts.filter(a => a.cat === c.id)]);
+  const sans = arts.filter(a => !cats.some(c => c.id === a.cat));
+  if (sans.length || !cats.length) groupes.push([{id: '', nom: cats.length ? 'Sans catégorie' : 'Articles'}, sans]);
+  const achat = arts.filter(a => a.achat), pris = achat.filter(a => a.pris).length;
+  let h = `<h1 style="display:flex;align-items:center;gap:8px">${esc(m.nom)} <button class="lien" data-a="emag" aria-label="Modifier le magasin">✎</button></h1>
+  <div class="mode"><button data-mode="liste" aria-pressed="${V.mode === 'liste'}">📝 Ma liste</button><button data-mode="magasin" aria-pressed="${V.mode === 'magasin'}">🛒 Au magasin${achat.length ? ' (' + (achat.length - pris) + ')' : ''}</button></div>`;
+  if (V.mode === 'liste') {
+    h += `<form class="ajout-art" id="f-ajout"><input id="i-art" placeholder="Ajouter ou chercher un article…" autocomplete="off"><select id="s-cat" aria-label="Catégorie">${cats.map(c => `<option value="${c.id}">${esc(c.nom)}</option>`).join('')}<option value="">Sans catégorie</option></select><button class="go" aria-label="Ajouter">＋</button></form>
+    <p class="astuce">Touche un article pour le mettre sur la liste (orange) ou l'enlever.${V.edit ? ' Mode modification : touche un article pour le renommer, changer la quantité ou le supprimer.' : ''}</p>
+    <div class="${V.edit ? 'edit' : ''}" id="cats">` + groupes.map(([c, l]) => `<section class="cat" data-cat="${c.id}"><h3>${esc(c.nom)}${c.id ? ` <button class="lien" data-a="ecat" data-id="${c.id}" aria-label="Modifier la catégorie">✎</button>` : ''}<small>${l.filter(a => a.achat).length}/${l.length}</small></h3><div class="arts">` +
+      l.map(a => `<button class="art${a.achat ? ' on' : ''}" data-art="${a.id}">${esc(a.nom)}${a.qte ? ` <span class="q">× ${esc(a.qte)}</span>` : ''}</button>`).join('') + `</div></section>`).join('') +
+      `</div><div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button data-a="ncat">＋ Catégorie</button><button data-a="edit" aria-pressed="${V.edit}">${V.edit ? '✓ Fini de modifier' : '✎ Modifier les articles'}</button>${achat.length ? '<button data-a="vider">Vider la liste</button>' : ''}</div>`;
+  } else {
+    const ordre = a => { const c = cats.findIndex(x => x.id === a.cat); return c < 0 ? 1e9 : c; };
+    const l = achat.slice().sort((a, b) => (a.pris - b.pris) || ordre(a) - ordre(b) || a.nom.localeCompare(b.nom, 'fr'));
+    h += l.length ? `<div class="cat"><ul class="liste">` + l.map(a => `<li class="${a.pris ? 'pris' : ''}" data-pris="${a.id}"><div class="bx">${a.pris ? '✓' : ''}</div><span>${esc(a.nom)}${a.qte ? ` <small>× ${esc(a.qte)}</small>` : ''}</span><small>${esc((cats.find(c => c.id === a.cat) || {}).nom || '')}</small></li>`).join('') + `</ul></div>`
+      : `<div class="vide">La liste est vide.<br>Passe dans « 📝 Ma liste » pour choisir quoi acheter.</div>`;
+  }
+  h += `<div class="barre"><button data-a="mags">‹ Magasins</button>${V.mode === 'magasin' && achat.length ? `<span class="tot">${pris}/${achat.length} dans le caddie</span>${pris ? '<button class="go" data-a="fini">✓ Courses terminées</button>' : ''}` : `<span class="tot">${achat.length} à acheter</span>`}</div>`;
+  $('app').innerHTML = h;
+  const f = $('f-ajout');
+  if (f) {
+    const i = $('i-art');
+    i.oninput = () => { const q = norm(i.value); document.querySelectorAll('.art').forEach(b => { b.hidden = q && !norm(b.textContent).includes(q); }); document.querySelectorAll('.cat').forEach(s => { s.hidden = q && !s.querySelector('.art:not([hidden])'); }); };
+    f.onsubmit = e => {
+      e.preventDefault();
+      const nom = i.value.trim(); if (!nom) return;
+      const ex = arts.find(a => norm(a.nom) === norm(nom));
+      if (ex) { ex.achat = true; ex.pris = false; S.put(ex); }
+      else S.put({id: S.id(), type: 'art', mag: m.id, cat: $('s-cat').value, nom: nom[0].toUpperCase() + nom.slice(1), achat: true, pris: false, qte: ''});
+      rendre(); setTimeout(() => $('i-art') && $('i-art').focus(), 0);
+    };
+  }
+}
+
+function dialogue(titre, champs, ok, suppr) {
+  const d = $('dlg');
+  $('dlg-f').innerHTML = `<h3>${esc(titre)}</h3>` + champs.map((c, i) => c.opts
+    ? `<label for="dc${i}">${esc(c.l)}</label><select id="dc${i}">${c.opts.map(([v, t]) => `<option value="${esc(v)}" ${v === c.v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`
+    : `<label for="dc${i}">${esc(c.l)}</label><input id="dc${i}" value="${esc(c.v || '')}" placeholder="${esc(c.p || '')}" autocomplete="off">`).join('') +
+    `<div class="btns">${suppr ? '<button type="button" class="suppr" id="d-suppr">Supprimer</button>' : ''}<button value="non" type="button" id="d-non">Annuler</button><button class="go" id="d-ok" type="submit">OK</button></div>`;
+  $('d-non').onclick = () => d.close();
+  if (suppr) $('d-suppr').onclick = () => { if (confirm('Supprimer ?')) { suppr(); d.close(); rendre(); } };
+  $('dlg-f').onsubmit = e => { e.preventDefault(); const v = champs.map((c, i) => $('dc' + i).value.trim()); if (ok(v) !== false) { d.close(); rendre(); } };
+  d.showModal();
+  setTimeout(() => { const i = $('dc0'); if (i && i.select) i.select(); }, 30);
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-mag],[data-mode],[data-art],[data-pris],[data-a]');
+  if (!t || t.closest('dialog')) return;
+  const m = V.mag && S.get(V.mag);
+  if (t.dataset.mag) { V.mag = t.dataset.mag; V.mode = S.tous('art').some(a => a.mag === V.mag && a.achat && !a.pris) && V.mode === 'magasin' ? 'magasin' : 'liste'; V.edit = false; rendre(); scrollTo(0, 0); return; }
+  if (t.dataset.mode) { V.mode = t.dataset.mode; V.edit = false; rendre(); return; }
+  if (t.dataset.art) {
+    const a = S.get(t.dataset.art); if (!a) return;
+    if (V.edit) {
+      const cats = S.tous('cat').filter(c => c.mag === a.mag).sort(parOrdre);
+      return dialogue('Article', [{l: 'Nom', v: a.nom}, {l: 'Quantité (facultatif)', v: a.qte, p: 'ex. 2, 1 kg'}, {l: 'Catégorie', v: a.cat, opts: [...cats.map(c => [c.id, c.nom]), ['', 'Sans catégorie']]}],
+        ([nom, qte, cat]) => { if (!nom) return false; Object.assign(a, {nom, qte, cat}); S.put(a); }, () => S.del(a.id));
+    }
+    a.achat = !a.achat; a.pris = false; S.put(a); rendre(); return;
+  }
+  if (t.dataset.pris) { const a = S.get(t.dataset.pris); if (!a) return; a.pris = !a.pris; S.put(a); rendre(); return; }
+  switch (t.dataset.a) {
+    case 'mags': V.mag = null; rendre(); scrollTo(0, 0); break;
+    case 'nmag': dialogue('Nouveau magasin', [{l: 'Nom du magasin', p: 'ex. Delhaize'}], ([nom]) => {
+      if (!nom) return false;
+      const id = S.id(); S.put({id, type: 'mag', nom, ordre: S.tous('mag').length});
+      ['Fruits et légumes', 'Frais', 'Épicerie'].forEach((c, i) => S.put({id: S.id() + i, type: 'cat', mag: id, nom: c, ordre: i}));
+      V.mag = id; V.mode = 'liste';
+    }); break;
+    case 'emag': dialogue('Magasin', [{l: 'Nom', v: m.nom}], ([nom]) => { if (!nom) return false; m.nom = nom; S.put(m); },
+      () => { S.tous().filter(r => r.mag === m.id).forEach(r => S.del(r.id)); S.del(m.id); V.mag = null; }); break;
+    case 'ncat': dialogue('Nouvelle catégorie', [{l: 'Nom', p: 'ex. Conserves'}], ([nom]) => { if (!nom) return false; S.put({id: S.id(), type: 'cat', mag: m.id, nom, ordre: S.tous('cat').filter(c => c.mag === m.id).length}); }); break;
+    case 'ecat': { const c = S.get(t.dataset.id); dialogue('Catégorie', [{l: 'Nom', v: c.nom}], ([nom]) => { if (!nom) return false; c.nom = nom; S.put(c); },
+      () => { S.tous('art').filter(a => a.cat === c.id).forEach(a => { a.cat = ''; S.put(a); }); S.del(c.id); }); break; }
+    case 'edit': V.edit = !V.edit; rendre(); break;
+    case 'vider': if (confirm('Enlever tous les articles de la liste de ' + m.nom + ' ?')) { S.tous('art').filter(a => a.mag === m.id && a.achat).forEach(a => { a.achat = false; a.pris = false; S.put(a); }); rendre(); } break;
+    case 'fini': {
+      const l = S.tous('art').filter(a => a.mag === m.id && a.achat && a.pris);
+      if (!confirm(l.length + ' article(s) dans le caddie : on les retire de la liste ?')) break;
+      l.forEach(a => { a.achat = false; a.pris = false; S.put(a); });
+      if (!S.tous('art').some(a => a.mag === m.id && a.achat)) V.mode = 'liste';
+      rendre(); break;
+    }
+  }
+});
+
+Maison.pastille();
+rendre();
+</script>
+</body>
+</html>

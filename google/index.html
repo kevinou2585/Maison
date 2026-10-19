@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script Google · Ma maison</title>
+<style>body{margin:0 auto;max-width:900px;padding:16px;font:16px/1.4 system-ui,sans-serif;background:#f3f5f1;color:#18201a}button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:12px 18px;background:#2e6b3f;color:#fff}pre{background:#fff;border:1px solid #d9ded4;border-radius:12px;padding:12px;overflow:auto;font-size:12.5px;max-height:70vh}</style></head>
+<body><p><a href="../">‹ Ma maison</a></p><h1>Script de la feuille Google</h1>
+<p>Copie tout ce texte et colle-le dans <b>Extensions › Apps Script</b> de ta feuille « Ma maison ». N'oublie pas de changer le mot de passe à la ligne <code>CLE</code>.</p>
+<p><button id="c">📋 Copier le script</button> <span id="m"></span></p><pre id="p">Chargement…</pre>
+<script>
+fetch('Code.gs',{cache:'no-cache'}).then(r=>r.text()).then(t=>{document.getElementById('p').textContent=t});
+document.getElementById('c').onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById('p').textContent);document.getElementById('m').textContent='Copié ✓'}catch(e){document.getElementById('m').textContent='Sélectionne le texte et copie-le à la main.'}};
+</script></body></html>

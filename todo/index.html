@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>À ne pas oublier</title>
+<meta name="theme-color" content="#3c6ebe">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icones/todo-192.png">
+<link rel="apple-touch-icon" href="../icones/maison-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma maison">
+<style>
+:root{--bg:#f2f4f8;--surface:#fff;--fg:#161a22;--muted:#5f6878;--line:#d8dde7;--accent:#3567b8;--ok:#2e7d32;--late:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#10131a;--surface:#1a1f29;--fg:#e8ecf3;--muted:#9aa3b5;--line:#2c3443;--accent:#7aa5ee;--ok:#7cc884;--late:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body,button,a,input{touch-action:manipulation}
+body{margin:0 auto;max-width:720px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0}
+h1{font-size:26px;margin:4px 0 14px}
+h2{font-size:15px;margin:22px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer}
+button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+input{font:inherit;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface);color:var(--fg);min-width:0}
+form.ajout{display:flex;gap:6px}
+form.ajout input[type=text]{flex:1}
+form.ajout input[type=date]{width:150px}
+@media (max-width:480px){form.ajout{flex-wrap:wrap}form.ajout input[type=text]{flex:1 1 100%}form.ajout input[type=date]{flex:1}}
+.idees{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
+.idees button{border-radius:99px;padding:6px 11px;font-weight:500;font-size:14px;color:var(--muted)}
+.onglets{display:grid;grid-template-columns:1fr 1fr;background:var(--line);border-radius:12px;padding:3px;gap:3px;margin:16px 0 4px}
+.onglets button{border:0;border-radius:9px;background:none;padding:10px}
+.onglets button[aria-pressed=true]{background:var(--surface);box-shadow:0 1px 3px #0002}
+ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+li{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--line)}
+li:last-child{border-bottom:0}
+.rond{width:28px;height:28px;border-radius:50%;border:2px solid var(--muted);flex:none;background:none;padding:0;display:grid;place-items:center;color:#fff;font-weight:900}
+li.fait .rond{background:var(--ok);border-color:var(--ok)}
+li .txt{flex:1;cursor:pointer;min-width:0}
+li .txt b{font-weight:500;display:block;overflow-wrap:anywhere}
+li.fait .txt b{color:var(--muted)}
+li .txt small{color:var(--muted)}
+li .txt small.retard{color:var(--late);font-weight:700}
+.vide{color:var(--muted);text-align:center;padding:24px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+dialog{border:0;border-radius:16px;padding:18px;width:min(420px,calc(100vw - 32px));background:var(--surface);color:var(--fg)}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 12px}
+dialog label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+dialog input,dialog textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--fg)}
+dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+dialog .suppr{margin-right:auto;color:#b3261e}
+.plus{display:block;margin:10px auto 0}
+</style>
+</head>
+<body>
+<a class="retour" href="../">‹ Ma maison</a>
+<h1>✅ À ne pas oublier</h1>
+<form class="ajout" id="f"><input type="text" id="i" placeholder="Nouvelle chose à faire…" autocomplete="off" enterkeyhint="done"><input type="date" id="dt" aria-label="Pour le (facultatif)" title="Pour le (facultatif)"><button class="go" aria-label="Ajouter">＋</button></form>
+<div class="idees" id="idees"></div>
+<div class="onglets"><button data-o="afaire" aria-pressed="true">À faire</button><button data-o="fait" aria-pressed="false">Fait</button></div>
+<div id="liste"></div>
+<dialog id="dlg"><form method="dialog" id="dlg-f">
+  <h3>Modifier</h3>
+  <label for="e-t">Quoi</label><input id="e-t" autocomplete="off">
+  <label for="e-d">Pour le (facultatif)</label><input id="e-d" type="date">
+  <label for="e-n">Note (facultatif)</label><textarea id="e-n" rows="3"></textarea>
+  <div class="btns"><button type="button" class="suppr" id="e-s">Supprimer</button><button type="button" id="e-a">Annuler</button><button class="go">OK</button></div>
+</form></dialog>
+<script src="../sync.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const IDEES = ['Tondre la pelouse', 'Ramasser les feuilles', 'Sortir les poubelles', 'Arroser le potager', 'Nettoyer les gouttières', 'Tailler la haie'];
+const jour = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+const auj = () => jour(Date.now());
+const fmt = s => s ? new Date(s + 'T12:00').toLocaleDateString('fr-BE', {weekday: 'short', day: 'numeric', month: 'short'}) : '';
+const fmtH = t => new Date(t).toLocaleString('fr-BE', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+
+const S = Maison.store('todo', {
+  recu: () => rendre(),
+  tables(recs) {
+    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || (b.faitLe || 0) - (a.faitLe || 0) || (a.quand || '9').localeCompare(b.quand || '9') || a.cree - b.cree);
+    return {'To-Do': [['Tâche', 'Pour le', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
+      ...l.map(r => [r.titre, r.quand ? fmtD(r.quand) : '', r.fait ? 'Fait' : 'À faire', fmtT(r.cree), r.fait ? fmtT(r.faitLe) : '', [r.par, r.faitPar].filter(Boolean).join(' → '), r.note || ''])]};
+  }
+});
+const fmtD = s => s.split('-').reverse().join('/');
+const fmtT = t => t ? fmtD(jour(t)) : '';
+let O = 'afaire', montrerTout = false;
+
+function rendre() {
+  const qui = Maison.cfg().qui || '';
+  const T = S.tous('tache');
+  document.querySelectorAll('[data-o]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.o === O)));
+  const afaire = T.filter(t => !t.fait).sort((a, b) => (a.quand || '9').localeCompare(b.quand || '9') || a.cree - b.cree);
+  const fait = T.filter(t => t.fait).sort((a, b) => b.faitLe - a.faitLe);
+  document.querySelector('[data-o=afaire]').textContent = 'À faire' + (afaire.length ? ' (' + afaire.length + ')' : '');
+  const ligne = t => {
+    const retard = !t.fait && t.quand && t.quand < auj();
+    const sous = t.fait ? 'fait ' + fmtH(t.faitLe) + (t.faitPar ? ' par ' + t.faitPar : '') : [t.quand ? (retard ? '⏰ ' : '📅 ') + fmt(t.quand) : '', t.note].filter(Boolean).join(' · ');
+    return `<li class="${t.fait ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${t.fait ? 'Remettre à faire' : 'Marquer comme fait'}">${t.fait ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous ? `<small class="${retard ? 'retard' : ''}">${esc(sous)}</small>` : ''}</div></li>`;
+  };
+  if (O === 'afaire') $('liste').innerHTML = afaire.length ? `<ul>${afaire.map(ligne).join('')}</ul>` : `<div class="vide">Rien à faire pour l'instant 🎉</div>`;
+  else {
+    const l = montrerTout ? fait : fait.slice(0, 60);
+    let h = '', j = '';
+    l.forEach(t => { const k = jour(t.faitLe); if (k !== j) { if (j) h += '</ul>'; j = k; h += `<h2>${k === auj() ? "Aujourd'hui" : fmt(k)}</h2><ul>`; } h += ligne(t); });
+    if (j) h += '</ul>';
+    $('liste').innerHTML = h || `<div class="vide">Rien de fait pour l'instant.</div>`;
+    if (fait.length > l.length) $('liste').insertAdjacentHTML('beforeend', `<button class="plus" id="plus">Voir tout l'historique (${fait.length})</button>`);
+  }
+  $('idees').innerHTML = IDEES.filter(x => !afaire.some(t => t.titre === x)).slice(0, 4).map(x => `<button type="button" data-i="${esc(x)}">＋ ${esc(x)}</button>`).join('');
+}
+
+function ajouter(titre, quand) {
+  titre = titre.trim(); if (!titre) return;
+  S.put({id: S.id(), type: 'tache', titre: titre[0].toUpperCase() + titre.slice(1), quand: quand || '', note: '', fait: false, cree: Date.now(), par: Maison.cfg().qui || ''});
+  O = 'afaire'; rendre();
+}
+$('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('dt').value); $('i').value = ''; $('dt').value = ''; $('i').focus(); };
+let ED = null;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-o],[data-c],[data-e],[data-i],#plus');
+  if (!b || b.closest('dialog')) return;
+  if (b.id === 'plus') { montrerTout = true; rendre(); return; }
+  if (b.dataset.o) { O = b.dataset.o; rendre(); return; }
+  if (b.dataset.i) { ajouter(b.dataset.i); return; }
+  if (b.dataset.c) {
+    const t = S.get(b.dataset.c); if (!t) return;
+    t.fait = !t.fait; t.faitLe = t.fait ? Date.now() : null; t.faitPar = t.fait ? (Maison.cfg().qui || '') : '';
+    S.put(t); rendre(); return;
+  }
+  if (b.dataset.e) {
+    ED = S.get(b.dataset.e); if (!ED) return;
+    $('e-t').value = ED.titre; $('e-d').value = ED.quand || ''; $('e-n').value = ED.note || '';
+    $('dlg').showModal();
+  }
+});
+$('dlg-f').onsubmit = e => { e.preventDefault(); if (!ED || !$('e-t').value.trim()) return; Object.assign(ED, {titre: $('e-t').value.trim(), quand: $('e-d').value, note: $('e-n').value.trim()}); S.put(ED); $('dlg').close(); rendre(); };
+$('e-a').onclick = () => $('dlg').close();
+$('e-s').onclick = () => { if (ED && confirm('Supprimer « ' + ED.titre + ' » ?')) { S.del(ED.id); $('dlg').close(); rendre(); } };
+
+Maison.pastille();
+rendre();
+</script>
+</body>
+</html>
