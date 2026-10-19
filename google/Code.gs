@@ -17,12 +17,19 @@ const CLE = 'change-moi';
 const DONNEES = '_donnees';
 const MORCEAU = 40000; // une cellule Google Sheets accepte 50 000 caractères au maximum
 const ENTETE = ['Module', 'Id', 'Rev', 'T', 'Partie', 'Données'];
-const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do', mdp: 'Mots de passe'};
+const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do', mdp: 'Mots de passe', notes: 'Notes'};
 
 function doGet(e) {
   return repondre(() => {
     const p = e.parameter || {};
     verifier(p.cle);
+    if (p.a === 'fichier') {
+      const f = DriveApp.getFileById(p.id), d = dossier().getId(), par = f.getParents();
+      let dedans = false; while (par.hasNext()) if (par.next().getId() === d) dedans = true;
+      if (!dedans) throw new Error('fichier hors du dossier de l\'appli');
+      const b = f.getBlob();
+      return {ok: true, nom: f.getName(), type: b.getContentType(), data: Utilities.base64Encode(b.getBytes())};
+    }
     if (!MODULES[p.m]) throw new Error('module inconnu');
     const depuis = +p.r || 0, tout = lire(), recs = [];
     let rev = 0;
@@ -35,6 +42,10 @@ function doPost(e) {
   return repondre(() => {
     const o = JSON.parse(e.postData.contents);
     verifier(o.cle);
+    if (o.a === 'fichier') {
+      const f = dossier().createFile(Utilities.newBlob(Utilities.base64Decode(o.data), o.type || 'application/octet-stream', o.nom || 'fichier'));
+      return {ok: true, id: f.getId(), url: f.getUrl()};
+    }
     if (!MODULES[o.m]) throw new Error('module inconnu');
     const verrou = LockService.getScriptLock();
     verrou.waitLock(30000);
@@ -60,6 +71,15 @@ function doPost(e) {
       verrou.releaseLock();
     }
   });
+}
+
+// Fichiers joints aux notes : rangés dans un dossier « Ma maison – fichiers » sur le Drive
+function dossier() {
+  const props = PropertiesService.getScriptProperties(), id = props.getProperty('dossier');
+  if (id) try { return DriveApp.getFolderById(id); } catch (err) {}
+  const d = DriveApp.createFolder('Ma maison – fichiers');
+  props.setProperty('dossier', d.getId());
+  return d;
 }
 
 function repondre(f) {
@@ -108,7 +128,8 @@ function ecrire(tout) {
 
 // Couleurs de chaque partie : [titres, lignes paires, onglet]
 const COULEURS = {jardin: ['#2e6b3f', '#eef6ef', '#4f9a5c'], courses: ['#b8541f', '#fdf1e8', '#e07b3c'],
-  todo: ['#2f5ea8', '#eef3fb', '#4a7fd1'], mdp: ['#4b3d8c', '#f2effa', '#7a68c8']};
+  todo: ['#2f5ea8', '#eef3fb', '#4a7fd1'], mdp: ['#4b3d8c', '#f2effa', '#7a68c8'],
+  notes: ['#8a6d1d', '#fbf6e6', '#d4a72c']};
 
 /** Onglet lisible : lignes[0] = titres de colonnes. */
 function tableau(nom, lignes, m) {

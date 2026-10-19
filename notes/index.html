@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Notes</title>
+<meta name="theme-color" content="#b38a1e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icones/notes-192.png">
+<link rel="apple-touch-icon" href="../icones/maison-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma maison">
+<style>
+:root{--bg:#f7f5ef;--surface:#fff;--fg:#1f1d17;--muted:#6a6455;--line:#e3ddcc;--accent:#a57c12;--soft:#fbf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#14130f;--surface:#1f1d17;--fg:#efeadf;--muted:#a9a18e;--line:#38342a;--accent:#e2b546;--soft:#2e2814;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body,button,a,input,select{touch-action:manipulation}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer}
+button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+input,select{font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--fg);min-width:0}
+.app{display:grid;grid-template-columns:340px 1fr;height:100vh;height:100dvh}
+.cote{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 0}
+.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:4px 0}
+h1{font-size:24px;margin:2px 0 10px;display:flex;align-items:center;gap:8px}
+h1 .sp{flex:1}
+.cherche{display:flex;gap:6px}
+.cherche input{flex:1}
+.filtres{display:flex;gap:6px;overflow-x:auto;padding:8px 0;scrollbar-width:none}
+.filtres button{border-radius:99px;padding:5px 11px;font-size:14px;font-weight:500;white-space:nowrap}
+.filtres button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.liste{overflow-y:auto;flex:1;margin:0 -12px;padding:0 12px calc(16px + env(safe-area-inset-bottom,0px))}
+.it{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:11px 6px;font-weight:400}
+.it.on{background:var(--soft);border-radius:10px}
+.it b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it p{margin:2px 0 0;color:var(--muted);font-size:13.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.it small{color:var(--muted);font-size:12px}
+.vide{color:var(--muted);text-align:center;padding:30px 10px}
+.edit{display:flex;flex-direction:column;min-width:0;min-height:0;padding:calc(10px + env(safe-area-inset-top,0px)) 20px 0}
+.ehaut{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-right:96px}
+h1 button{font-size:14px;padding:7px 10px;white-space:nowrap}
+h1 button.go{font-size:18px;padding:5px 12px}
+.ehaut .sp{flex:1}
+#titre{font-size:24px;font-weight:700;border:0;background:none;padding:8px 0;width:100%}
+#titre:focus{outline:none}
+.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:13px}
+.meta input{padding:6px 9px;font-size:14px;width:170px}
+.barre{display:flex;gap:4px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+.barre button{padding:6px 10px;min-width:38px}
+#ed{flex:1;overflow-y:auto;padding:12px 2px calc(30px + env(safe-area-inset-bottom,0px));outline:none;font-size:16.5px;line-height:1.55;overflow-wrap:anywhere}
+#ed:empty::before{content:"Écris ta note ici…";color:var(--muted)}
+#ed img{max-width:100%;height:auto}
+#ed table{border-collapse:collapse}#ed td,#ed th{border:1px solid var(--line);padding:4px 6px}
+#ed ul.cases{list-style:none;padding-left:4px}
+#ed ul.cases li{position:relative;padding-left:30px;margin:4px 0}
+#ed ul.cases li::before{content:"";position:absolute;left:0;top:.2em;width:18px;height:18px;border:2px solid var(--muted);border-radius:5px;cursor:pointer}
+#ed ul.cases li[data-ok]::before{background:var(--accent);border-color:var(--accent)}
+#ed ul.cases li[data-ok]{color:var(--muted);text-decoration:line-through}
+#ed blockquote{border-left:3px solid var(--line);margin:8px 0;padding-left:12px;color:var(--muted)}
+.fich{display:flex;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+.fich:empty{display:none}
+.fi{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 8px;max-width:100%;font-size:14px}
+.fi img{width:44px;height:44px;object-fit:cover;border-radius:6px}
+.fi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.fi small{color:var(--muted)}
+.fi button{padding:3px 7px;font-size:13px}
+.rien{margin:auto;color:var(--muted);text-align:center;padding:20px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;z-index:60;max-width:calc(100vw - 32px)}
+.seulTel{display:none}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .app.ouvert .cote{display:none}
+  .app:not(.ouvert) .edit{display:none}
+  .cote{border-right:0;padding-left:16px;padding-right:16px}
+  .liste{margin:0 -16px;padding:0 16px calc(16px + env(safe-area-inset-bottom,0px))}
+  .edit{padding-left:16px;padding-right:16px}
+  .seulTel{display:inline-block}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="cote">
+    <a class="retour" href="../">‹ Ma maison</a>
+    <h1>🗒️ Notes <span class="sp"></span><button id="imp" type="button" title="Importer des notes Evernote (.enex)">⤓ Evernote</button><button class="go" id="nouv" type="button" aria-label="Nouvelle note">＋</button></h1>
+    <input type="file" id="f-enex" accept=".enex,application/xml,text/xml" multiple hidden>
+    <div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher dans les notes" autocomplete="off"></div>
+    <div class="filtres" id="filtres"></div>
+    <div class="liste" id="liste"></div>
+  </aside>
+  <section class="edit" id="edit"><div class="rien">Choisis une note ou crée-en une avec ＋</div></section>
+</div>
+<input type="file" id="f-joint" multiple hidden>
+<script src="../sync.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const fmtD = t => t ? new Date(t).toLocaleDateString('fr-BE', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+const taille = n => n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(n / 1024)) + ' Ko';
+function toast(t, ms) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), ms || 2000); }
+
+// ---------- Nettoyage du HTML (notes collées ou importées) ----------
+const GARDE = new Set('P DIV BR B STRONG I EM U S STRIKE UL OL LI H1 H2 H3 H4 A BLOCKQUOTE PRE CODE TABLE THEAD TBODY TR TD TH HR SPAN IMG SUB SUP'.split(' '));
+const JETTE = new Set('SCRIPT STYLE IFRAME OBJECT EMBED HEAD TITLE META LINK BUTTON INPUT SELECT TEXTAREA FORM SVG EN-MEDIA EN-CRYPT'.split(' '));
+function propre(html) {
+  const d = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html'), racine = d.body.firstChild;
+  (function nettoie(n) {
+    [...n.childNodes].forEach(c => {
+      if (c.nodeType === 3) return;
+      if (c.nodeType !== 1) { c.remove(); return; }
+      const t = c.tagName;
+      if (JETTE.has(t)) { c.remove(); return; }
+      nettoie(c);
+      if (!GARDE.has(t)) { c.replaceWith(...c.childNodes); return; }
+      [...c.attributes].forEach(a => {
+        const k = a.name, v = a.value;
+        const ok = (t === 'A' && k === 'href' && /^(https?:|mailto:|tel:)/i.test(v)) || (t === 'IMG' && k === 'src' && /^(https?:|data:image\/)/i.test(v)) || (t === 'LI' && k === 'data-ok') || (t === 'UL' && k === 'class' && v === 'cases');
+        if (!ok) c.removeAttribute(k);
+      });
+      if (t === 'A') { c.setAttribute('target', '_blank'); c.setAttribute('rel', 'noopener'); }
+    });
+  })(racine);
+  return racine.innerHTML.replace(/(<div><br><\/div>\s*){3,}/g, '<div><br></div><div><br></div>');
+}
+const texte = html => { const d = new DOMParser().parseFromString('<div>' + String(html || '').replace(/<(br|\/p|\/div|\/li|\/h\d|\/tr)>/gi, '$&\n') + '</div>', 'text/html'); return d.body.textContent.replace(/\n{3,}/g, '\n\n').trim(); };
+
+// ---------- Fichiers joints : copie dans l'appareil (IndexedDB), original sur le Drive ----------
+let BASE = null;
+const base = () => BASE || (BASE = new Promise((ok, ko) => { const r = indexedDB.open('maison-notes', 1); r.onupgradeneeded = () => r.result.createObjectStore('f'); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); }));
+const idb = (mode, f) => base().then(db => new Promise((ok, ko) => { const tx = db.transaction('f', mode), st = tx.objectStore('f'), r = f(st); tx.oncomplete = () => ok(r && r.result); tx.onerror = () => ko(tx.error); }));
+const fGet = k => idb('readonly', st => st.get(k)).catch(() => null);
+const fPut = (k, b) => idb('readwrite', st => st.put(b, k));
+
+const S = Maison.store('notes', {
+  recu: () => { rendreListe(); if (OUV && !document.activeElement?.closest?.('#edit')) ouvrir(OUV, true); },
+  tables(recs) {
+    const l = recs.filter(r => r.type === 'note').sort((a, b) => (a.carnet || '').localeCompare(b.carnet || '', 'fr') || (b.modif || 0) - (a.modif || 0));
+    const dt = t => t ? new Date(t).toLocaleDateString('fr-BE') : '';
+    return {'Notes': [['Titre', 'Carnet', 'Étiquettes', 'Texte', 'Fichiers joints', 'Créée le', 'Modifiée le'],
+      ...l.map(n => [n.titre || 'Sans titre', n.carnet || '', (n.tags || []).join(', '), texte(n.html).slice(0, 45000),
+        (n.fichiers || []).map(f => f.nom + (f.url ? ' (' + f.url + ')' : ' (pas encore envoyé)')).join('\n'), dt(n.cree), dt(n.modif)])]};
+  }
+});
+
+let Q = '', CARNET = '', OUV = null, minut = null;
+try { CARNET = sessionStorage.getItem('notes:carnet') || ''; } catch (e) {}
+const notes = () => S.tous('note');
+
+function rendreListe() {
+  const N = notes(), carnets = [...new Set(N.map(n => n.carnet).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  if (CARNET && !carnets.includes(CARNET) && CARNET !== '★') CARNET = '';
+  $('filtres').innerHTML = [['', 'Toutes (' + N.length + ')'], ...(N.some(n => n.epingle) ? [['★', '★ Épinglées']] : []), ...carnets.map(c => [c, c])]
+    .map(([v, t]) => `<button data-c="${esc(v)}" aria-pressed="${v === CARNET}">${esc(t)}</button>`).join('');
+  const q = norm(Q.trim());
+  const l = N.filter(n => (!CARNET || (CARNET === '★' ? n.epingle : n.carnet === CARNET)) && (!q || norm(n.titre + ' ' + (n.tags || []).join(' ') + ' ' + texte(n.html) + ' ' + (n.fichiers || []).map(f => f.nom).join(' ')).includes(q)))
+    .sort((a, b) => (b.epingle ? 1 : 0) - (a.epingle ? 1 : 0) || (b.modif || 0) - (a.modif || 0));
+  $('liste').innerHTML = l.length ? l.map(n => {
+    const t = texte(n.html).slice(0, 160);
+    return `<button class="it${n.id === OUV ? ' on' : ''}" data-n="${n.id}"><b>${n.epingle ? '★ ' : ''}${esc(n.titre || 'Sans titre')}</b>${t ? `<p>${esc(t)}</p>` : ''}<small>${fmtD(n.modif)}${n.carnet ? ' · ' + esc(n.carnet) : ''}${(n.fichiers || []).length ? ' · 📎 ' + n.fichiers.length : ''}</small></button>`;
+  }).join('') : `<div class="vide">${q ? 'Rien trouvé pour « ' + esc(Q) + ' ».' : 'Aucune note ici. Touche ＋ pour en écrire une, ou ⤓ Evernote pour importer tes notes.'}</div>`;
+}
+
+function ouvrir(id, garderCurseur) {
+  const n = S.get(id); if (!n) { OUV = null; $('app').classList.remove('ouvert'); $('edit').innerHTML = '<div class="rien">Choisis une note ou crée-en une avec ＋</div>'; return; }
+  OUV = id;
+  $('app').classList.add('ouvert');
+  const carnets = [...new Set(notes().map(x => x.carnet).filter(Boolean))];
+  $('edit').innerHTML = `<div class="ehaut"><button class="seulTel" data-a="fermer">‹ Notes</button><span class="sp"></span>
+    <button data-a="epingle" aria-pressed="${!!n.epingle}" title="Épingler en haut">${n.epingle ? '★' : '☆'}</button>
+    <button data-a="joindre" title="Joindre un fichier">📎</button><button data-a="suppr" title="Supprimer la note">🗑</button></div>
+  <input id="titre" value="${esc(n.titre || '')}" placeholder="Titre" autocomplete="off">
+  <div class="meta"><label>Carnet <input id="carnet" list="carnets" value="${esc(n.carnet || '')}" placeholder="aucun" autocomplete="off"></label><datalist id="carnets">${carnets.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+    <label>Étiquettes <input id="tags" value="${esc((n.tags || []).join(', '))}" placeholder="jardin, maison" autocomplete="off"></label><span>Modifiée le ${fmtD(n.modif)}</span></div>
+  <div class="barre" id="barre">
+    <button data-x="bold" title="Gras"><b>G</b></button><button data-x="italic" title="Italique"><i>I</i></button><button data-x="underline" title="Souligné"><u>S</u></button>
+    <button data-x="h2" title="Titre">T</button><button data-x="insertUnorderedList" title="Liste">•</button><button data-x="insertOrderedList" title="Liste numérotée">1.</button>
+    <button data-x="cases" title="Cases à cocher">☑</button><button data-x="removeFormat" title="Enlever la mise en forme">⌫</button></div>
+  <div id="ed" contenteditable="true" spellcheck="true">${n.html || ''}</div>
+  <div class="fich" id="fich"></div>`;
+  rendreFichiers(n);
+  rendreListe();
+  if (!garderCurseur && !n.titre && !n.html) $('titre').focus();
+}
+
+function sauver() {
+  clearTimeout(minut);
+  const n = OUV && S.get(OUV); if (!n || !$('ed')) return;
+  const html = propre($('ed').innerHTML), titre = $('titre').value.trim(), carnet = $('carnet').value.trim(), tags = $('tags').value.split(',').map(x => x.trim()).filter(Boolean);
+  if (html === (n.html || '') && titre === (n.titre || '') && carnet === (n.carnet || '') && tags.join(',') === (n.tags || []).join(',')) return;
+  Object.assign(n, {html, titre, carnet, tags, modif: Date.now()});
+  S.put(n); rendreListe();
+}
+const bientot = () => { clearTimeout(minut); minut = setTimeout(sauver, 700); };
+
+async function rendreFichiers(n) {
+  const box = $('fich'); if (!box) return;
+  const l = n.fichiers || [];
+  box.innerHTML = l.map((f, i) => `<div class="fi" data-i="${i}"><span class="ap">${/^image\//.test(f.type) ? '🖼️' : '📄'}</span><span title="${esc(f.nom)}">${esc(f.nom)}</span><small>${f.taille ? taille(f.taille) : ''}${f.id ? '' : ' · ⏳ à envoyer au Drive'}</small><button data-a="vfich" data-i="${i}">Ouvrir</button><button data-a="sfich" data-i="${i}" aria-label="Retirer">✕</button></div>`).join('');
+  for (const [i, f] of l.entries()) {
+    if (!/^image\//.test(f.type) || !f.lid) continue;
+    const b = await fGet(f.lid); if (!b) continue;
+    const el = box.querySelector(`[data-i="${i}"] .ap`); if (el) el.outerHTML = `<img src="${URL.createObjectURL(b)}" alt="">`;
+  }
+}
+
+async function joindre(files, note) {
+  const n = note || S.get(OUV); if (!n) return;
+  for (const f of files) {
+    if (f.size > 25 * 1048576) { toast('« ' + f.name + ' » est trop gros (25 Mo maximum).', 3000); continue; }
+    const lid = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await fPut(lid, f);
+    (n.fichiers = n.fichiers || []).push({lid, nom: f.name, type: f.type || '', taille: f.size, id: '', url: ''});
+  }
+  n.modif = Date.now(); S.put(n);
+  if (n.id === OUV) rendreFichiers(n);
+  rendreListe(); envoyerAttente();
+}
+
+// Envoie au Drive les fichiers pas encore partis (un par un)
+let envoiEnCours = false;
+async function envoyerAttente() {
+  if (envoiEnCours || !Maison.relie() || !navigator.onLine) return;
+  envoiEnCours = true;
+  try {
+    for (const n of notes()) for (const f of (n.fichiers || [])) {
+      if (f.id || !f.lid) continue;
+      const b = await fGet(f.lid); if (!b) continue;
+      try {
+        const o = await Maison.envoyerFichier(b, f.nom);
+        const m = S.get(n.id), g = m && (m.fichiers || []).find(x => x.lid === f.lid);
+        if (g) { g.id = o.id; g.url = o.url; S.put(m); if (m.id === OUV) rendreFichiers(m); }
+      } catch (e) { return; }
+    }
+  } finally { envoiEnCours = false; }
+}
+
+async function voirFichier(f) {
+  let b = f.lid ? await fGet(f.lid) : null;
+  if (!b && f.id) {
+    toast('Téléchargement depuis le Drive…');
+    try { b = await Maison.lireFichier(f.id); if (f.lid) fPut(f.lid, b).catch(() => {}); } catch (e) { toast("Impossible d'ouvrir ce fichier depuis le Drive."); return; }
+  }
+  if (!b) { toast("Ce fichier n'est pas sur cet appareil et n'a pas encore été envoyé au Drive."); return; }
+  const u = URL.createObjectURL(b), a = document.createElement('a');
+  a.href = u; a.target = '_blank'; a.rel = 'noopener';
+  if (!/^(image\/|application\/pdf|text\/)/.test(b.type)) a.download = f.nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 60000);
+}
+
+// ---------- Import Evernote (.enex) ----------
+const dateEN = s => { const m = /^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)/.exec(s || ''); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : Date.now(); };
+const hashTxt = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+async function importer(fichiers) {
+  let total = 0, joints = 0;
+  for (const fic of fichiers) {
+    toast('Lecture de « ' + fic.name + ' »…', 1500);
+    const xml = new DOMParser().parseFromString(await fic.text(), 'application/xml');
+    if (xml.querySelector('parsererror')) { toast('« ' + fic.name + " » n'est pas un export Evernote lisible.", 3500); continue; }
+    const carnet = fic.name.replace(/\.enex$/i, '').replace(/^Evernote[ _-]*/i, '').trim();
+    const lot = [];
+    for (const e of xml.querySelectorAll('note')) {
+      const titre = (e.querySelector('title')?.textContent || '').trim(), cree = dateEN(e.querySelector('created')?.textContent), modif = dateEN(e.querySelector('updated')?.textContent || e.querySelector('created')?.textContent);
+      let html = e.querySelector('content')?.textContent || '';
+      html = html.replace(/<\?xml[^>]*\?>/g, '').replace(/<!DOCTYPE[^>]*>/gi, '')
+        .replace(/<en-todo[^>]*checked="true"[^>]*\/?>(<\/en-todo>)?/gi, '☑ ').replace(/<en-todo[^>]*\/?>(<\/en-todo>)?/gi, '☐ ')
+        .replace(/<\/?en-note[^>]*>/gi, '');
+      const id = 'en-' + hashTxt(titre + '|' + cree);
+      const n = S.get(id) || {id, type: 'note', fichiers: []};
+      Object.assign(n, {titre, html: propre(html), carnet: n.carnet || carnet, tags: [...e.querySelectorAll('tag')].map(t => t.textContent.trim()).filter(Boolean), cree, modif, source: 'Evernote'});
+      for (const r of e.querySelectorAll('resource')) {
+        const d = r.querySelector('data'), type = r.querySelector('mime')?.textContent || 'application/octet-stream';
+        const nom = r.querySelector('resource-attributes file-name')?.textContent || ('fichier.' + (type.split('/')[1] || 'bin'));
+        if (!d || n.fichiers.some(f => f.nom === nom)) continue;
+        const bin = atob(d.textContent.replace(/\s+/g, '')), u = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        const lid = 'f' + hashTxt(id + nom + u.length);
+        await fPut(lid, new Blob([u], {type}));
+        n.fichiers.push({lid, nom, type, taille: u.length, id: '', url: ''}); joints++;
+      }
+      lot.push(n);
+    }
+    S.putTous(lot); total += lot.length;
+  }
+  rendreListe();
+  toast(total + ' note(s) importée(s)' + (joints ? ', ' + joints + ' fichier(s) joint(s) : ils partent vers le Drive.' : '.'), 4000);
+  envoyerAttente();
+}
+
+// ---------- Événements ----------
+$('nouv').onclick = () => {
+  sauver();
+  const n = S.put({id: S.id(), type: 'note', titre: '', html: '', carnet: CARNET && CARNET !== '★' ? CARNET : '', tags: [], fichiers: [], cree: Date.now(), modif: Date.now()});
+  Q = ''; $('q').value = ''; ouvrir(n.id);
+};
+$('imp').onclick = () => $('f-enex').click();
+$('f-enex').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) importer(f); };
+$('f-joint').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) joindre(f); };
+$('q').oninput = () => { Q = $('q').value; rendreListe(); };
+document.addEventListener('input', e => { if (e.target.closest && e.target.closest('#edit')) bientot(); });
+document.addEventListener('paste', e => {
+  if (!e.target.closest || !e.target.closest('#ed')) return;
+  const fs = [...(e.clipboardData?.files || [])];
+  if (fs.length) { e.preventDefault(); joindre(fs); return; }
+  const h = e.clipboardData?.getData('text/html');
+  if (h) { e.preventDefault(); document.execCommand('insertHTML', false, propre(h)); }
+});
+document.addEventListener('click', e => {
+  const li = e.target.closest && e.target.closest('#ed ul.cases > li');
+  if (li && e.clientX - li.getBoundingClientRect().left < 26) { li.toggleAttribute('data-ok'); bientot(); e.preventDefault(); return; }
+  const b = e.target.closest && e.target.closest('[data-n],[data-c],[data-a],[data-x]'); if (!b) return;
+  if (b.dataset.n) { sauver(); ouvrir(b.dataset.n); return; }
+  if (b.dataset.c !== undefined && b.closest('#filtres')) { CARNET = b.dataset.c; try { sessionStorage.setItem('notes:carnet', CARNET); } catch (err) {} rendreListe(); return; }
+  if (b.dataset.x) {
+    e.preventDefault(); $('ed').focus();
+    const x = b.dataset.x;
+    if (x === 'h2') document.execCommand('formatBlock', false, 'h2');
+    else if (x === 'cases') { document.execCommand('insertUnorderedList'); const s = getSelection(), n0 = s.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement), ul = n0 && n0.closest('ul'); if (ul) ul.classList.toggle('cases'); }
+    else document.execCommand(x);
+    bientot(); return;
+  }
+  const n = OUV && S.get(OUV);
+  switch (b.dataset.a) {
+    case 'fermer': sauver(); OUV = null; $('app').classList.remove('ouvert'); rendreListe(); break;
+    case 'epingle': if (n) { sauver(); n.epingle = !n.epingle; S.put(n); ouvrir(n.id, true); } break;
+    case 'joindre': if (!Maison.relie()) toast('Le fichier reste sur cet appareil tant que le Drive n\'est pas relié.', 3000); $('f-joint').click(); break;
+    case 'suppr': if (n && confirm('Supprimer la note « ' + (n.titre || 'Sans titre') + ' » ?')) { S.del(n.id); OUV = null; ouvrir(null); rendreListe(); } break;
+    case 'vfich': if (n) voirFichier(n.fichiers[+b.dataset.i]); break;
+    case 'sfich': if (n && confirm('Retirer ce fichier de la note ? (Il reste dans le dossier du Drive.)')) { n.fichiers.splice(+b.dataset.i, 1); S.put(n); rendreFichiers(n); rendreListe(); } break;
+  }
+});
+addEventListener('pagehide', sauver);
+document.addEventListener('visibilitychange', () => { if (document.hidden) sauver(); });
+addEventListener('online', envoyerAttente);
+// Glisser-déposer des fichiers sur une note (ordinateur)
+document.addEventListener('dragover', e => { if (OUV) e.preventDefault(); });
+document.addEventListener('drop', e => { if (!OUV) return; e.preventDefault(); const f = [...(e.dataTransfer?.files || [])]; if (f.length) joindre(f); });
+
+Maison.dictee($('q'));
+Maison.pastille();
+rendreListe();
+if (innerWidth > 760) { const d = notes().sort((a, b) => (b.modif || 0) - (a.modif || 0))[0]; if (d) ouvrir(d.id, true); }
+setTimeout(envoyerAttente, 1500);
+</script>
+</body>
+</html>

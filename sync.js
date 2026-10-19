@@ -111,6 +111,7 @@
     const K = 'maison:' + m;
     let D = lsJson(K, {});
     const sv = () => lsSet(K, JSON.stringify(D));
+    const plein = () => { (opt.plein || (() => alert("La mémoire de l'appli est pleine sur cet appareil : cette modification n'a pas pu être gardée.")))(); };
     (opt.graines || []).forEach(g => { if (!D[g.id]) D[g.id] = Object.assign({t: 1}, g); });
     const e = moteur(m, {
       ids: () => Object.keys(D),
@@ -123,7 +124,9 @@
     return {
       tous: type => Object.values(D).filter(r => !r.del && (!type || r.type === type)),
       get: id => (D[id] && !D[id].del) ? D[id] : null,
-      put(rec) { rec.t = Date.now(); D[rec.id] = rec; sv(); e.sale(rec.id); return rec; },
+      put(rec) { rec.t = Date.now(); D[rec.id] = rec; if (!sv()) plein(); e.sale(rec.id); return rec; },
+      // Plusieurs éléments d'un coup (import) : un seul enregistrement
+      putTous(recs) { const t = Date.now(); recs.forEach(r => { r.t = t; D[r.id] = r; }); if (!sv()) plein(); recs.forEach(r => { e.meta.sale[r.id] = 1; }); e.sale(recs.length ? recs[0].id : ''); },
       del(id) { if (!D[id]) return; D[id] = {id, type: D[id].type, del: 1, t: Date.now()}; sv(); e.sale(id); },
       id: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
       synchro: () => e.cycle()
@@ -200,8 +203,21 @@
     input.insertAdjacentElement('afterend', b);
   }
 
+  // Fichiers joints : envoyés dans le dossier « Ma maison – fichiers » du Drive, relus via le script
+  const b64 = f => new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = ko; r.readAsDataURL(f); });
+  async function envoyerFichier(blob, nom) {
+    if (!relie()) throw new Error('drive');
+    return appel(cfg(), {a: 'fichier', nom: nom || blob.name || 'fichier', type: blob.type || 'application/octet-stream', data: await b64(blob)});
+  }
+  async function lireFichier(id) {
+    const o = await appel(cfg(), null, {a: 'fichier', id});
+    const bin = atob(o.data), u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return new Blob([u], {type: o.type});
+  }
+
   window.Maison = {
-    dictee,
+    dictee, envoyerFichier, lireFichier,
     cfg, relie, store, jardin, pastille, toutSynchro,
     regler(c) { lsSet(CFG, JSON.stringify(c)); toutSynchro(); },
     surStatut(f) { ecoute.add(f); f(relie() ? etat : 'off'); },
