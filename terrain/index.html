@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gestion du terrain</title>
+<meta name="theme-color" content="#5b7a1e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icones/terrain-192.png">
+<link rel="apple-touch-icon" href="../icones/maison-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma maison">
+<style>
+:root{--bg:#f4f5ee;--surface:#fff;--fg:#1b1f14;--muted:#626a55;--line:#dcdfd0;--accent:#5b7a1e;--ok:#2e7d32;--late:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#12140e;--surface:#1c2016;--fg:#ebeee2;--muted:#a2a993;--line:#30362a;--accent:#a8cc5c;--ok:#7cc884;--late:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body,button,a,input,select{touch-action:manipulation}
+body{margin:0 auto;max-width:760px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0}
+h1{font-size:26px;margin:4px 0 2px}
+.sous{color:var(--muted);margin:0 0 14px;font-size:14px}
+h2{font-size:15px;margin:22px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;gap:8px}
+h2 span{text-transform:none;letter-spacing:0;font-weight:500}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer}
+button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){button.go{color:#12140e}}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--fg);min-width:0}
+.onglets{display:grid;grid-template-columns:repeat(3,1fr);background:var(--line);border-radius:12px;padding:3px;gap:3px;margin:12px 0 4px}
+.onglets button{border:0;border-radius:9px;background:none;padding:10px 4px}
+.onglets button[aria-pressed=true]{background:var(--surface);box-shadow:0 1px 3px #0002}
+@media (max-width:420px){.onglets button{font-size:14px;padding:10px 2px}}
+.zones{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
+.zones button{border-radius:99px;padding:6px 11px;font-weight:500;font-size:14px}
+.zones button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.cherche{display:flex;gap:6px;margin:12px 0 0}
+.cherche input{flex:1}
+.barre{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:4px 0 0}
+.barre i{display:block;height:100%;background:var(--ok);border-radius:99px}
+ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+li{display:flex;align-items:center;gap:12px;padding:11px 12px;border-bottom:1px solid var(--line)}
+li:last-child{border-bottom:0}
+.rond{width:30px;height:30px;border-radius:50%;border:2px solid var(--muted);flex:none;background:none;padding:0;display:grid;place-items:center;color:#fff;font-weight:900}
+li.fait .rond{background:var(--ok);border-color:var(--ok)}
+li .txt{flex:1;cursor:pointer;min-width:0}
+li .txt b{font-weight:500;display:block;overflow-wrap:anywhere}
+li.fait .txt b{color:var(--muted);text-decoration:line-through}
+li .txt small{color:var(--muted);display:block}
+li .txt small.ok{color:var(--ok)}
+.zone{font-size:12px;font-weight:700;border-radius:99px;padding:2px 8px;white-space:nowrap;flex:none}
+.z-Potager{background:#e5f2d8;color:#3b6a12}.z-Verger{background:#fbe6dc;color:#9a3f17}.z-Tonte{background:#dff1ec;color:#1d6b58}.z-Petits{background:#ece6f6;color:#5a3f96}
+@media (prefers-color-scheme:dark){.z-Potager{background:#2a3a1c;color:#b9e08c}.z-Verger{background:#43281c;color:#ffb894}.z-Tonte{background:#183a33;color:#8fe0cb}.z-Petits{background:#2e2642;color:#cbb8f2}}
+.vide{color:var(--muted);text-align:center;padding:18px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.ajout{display:block;margin:12px auto 0}
+.hors{margin:14px 0 0;color:var(--muted);font-size:14px}
+.hors summary{cursor:pointer;font-weight:600}
+.hors ul{margin-top:8px;opacity:.75}
+dialog{border:0;border-radius:16px;padding:18px;width:min(440px,calc(100vw - 32px));background:var(--surface);color:var(--fg)}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 12px}
+dialog label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+dialog input,dialog textarea,dialog select{width:100%;background:var(--bg)}
+dialog .deux{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mois{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.mois button{padding:6px 0;font-size:13px;font-weight:500;border-radius:8px}
+.mois button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+dialog .suppr{margin-right:auto;color:#b3261e}
+</style>
+</head>
+<body>
+<a class="retour" href="../">‹ Ma maison</a>
+<h1>🚜 Gestion du terrain</h1>
+<p class="sous" id="periode"></p>
+<div class="onglets" id="onglets"><button data-o="semaine" aria-pressed="true">Cette semaine</button><button data-o="mois" aria-pressed="false">Ce mois-ci</button><button data-o="histo" aria-pressed="false">Historique</button></div>
+<div class="zones" id="zones"></div>
+<div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher une tâche" autocomplete="off"></div>
+<div id="liste"></div>
+<button class="ajout go" id="nouv">＋ Ajouter une tâche</button>
+<dialog id="dlg"><form method="dialog" id="dlg-f">
+  <h3 id="e-h">Tâche</h3>
+  <label for="e-t">Quoi</label><input id="e-t" autocomplete="off" required>
+  <div class="deux">
+    <div><label for="e-f">Quand</label><select id="e-f"><option value="une">Cette semaine (une fois)</option><option value="semaine">Chaque semaine</option><option value="mois">Chaque mois</option></select></div>
+    <div><label for="e-z">Où</label><select id="e-z"></select></div>
+  </div>
+  <label for="e-p">Qui s'en occupe (facultatif)</label><input id="e-p" list="gens" autocomplete="off" placeholder="Tout le monde">
+  <datalist id="gens"></datalist>
+  <label>Saison (mois où la tâche revient)</label><div class="mois" id="e-m"></div>
+  <label for="e-n">Note (facultatif)</label><textarea id="e-n" rows="2"></textarea>
+  <div class="btns"><button type="button" class="suppr" id="e-s">Supprimer</button><button type="button" id="e-a">Annuler</button><button class="go">OK</button></div>
+</form></dialog>
+<script src="../sync.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const ZONES = ['Potager', 'Verger', 'Tonte', 'Petits travaux'];
+const FREQ = {une: 'Cette semaine', semaine: 'Chaque semaine', mois: 'Chaque mois'};
+const MOIS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+const TOUTE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const de = (a, b) => { const o = []; for (let m = a; ; m = m % 12 + 1) { o.push(m); if (m === b) return o; } };
+
+// Semaine du lundi au dimanche (numéro ISO) et mois
+function semaine(t) {
+  const d = new Date(t); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const j1 = new Date(d.getFullYear(), 0, 4, 12);
+  return 'S' + d.getFullYear() + '-' + String(1 + Math.round(((d - j1) / 864e5 - 3 + (j1.getDay() + 6) % 7) / 7)).padStart(2, '0');
+}
+const mois = t => { const d = new Date(t); return 'M' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const periode = (f, t) => f === 'mois' ? mois(t) : f === 'semaine' ? semaine(t) : 'une';
+const lundi = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; };
+const fmtJ = d => d.toLocaleDateString('fr-BE', {day: 'numeric', month: 'long'});
+const fmtH = t => new Date(t).toLocaleString('fr-BE', {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+const fmtD = t => { const d = new Date(t); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
+const saisonTxt = s => !s || s.length >= 12 ? 'Toute l\'année' : s.length === 1 ? MOIS[s[0] - 1] : MOIS[s[0] - 1] + ' → ' + MOIS[s[s.length - 1] - 1];
+const enSaison = (r, t) => !r.saison || !r.saison.length || r.saison.includes(new Date(t).getMonth() + 1);
+
+// Le canevas de départ : à adapter ensemble
+const G = [
+  ['semaine', 'Tonte', 'Tondre la pelouse', de(4, 10)],
+  ['semaine', 'Tonte', 'Tondre les chemins et les abords du verger', de(4, 10)],
+  ['semaine', 'Potager', 'Arroser le potager (si pas de pluie)', de(5, 9)],
+  ['semaine', 'Potager', 'Désherber les planches et les allées', de(3, 10)],
+  ['semaine', 'Potager', 'Récolter et noter ce qui est prêt', de(5, 11)],
+  ['semaine', 'Potager', 'Faire la ronde des limaces', de(3, 6)],
+  ['semaine', 'Verger', 'Ramasser les fruits tombés', de(7, 10)],
+  ['semaine', 'Petits travaux', 'Nourrir le compost (déchets verts + brun)', TOUTE],
+  ['mois', 'Potager', 'Semer et planter selon le calendrier', de(2, 10)],
+  ['mois', 'Potager', 'Pailler les planches', de(4, 10)],
+  ['mois', 'Potager', 'Apporter du compost aux planches libres', de(10, 3)],
+  ['mois', 'Verger', 'Vérifier tuteurs, liens et protections des arbres', TOUTE],
+  ['mois', 'Verger', 'Surveiller maladies et ravageurs', de(4, 9)],
+  ['mois', 'Verger', 'Désherber et pailler le pied des arbres', de(3, 10)],
+  ['mois', 'Verger', 'Tailler les fruitiers (taille d\'hiver)', de(12, 2)],
+  ['mois', 'Tonte', 'Entretenir la tondeuse (nettoyer, affûter la lame)', de(3, 10)],
+  ['mois', 'Petits travaux', 'Retourner le compost', de(3, 11)],
+  ['mois', 'Petits travaux', 'Nettoyer et ranger les outils', TOUTE],
+  ['mois', 'Petits travaux', 'Faire le tour des clôtures et du portail', TOUTE],
+  ['mois', 'Petits travaux', 'Couper les ronces et tailler les haies', de(9, 3)]
+];
+const slug = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const GR = G.map(([f, z, titre, saison]) => ({id: 't-' + slug(titre), type: 'tache', titre, freq: f, zone: z, saison, pour: '', note: '', cree: 0}));
+
+const S = Maison.store('terrain', {
+  graines: GR,
+  recu: () => rendre(),
+  tables(recs) {
+    const T = recs.filter(r => r.type === 'tache'), C = recs.filter(r => r.type === 'coche'), now = Date.now();
+    const ordre = {une: 0, semaine: 1, mois: 2};
+    const l = T.slice().sort((a, b) => ordre[a.freq] - ordre[b.freq] || ZONES.indexOf(a.zone) - ZONES.indexOf(b.zone) || a.titre.localeCompare(b.titre));
+    const etat = t => { const c = C.find(c => c.tache === t.id && c.periode === periode(t.freq, now)); return c ? ['Fait', fmtD(c.le), c.par || ''] : [enSaison(t, now) ? 'À faire' : 'Hors saison', '', '']; };
+    const tache = id => T.find(t => t.id === id);
+    const h = C.filter(c => tache(c.tache)).sort((a, b) => b.le - a.le);
+    return {
+      'Terrain – canevas': [['Quand', 'Où', 'Tâche', 'Saison', 'Qui', 'En ce moment', 'Fait le', 'Par', 'Note'],
+        ...l.map(t => [FREQ[t.freq], t.zone, t.titre, saisonTxt(t.saison), t.pour || 'Tout le monde', ...etat(t), t.note || ''])],
+      'Terrain – historique': [['Fait le', 'Tâche', 'Où', 'Quand', 'Par'],
+        ...h.map(c => { const t = tache(c.tache); return [fmtD(c.le), t.titre, t.zone, FREQ[t.freq], c.par || '']; })]
+    };
+  }
+});
+
+let O = 'semaine', Z = '', ED = null, EM = [];
+const coche = (t, now) => S.get('c-' + t.id + '-' + periode(t.freq, now));
+const gens = () => [...new Set([Maison.cfg().qui, ...S.tous('coche').map(c => c.par), ...S.tous('tache').map(t => t.pour)].filter(Boolean))];
+
+function ligne(t, now) {
+  const c = coche(t, now);
+  const sous = c ? `<small class="ok">✓ ${esc(c.par || 'Fait')} · ${esc(fmtH(c.le))}</small>`
+    : [t.pour ? '👤 ' + t.pour : '', t.note].filter(Boolean).map(x => `<small>${esc(x)}</small>`).join('');
+  return `<li class="${c ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${c ? 'Remettre à faire' : 'Marquer comme fait'}">${c ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous}</div><span class="zone z-${t.zone.split(' ')[0]}">${esc(t.zone)}</span></li>`;
+}
+function bloc(titre, l, now, vide) {
+  const n = l.filter(t => coche(t, now)).length;
+  l.sort((a, b) => !!coche(a, now) - !!coche(b, now) || ZONES.indexOf(a.zone) - ZONES.indexOf(b.zone) || a.titre.localeCompare(b.titre));
+  return `<h2>${titre}${l.length ? `<span>${n} / ${l.length} fait${n > 1 ? 's' : ''}</span>` : ''}</h2>` +
+    (l.length ? `<div class="barre"><i style="width:${Math.round(100 * n / l.length)}%"></i></div><ul style="margin-top:8px">${l.map(t => ligne(t, now)).join('')}</ul>` : `<div class="vide">${vide}</div>`);
+}
+
+function rendre() {
+  const now = Date.now(), lu = lundi(now), di = new Date(+lu + 6 * 864e5);
+  $('periode').textContent = `Semaine du ${fmtJ(lu)} au ${fmtJ(di)} · ${new Date(now).toLocaleDateString('fr-BE', {month: 'long', year: 'numeric'})}`;
+  document.querySelectorAll('[data-o]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.o === O)));
+  $('zones').innerHTML = ['', ...ZONES].map(z => `<button data-z="${esc(z)}" aria-pressed="${z === Z}">${z || 'Tout'}</button>`).join('');
+  const q = norm($('q').value);
+  let T = S.tous('tache').filter(t => !Z || t.zone === Z);
+  if (q) T = T.filter(t => norm(t.titre + ' ' + t.zone + ' ' + (t.note || '') + ' ' + (t.pour || '')).includes(q));
+  // Une tâche « cette semaine » déjà faite une semaine précédente part dans l'historique
+  const une = T.filter(t => t.freq === 'une' && !(coche(t, now) && semaine(coche(t, now).le) !== semaine(now)));
+  let h = '';
+  if (O === 'histo') {
+    const C = S.tous('coche').map(c => ({c, t: S.get(c.tache)})).filter(x => x.t && T.includes(x.t)).sort((a, b) => b.c.le - a.c.le);
+    let k = '';
+    C.slice(0, 300).forEach(({c, t}) => {
+      const s = semaine(c.le);
+      if (s !== k) { if (k) h += '</ul>'; k = s; const l = lundi(c.le); h += `<h2>${s === semaine(now) ? 'Cette semaine' : 'Semaine du ' + fmtJ(l)}</h2><ul>`; }
+      h += `<li class="fait"><span class="rond">✓</span><div class="txt"><b>${esc(t.titre)}</b><small>${esc((c.par ? c.par + ' · ' : '') + fmtH(c.le))}</small></div><span class="zone z-${t.zone.split(' ')[0]}">${esc(t.zone)}</span></li>`;
+    });
+    if (k) h += '</ul>';
+    $('liste').innerHTML = h || `<div class="vide">Rien n'a encore été coché.</div>`;
+    return;
+  }
+  const f = O === 'mois' ? 'mois' : 'semaine';
+  const actives = T.filter(t => t.freq === f && enSaison(t, now)), hors = T.filter(t => t.freq === f && !enSaison(t, now));
+  if (O === 'semaine') h += bloc('À faire cette semaine', une, now, 'Rien de spécial cette semaine. Ajoute une tâche ponctuelle avec ＋.');
+  h += bloc(O === 'semaine' ? 'Chaque semaine' : 'Chaque mois', actives, now, q || Z ? 'Rien ici.' : 'Aucune tâche en ce moment.');
+  if (hors.length) h += `<details class="hors"><summary>Hors saison (${hors.length})</summary><ul>${hors.map(t => `<li><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b><small>${esc(saisonTxt(t.saison))}</small></div><span class="zone z-${t.zone.split(' ')[0]}">${esc(t.zone)}</span></li>`).join('')}</ul></details>`;
+  $('liste').innerHTML = h;
+}
+
+function ouvrir(t) {
+  ED = t;
+  $('e-h').textContent = t ? 'Modifier la tâche' : 'Nouvelle tâche';
+  $('e-t').value = t ? t.titre : '';
+  $('e-f').value = t ? t.freq : (O === 'mois' ? 'mois' : 'une');
+  $('e-z').innerHTML = ZONES.map(z => `<option>${z}</option>`).join('');
+  $('e-z').value = t ? t.zone : (Z || 'Potager');
+  $('e-p').value = t ? t.pour || '' : '';
+  $('gens').innerHTML = gens().map(g => `<option value="${esc(g)}">`).join('');
+  EM = t && t.saison && t.saison.length ? t.saison.slice() : TOUTE.slice();
+  moisRendre();
+  $('e-n').value = t ? t.note || '' : '';
+  $('e-s').hidden = !t;
+  $('dlg').showModal();
+}
+function moisRendre() { $('e-m').innerHTML = MOIS.map((m, i) => `<button type="button" data-m="${i + 1}" aria-pressed="${EM.includes(i + 1)}">${m}</button>`).join(''); }
+$('e-m').onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return; const m = +b.dataset.m; EM = EM.includes(m) ? EM.filter(x => x !== m) : [...EM, m].sort((a, b) => a - b); moisRendre(); };
+$('dlg-f').onsubmit = e => {
+  e.preventDefault();
+  const titre = $('e-t').value.trim(); if (!titre) return;
+  const r = ED || {id: S.id(), type: 'tache', cree: Date.now(), par: Maison.cfg().qui || ''};
+  Object.assign(r, {titre: titre[0].toUpperCase() + titre.slice(1), freq: $('e-f').value, zone: $('e-z').value, pour: $('e-p').value.trim(), saison: EM.length ? EM : TOUTE.slice(), note: $('e-n').value.trim()});
+  S.put(r); $('dlg').close();
+  if (!ED) { O = r.freq === 'mois' ? 'mois' : 'semaine'; Z = ''; $('q').value = ''; }
+  rendre();
+};
+$('e-a').onclick = () => $('dlg').close();
+$('e-s').onclick = () => { if (ED && confirm('Supprimer « ' + ED.titre + ' » du canevas ?')) { S.del(ED.id); $('dlg').close(); rendre(); } };
+$('nouv').onclick = () => ouvrir(null);
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-o],[data-z],[data-c],[data-e]');
+  if (!b || b.closest('dialog')) return;
+  if (b.dataset.o) { O = b.dataset.o; rendre(); return; }
+  if (b.dataset.z != null && b.matches('[data-z]')) { Z = b.dataset.z; rendre(); return; }
+  if (b.dataset.c) {
+    const t = S.get(b.dataset.c); if (!t) return;
+    const now = Date.now(), c = coche(t, now);
+    if (c) S.del(c.id);
+    else S.put({id: 'c-' + t.id + '-' + periode(t.freq, now), type: 'coche', tache: t.id, periode: periode(t.freq, now), le: now, par: Maison.cfg().qui || ''});
+    rendre(); return;
+  }
+  if (b.dataset.e) { const t = S.get(b.dataset.e); if (t) ouvrir(t); }
+});
+$('q').oninput = rendre;
+Maison.dictee($('q'));
+Maison.dictee($('e-t'));
+Maison.pastille();
+rendre();
+// Changement de semaine ou de mois pendant que l'appli reste ouverte
+setInterval(() => { if (document.visibilityState === 'visible' && !$('dlg').open) rendre(); }, 60000);
+</script>
+</body>
+</html>

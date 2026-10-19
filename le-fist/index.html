@@ -85,6 +85,11 @@ h2{font-size:18px;margin:18px 0 8px}
 .cri td.mk.actif{background:var(--soft);border-radius:10px}
 .cri tr.pts td{font-size:22px;font-weight:800;padding-top:8px}
 .pave.cri-pave{grid-template-columns:repeat(4,1fr)}
+/* Équipes */
+.eq-tit{font-weight:800;font-size:14px;color:var(--accent);margin:12px 0 2px;text-transform:uppercase;letter-spacing:.04em}
+.membres{font-size:12px;color:var(--muted);line-height:1.3;margin-top:2px}
+.membres b{color:var(--fg)}
+.alerte{color:var(--accent);font-weight:700;font-size:14px;margin:10px 0 0}
 </style>
 </head>
 <body>
@@ -100,6 +105,14 @@ function charger(){
   try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 1) return o; } catch(e){}
   return {v:1, depart:301, noms:['',''], victoires:{}, partie:null};
 }
+if (!S.equipe) S.equipe = 1;   // 1 = chacun pour soi, 2 ou 3 = équipes de 2 ou de 3
+// En équipe, les joueurs d'une même équipe lancent chacun leur tour, en alternant avec l'autre équipe.
+const lanceur = j => j.membres ? j.membres[(j.mi||0) % j.membres.length] : j.nom;
+const tourSuivant = j => { if (j.membres) j.mi = ((j.mi||0) + 1) % j.membres.length; };
+const membresHtml = (j, actif) => j.membres ? `<div class="membres">${j.membres.map((m,k)=>actif&&k===(j.mi||0)%j.membres.length?`<b>${esc(m)}</b>`:esc(m)).join(' · ')}</div>` : '';
+const quiHtml = j => `🎯 ${esc(lanceur(j))}${j.membres?` <span style="font-weight:400;font-size:.8em;opacity:.75">(${esc(j.nom)})</span>`:''}`;
+const nbEquipes = () => S.equipe > 1 ? Math.floor(S.noms.length / S.equipe) : S.noms.length;
+const equipesOk = () => S.equipe === 1 || (S.noms.length % S.equipe === 0 && S.noms.length >= 2 * S.equipe);
 function sauver(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $ = id => document.getElementById(id);
@@ -117,36 +130,50 @@ function afficher(){
 function accueil(){
   $('app').innerHTML = `
   <h1>🎯 Le Fist</h1>
-  <p class="sous">Fléchettes entre collègues. 101, 301, 501 (pas besoin de finir en double) ou Cricket.</p>
+  <p class="sous">Fléchettes entre collègues. 101, 301, 501 (pas besoin de finir en double) ou Cricket, seul ou en équipes.</p>
   <div class="carte">
     <h2 style="margin-top:0">Départ</h2>
     <div class="choix">${[101,301,501,'cricket'].map(n=>`<button data-dep="${n}" class="${S.depart===n?'on':''} ${n==='cricket'?'txt':''}">${n==='cricket'?'Cricket':n}</button>`).join('')}</div>
     ${S.depart==='cricket'?'<p class="sous" style="margin:10px 0 0;font-size:14px">Ferme 15 à 20 et le Bull (3 touches chacun : simple 1, double 2, triple 3). Une fois fermé, chaque touche en plus marque des points tant qu\'un adversaire ne l\'a pas fermé. Gagne celui qui a tout fermé avec au moins autant de points que les autres.</p>':''}
-    <h2>Joueurs <span class="sous" style="font-weight:400;font-size:14px">(dans l'ordre de jeu)</span></h2>
-    <div id="joueurs">${S.noms.map((n,i)=>`
+    <h2>Format</h2>
+    <div class="choix">${[[1,'Chacun pour soi'],[2,'Équipes de 2'],[3,'Équipes de 3']].map(([e,t])=>`<button data-eq="${e}" class="txt ${S.equipe===e?'on':''}">${t}</button>`).join('')}</div>
+    <h2>Joueurs <span class="sous" style="font-weight:400;font-size:14px">(${S.equipe>1?'rangés par équipe, ↑ pour changer d\'équipe':'dans l\'ordre de jeu'})</span></h2>
+    <div id="joueurs">${S.noms.map((n,i)=>`${S.equipe>1&&i%S.equipe===0?`<div class="eq-tit">Équipe ${i/S.equipe+1}</div>`:''}
       <div class="joueur"><input data-i="${i}" value="${esc(n)}" placeholder="Joueur ${i+1}" autocomplete="off">
       <button data-monte="${i}" aria-label="Monter" ${i?'':'disabled'}>↑</button>
       <button data-suppr="${i}" aria-label="Retirer" ${S.noms.length>1?'':'disabled'}>✕</button></div>`).join('')}</div>
-    <button id="ajout">+ Ajouter un joueur</button>
-    <div class="bas"><button class="prim gros" id="go">Lancer la partie</button></div>
+    <button id="ajout">+ Ajouter un joueur</button>${S.equipe>1?' <button id="melange">🔀 Mélanger les équipes</button>':''}
+    ${equipesOk()?'':`<p class="alerte">Pour jouer en équipes de ${S.equipe}, il faut ${S.equipe*2}, ${S.equipe*3}… joueurs (là : ${S.noms.length}).</p>`}
+    <div class="bas"><button class="prim gros" id="go" ${equipesOk()?'':'disabled'}>Lancer la partie${S.equipe>1&&equipesOk()?` (${nbEquipes()} équipes)`:''}</button></div>
   </div>
   ${Object.keys(S.victoires).length ? `<p class="histo">Victoires : ${Object.entries(S.victoires).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`${esc(n)} ${v}`).join(' · ')} <button class="lien" id="raz">remettre à zéro</button></p>`:''}`;
   $('app').querySelectorAll('[data-dep]').forEach(b=>b.onclick=()=>{const d=b.dataset.dep;S.depart=d==='cricket'?d:+d;sauver();accueil();});
+  $('app').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{S.equipe=+b.dataset.eq;while(S.equipe>1&&S.noms.length<S.equipe*2)S.noms.push('');sauver();accueil();});
+  if ($('melange')) $('melange').onclick=()=>{for(let i=S.noms.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[S.noms[i],S.noms[k]]=[S.noms[k],S.noms[i]];}sauver();accueil();};
   $('app').querySelectorAll('input[data-i]').forEach(inp=>inp.oninput=()=>{S.noms[+inp.dataset.i]=inp.value;sauver();});
   $('app').querySelectorAll('[data-suppr]').forEach(b=>b.onclick=()=>{S.noms.splice(+b.dataset.suppr,1);sauver();accueil();});
   $('app').querySelectorAll('[data-monte]').forEach(b=>b.onclick=()=>{const i=+b.dataset.monte;[S.noms[i-1],S.noms[i]]=[S.noms[i],S.noms[i-1]];sauver();accueil();});
   $('ajout').onclick=()=>{S.noms.push('');sauver();accueil();const l=$('app').querySelectorAll('input[data-i]');l[l.length-1].focus();};
   if ($('raz')) $('raz').onclick=()=>{ if(confirm('Remettre les victoires à zéro ?')){S.victoires={};sauver();accueil();} };
-  $('go').onclick=()=>nouvellePartie(S.noms.map((n,i)=>n.trim()||`Joueur ${i+1}`));
+  $('go').onclick=()=>{ if (equipesOk()) nouvellePartie(S.noms.map((n,i)=>n.trim()||`Joueur ${i+1}`)); };
 }
 
-function nouvellePartie(noms){
+// Les « joueurs » de la partie sont des personnes, ou des équipes (avec leurs membres).
+function unites(noms, eq){
+  if (!eq || eq < 2) return noms.map(n=>({nom:n}));
+  const o = [];
+  for (let i = 0; i + eq <= noms.length; i += eq){ const m = noms.slice(i, i + eq); o.push({nom:m.join(' & '), membres:m, mi:0}); }
+  return o;
+}
+function nouvellePartie(noms, eq){
+  eq = eq || S.equipe;
+  const U = unites(noms, eq);
   if (S.depart === 'cricket'){
-    S.partie = {mode:'cricket', etat:'jeu', depart:'cricket', joueurs:noms.map(n=>({nom:n, m:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, pts:0, fl:0, tours:[]})),
+    S.partie = {mode:'cricket', etat:'jeu', depart:'cricket', eq, joueurs:U.map(u=>({...u, m:{20:0,19:0,18:0,17:0,16:0,15:0,25:0}, pts:0, fl:0, tours:[]})),
                 cur:0, flech:[], tourNo:1, gagnant:null};
     pile = []; mult = 1; sauver(); return afficher();
   }
-  S.partie = {etat:'jeu', depart:S.depart, joueurs:noms.map(n=>({nom:n, score:S.depart, fl:0, tours:[]})),
+  S.partie = {etat:'jeu', depart:S.depart, eq, joueurs:U.map(u=>({...u, score:S.depart, fl:0, tours:[]})),
               cur:0, flech:[], tourNo:1, finis:[], gagnant:null};
   pile = []; mult = 1; sauver(); afficher();
 }
@@ -164,10 +191,10 @@ function jeu(msg){
     const fini = p.finis.includes(i);
     return `<div class="pj ${i===p.cur?'actif':''} ${fini?'fini':''}">
       ${S.victoires[x.nom]?`<span class="vic">🏆 ${S.victoires[x.nom]}</span>`:''}
-      <div class="nom">${esc(x.nom)}</div>
+      <div class="nom">${esc(x.nom)}</div>${membresHtml(x, i===p.cur)}
       <div class="sc">${i===p.cur ? reste : x.score}</div>
       <div class="info">${fini?'À zéro ✓':`moy. ${moy} / 3 fl.`}</div></div>`;}).join('')}</div>
-  <div class="tour"><div class="qui">🎯 ${esc(j.nom)}</div>
+  <div class="tour"><div class="qui">${quiHtml(j)}</div>
     ${[0,1,2].map(k=>`<div class="fl ${p.flech[k]?'ok':''}">${p.flech[k]?p.flech[k].t:''}</div>`).join('')}</div>
   ${msg ? `<div class="msg ${msg.c}">${msg.t}</div>` : `<div class="reste">Tour ${p.tourNo} · il reste <b>${reste}</b></div>`}
   <div class="mult">${[[1,'Simple'],[2,'Double'],[3,'Triple']].map(([m,t])=>`<button data-m="${m}" class="${mult===m?'on':''}">${t}</button>`).join('')}</div>
@@ -208,6 +235,7 @@ function fleche(n){
 function finTour(msg){
   const p = S.partie;
   p.flech = [];
+  tourSuivant(p.joueurs[p.cur]);
   let i = p.cur + 1;
   if (i >= p.joueurs.length){
     if (p.finis.length === 1){ return gagne(p.finis[0]); }
@@ -220,7 +248,7 @@ function finTour(msg){
 
 function gagne(i){
   const p = S.partie; p.etat = 'fin'; p.gagnant = i;
-  const n = p.joueurs[i].nom; S.victoires[n] = (S.victoires[n]||0)+1;
+  (p.joueurs[i].membres || [p.joueurs[i].nom]).forEach(n => { S.victoires[n] = (S.victoires[n]||0)+1; });
   sauver(); afficher();
 }
 
@@ -229,7 +257,8 @@ function annuler(){
   const avant = JSON.parse(pile.pop());
   // Une victoire comptée est retirée si on revient en arrière
   if (S.partie.etat==='fin' && S.partie.gagnant!=null){
-    const n = S.partie.joueurs[S.partie.gagnant].nom; if (S.victoires[n]) { S.victoires[n]--; if(!S.victoires[n]) delete S.victoires[n]; }
+    const g = S.partie.joueurs[S.partie.gagnant];
+    (g.membres || [g.nom]).forEach(n => { if (S.victoires[n]) { S.victoires[n]--; if(!S.victoires[n]) delete S.victoires[n]; } });
   }
   S.partie = avant; mult = 1; sauver(); afficher();
 }
@@ -257,14 +286,15 @@ function fin(){
   $('app').innerHTML = `
   <div class="carte or">
     <div class="big">🏆</div>
-    <h1>${esc(g.nom)} gagne !</h1>
-    <p class="sous">${p.mode==='cricket'?`Cricket · ${g.pts} pts`:p.depart} en ${g.tours.length} tours (${g.fl} fléchettes)${S.victoires[g.nom]>1?` · ${S.victoires[g.nom]} victoires`:''}</p>
+    <h1>${esc(g.nom)} ${g.membres?'gagnent':'gagne'} !</h1>
+    <p class="sous">${p.mode==='cricket'?`Cricket · ${g.pts} pts`:p.depart} en ${g.tours.length} tours (${g.fl} fléchettes)${!g.membres&&S.victoires[g.nom]>1?` · ${S.victoires[g.nom]} victoires`:''}</p>
     ${autres.length?`<p>${autres.map(x=>`${esc(x.nom)} : ${p.mode==='cricket'?x.pts+' pts':x.score}`).join(' · ')}</p>`:''}
     <button class="prim" id="revanche">Revanche (le suivant commence)</button>
     <button id="nouvelle">Nouvelle partie</button>
     <div class="actions"><button id="annule">↶ Annuler la dernière flèche</button></div>
   </div>`;
-  $('revanche').onclick=()=>{ const n=p.joueurs.map(x=>x.nom); n.push(n.shift()); S.depart=p.depart; nouvellePartie(n); };
+  // Revanche : l'équipe (ou le joueur) suivante commence
+  $('revanche').onclick=()=>{ const u=p.joueurs.map(x=>x.membres||[x.nom]); u.push(u.shift()); S.depart=p.depart; nouvellePartie(u.flat(), p.eq||1); };
   $('nouvelle').onclick=()=>{ S.partie=null; sauver(); afficher(); };
   $('annule').onclick=annuler;
 }
@@ -276,10 +306,10 @@ function jeuCricket(msg){
   const p = S.partie, j = p.joueurs[p.cur];
   const mort = c => p.joueurs.every(x => x.m[c] >= 3);
   $('app').innerHTML = `
-  <table class="cri"><tr><th></th>${p.joueurs.map((x,i)=>`<th class="${i===p.cur?'actif':''}">${esc(x.nom)}${S.victoires[x.nom]?` 🏆${S.victoires[x.nom]}`:''}</th>`).join('')}</tr>
+  <table class="cri"><tr><th></th>${p.joueurs.map((x,i)=>`<th class="${i===p.cur?'actif':''}">${esc(x.nom)}${S.victoires[x.nom]?` 🏆${S.victoires[x.nom]}`:''}${membresHtml(x, i===p.cur)}</th>`).join('')}</tr>
   ${CN.map(c=>`<tr><td class="num ${mort(c)?'mort':''}">${c===25?'Bull':c}</td>${p.joueurs.map((x,i)=>`<td class="mk ${i===p.cur?'actif':''}">${marque(x.m[c])}</td>`).join('')}</tr>`).join('')}
   <tr class="pts"><td class="num">Pts</td>${p.joueurs.map((x,i)=>`<td class="${i===p.cur?'actif':''}">${x.pts}</td>`).join('')}</tr></table>
-  <div class="tour"><div class="qui">🎯 ${esc(j.nom)}</div>
+  <div class="tour"><div class="qui">${quiHtml(j)}</div>
     ${[0,1,2].map(k=>`<div class="fl ${p.flech[k]?'ok':''}">${p.flech[k]?p.flech[k].t:''}</div>`).join('')}</div>
   ${msg ? `<div class="msg ${msg.c}">${msg.t}</div>` : `<div class="reste">Tour ${p.tourNo}</div>`}
   <div class="mult">${[[1,'Simple'],[2,'Double'],[3,'Triple']].map(([m,t])=>`<button data-m="${m}" class="${mult===m?'on':''}">${t}</button>`).join('')}</div>
@@ -313,7 +343,7 @@ function flecheCricket(n){
   const ferme = CN.every(x => j.m[x] >= 3);
   if (ferme && p.joueurs.every(x => x === j || j.pts >= x.pts)){ j.tours.push(1); return gagne(p.cur); }
   if (p.flech.length === 3){
-    j.tours.push(1); p.flech = [];
+    j.tours.push(1); p.flech = []; tourSuivant(j);
     p.cur = (p.cur + 1) % p.joueurs.length; if (p.cur === 0) p.tourNo++;
     sauver(); return jeuCricket();
   }
