@@ -17,7 +17,7 @@ const CLE = 'change-moi';
 const DONNEES = '_donnees';
 const MORCEAU = 40000; // une cellule Google Sheets accepte 50 000 caractères au maximum
 const ENTETE = ['Module', 'Id', 'Rev', 'T', 'Partie', 'Données'];
-const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do'};
+const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do', mdp: 'Mots de passe'};
 
 function doGet(e) {
   return repondre(() => {
@@ -53,7 +53,7 @@ function doPost(e) {
         change = true;
       });
       if (change) ecrire(tout);
-      if (o.tables) Object.keys(o.tables).forEach(nom => tableau(nom, o.tables[nom]));
+      if (o.tables) Object.keys(o.tables).forEach(nom => tableau(nom, o.tables[nom], o.m));
       if (change || o.tables) accueil(o.m, o.qui);
       return {ok: true, r: rev};
     } finally {
@@ -103,41 +103,73 @@ function ecrire(tout) {
   });
   sh.clearContents();
   sh.getRange(1, 1, lignes.length, ENTETE.length).setNumberFormat('@').setValues(lignes);
-  if (!sh.isSheetHidden()) sh.hideSheet();
+  try { if (!sh.isSheetHidden()) sh.hideSheet(); } catch (err) {}
 }
 
+// Couleurs de chaque partie : [titres, lignes paires, onglet]
+const COULEURS = {jardin: ['#2e6b3f', '#eef6ef', '#4f9a5c'], courses: ['#b8541f', '#fdf1e8', '#e07b3c'],
+  todo: ['#2f5ea8', '#eef3fb', '#4a7fd1'], mdp: ['#4b3d8c', '#f2effa', '#7a68c8']};
+
 /** Onglet lisible : lignes[0] = titres de colonnes. */
-function tableau(nom, lignes) {
+function tableau(nom, lignes, m) {
   if (!Array.isArray(lignes) || !lignes.length) return;
-  const sh = feuille(nom), larg = lignes[0].length;
-  lignes = lignes.map(l => { const r = l.slice(0, larg); while (r.length < larg) r.push(''); return r.map(c => c == null ? '' : c); });
-  sh.clear();
+  const [fonce, clair, onglet] = COULEURS[m] || COULEURS.jardin;
+  const sh = feuille(nom), larg = lignes[0].length, haut = lignes.length;
+  lignes = lignes.map(l => { const r = l.slice(0, larg); while (r.length < larg) r.push(''); return r.map(c => c == null ? '' : String(c)); });
+  if (sh.getFilter()) sh.getFilter().remove();
   sh.getBandings().forEach(b => b.remove());
+  sh.clear();
   if (sh.getMaxColumns() < larg) sh.insertColumnsAfter(sh.getMaxColumns(), larg - sh.getMaxColumns());
-  const plage = sh.getRange(1, 1, lignes.length, larg);
-  plage.setNumberFormat('@').setValues(lignes).setVerticalAlignment('top').setWrap(true).setFontFamily('Arial').setFontSize(10);
-  sh.getRange(1, 1, 1, larg).setFontWeight('bold').setFontColor('#ffffff').setBackground('#2e6b3f').setWrap(true);
-  if (lignes.length > 1) plage.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREEN, true, false);
-  sh.getRange(1, 1, 1, larg).setBackground('#2e6b3f');
-  sh.setFrozenRows(1);
-  for (let c = 1; c <= larg; c++) {
-    const max = Math.max.apply(null, lignes.map(l => String(l[c - 1]).length));
-    sh.setColumnWidth(c, Math.min(380, Math.max(70, max * 7 + 16)));
+  if (sh.getMaxColumns() > larg) sh.deleteColumns(larg + 1, sh.getMaxColumns() - larg);
+  if (sh.getMaxRows() < haut + 1) sh.insertRowsAfter(sh.getMaxRows(), haut + 1 - sh.getMaxRows());
+  if (sh.getMaxRows() > haut + 20) sh.deleteRows(haut + 21, sh.getMaxRows() - haut - 20);
+  const plage = sh.getRange(1, 1, haut, larg);
+  plage.setNumberFormat('@').setValues(lignes)
+    .setFontFamily('Calibri').setFontSize(11).setFontColor('#1f2421')
+    .setVerticalAlignment('middle').setWrap(true);
+  const tete = sh.getRange(1, 1, 1, larg);
+  tete.setFontWeight('bold').setFontColor('#ffffff').setBackground(fonce).setFontSize(11).setHorizontalAlignment('center');
+  sh.setRowHeight(1, 34);
+  if (haut > 1) {
+    const corps = sh.getRange(2, 1, haut - 1, larg);
+    corps.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false)
+      .setFirstRowColor('#ffffff').setSecondRowColor(clair);
+    corps.setBorder(null, null, true, null, null, true, '#d9ddd8', SpreadsheetApp.BorderStyle.SOLID);
+    sh.setRowHeights(2, haut - 1, 26);
+    sh.getRange(2, 1, haut - 1, 1).setFontWeight('bold');
   }
-  if (sh.getMaxRows() > lignes.length + 50) sh.deleteRows(lignes.length + 51, sh.getMaxRows() - lignes.length - 50);
+  plage.setBorder(true, true, true, true, null, null, fonce, SpreadsheetApp.BorderStyle.SOLID);
+  plage.createFilter();
+  sh.setFrozenRows(1);
+  sh.setHiddenGridlines(true);
+  sh.setTabColor(onglet);
+  for (let c = 1; c <= larg; c++) {
+    const max = Math.max.apply(null, lignes.map((l, i) => String(l[c - 1]).length + (i ? 0 : 4)));
+    sh.setColumnWidth(c, Math.min(360, Math.max(80, max * 7.5 + 24)));
+    // colonnes courtes (dates, oui/non, n°) centrées
+    if (max <= 12 && c > 1 && haut > 1) sh.getRange(2, c, haut - 1, 1).setHorizontalAlignment('center');
+  }
 }
 
 function accueil(m, qui) {
   const sh = feuille('Accueil'), props = PropertiesService.getScriptProperties();
-  const quand = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Brussels', 'dd/MM/yyyy HH:mm');
-  props.setProperty('maj-' + m, quand + (qui ? ' (' + qui + ')' : ''));
-  const l = [['Ma maison', ''], ['Sauvegarde partagée de l\'appli : chaque onglet est mis à jour tout seul.', ''], ['', ''], ['Partie', 'Dernière modification']];
+  const quand = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Brussels', 'dd/MM/yyyy à HH:mm');
+  props.setProperty('maj-' + m, quand + (qui ? ' par ' + qui : ''));
+  const l = [['🏡 Ma maison', ''], ['Sauvegarde de l\'appli : chaque onglet se met à jour tout seul quand quelqu\'un modifie quelque chose.', ''], ['', ''], ['Partie', 'Dernière modification']];
   Object.keys(MODULES).forEach(k => l.push([MODULES[k], props.getProperty('maj-' + k) || '—']));
   sh.clear();
-  sh.getRange(1, 1, l.length, 2).setValues(l);
-  sh.getRange(1, 1).setFontSize(18).setFontWeight('bold').setFontColor('#2e6b3f');
-  sh.getRange(4, 1, 1, 2).setFontWeight('bold').setBackground('#e3efe5');
-  sh.setColumnWidth(1, 260); sh.setColumnWidth(2, 240);
+  sh.setHiddenGridlines(true);
+  sh.getRange(1, 1, l.length, 2).setValues(l).setFontFamily('Calibri').setFontSize(11).setVerticalAlignment('middle');
+  sh.getRange(1, 1).setFontSize(22).setFontWeight('bold').setFontColor('#2e6b3f');
+  sh.getRange(2, 1).setFontColor('#5d6a60').setFontStyle('italic');
+  sh.getRange(4, 1, 1, 2).setFontWeight('bold').setFontColor('#ffffff').setBackground('#2e6b3f');
+  Object.keys(MODULES).forEach((k, i) => sh.getRange(5 + i, 1, 1, 2).setBackground(COULEURS[k][1]));
+  sh.getRange(4, 1, l.length - 3, 2).setBorder(true, true, true, true, null, true, '#c9d3cb', SpreadsheetApp.BorderStyle.SOLID);
+  sh.setRowHeight(1, 40); sh.setRowHeights(4, l.length - 3, 28);
+  sh.setColumnWidth(1, 240); sh.setColumnWidth(2, 260);
+  sh.setTabColor('#2e6b3f');
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  ss.setActiveSheet(sh); ss.moveActiveSheet(1);
+  try { if (sh.getIndex() !== 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(1); } } catch (err) {}
+  // L'onglet vide créé avec la feuille (« Feuille 1 ») ne sert à rien : on le retire.
+  ['Feuille 1', 'Sheet1', 'Feuille1'].forEach(n => { const f = ss.getSheetByName(n); if (f && f.getLastRow() === 0 && ss.getSheets().length > 2) try { ss.deleteSheet(f); } catch (err) {} });
 }

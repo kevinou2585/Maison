@@ -6,6 +6,7 @@ Appli de la maison, servie par GitHub Pages et installable sur téléphone et or
   `python3 outils/construire-jardin.py <fichier du jardin>.html` à partir du fichier d'origine, qui n'est pas modifié.
 - `courses/` : une liste par magasin, à préparer à la maison et cocher au magasin.
 - `todo/` : les petites choses à ne pas oublier, avec l'historique de ce qui est fait.
+- `mdp/` : mots de passe (site, identifiant, mot de passe), derrière un code dont seule l'empreinte est dans le code.
 - `le-fist/` : les fléchettes, copiées de l'appli EPS ultime.
 
 Synchro : `sync.js` échange les données avec une feuille Google de ton Drive via le script `google/Code.gs`

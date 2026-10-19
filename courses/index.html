@@ -66,6 +66,12 @@ dialog input,dialog select{width:100%}
 dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 dialog .suppr{margin-right:auto;color:#b3261e}
 .astuce{color:var(--muted);font-size:13px;margin:4px 0 0}
+.cherche{display:flex;gap:6px;margin:0 0 14px}
+.cherche input{flex:1}
+.res{margin:-6px 0 16px}
+.res li{cursor:pointer}
+.res li.on .bx{background:var(--accent);border-color:var(--accent)}
+.res li em{font-style:normal;color:var(--muted);font-size:13px;display:block}
 </style>
 </head>
 <body>
@@ -141,18 +147,40 @@ const garderVue = () => { try { sessionStorage.setItem('courses:vue', JSON.strin
 function rendre() {
   if (V.mag && !S.get(V.mag)) V.mag = null;
   garderVue();
-  if (!V.mag) return rendreMags();
+  if (!V.mag) { if (document.activeElement && document.activeElement.id === 'q') { rendreCompteurs(); resultats(); return; } return rendreMags(); }
   rendreMag(S.get(V.mag));
 }
 
 function rendreMags() {
   document.title = 'Courses';
+  setTimeout(() => { const i = $('q'); if (!i) return; i.oninput = () => { Q = i.value; resultats(); }; Maison.dictee(i); resultats(); }, 0);
   const mags = S.tous('mag').sort(parOrdre);
-  $('app').innerHTML = `<h1>🧺 Courses</h1><div class="mags">` + mags.map(m => {
+  $('app').innerHTML = `<h1>🧺 Courses</h1><div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher un article dans tous les magasins" autocomplete="off" value="${esc(Q)}"></div><div id="res" class="res"></div><div class="mags">` + mags.map(m => {
     const n = S.tous('art').filter(a => a.mag === m.id && a.achat && !a.pris).length;
     return `<button class="mag${n ? ' plein' : ''}" data-mag="${m.id}"><b>${esc(m.nom)}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
   }).join('') + `<button class="mag ajout" data-a="nmag">＋ Nouveau magasin</button></div>
-  <p class="astuce">Prépare ta liste à la maison, puis passe en mode « Au magasin » pour cocher ce qui est dans le caddie. Les listes sont partagées avec les autres téléphones reliés au Drive.</p>`;
+  <p class="astuce">Recherche : tape (ou dicte avec 🎤) un mot, puis touche un résultat pour le mettre sur la liste ou l'enlever. Prépare ta liste à la maison, puis passe en mode « Au magasin » pour cocher ce qui est dans le caddie. Les listes sont partagées avec les autres téléphones reliés au Drive.</p>`;
+}
+
+let Q = '';
+function rendreCompteurs() {
+  document.querySelectorAll('.mag[data-mag]').forEach(b => {
+    const n = S.tous('art').filter(a => a.mag === b.dataset.mag && a.achat && !a.pris).length;
+    b.classList.toggle('plein', !!n);
+    const sp = b.querySelector('span'); sp.className = n ? 'n' : ''; sp.textContent = n ? n + ' à acheter' : 'Rien à acheter';
+  });
+}
+function resultats() {
+  const box = $('res'); if (!box) return;
+  const q = norm(Q);
+  if (!q) { box.innerHTML = ''; return; }
+  const mags = {}, cats = {};
+  S.tous('mag').forEach(m => { mags[m.id] = m; }); S.tous('cat').forEach(c => { cats[c.id] = c; });
+  const l = S.tous('art').filter(a => mags[a.mag] && norm(a.nom).includes(q))
+    .sort((a, b) => (norm(a.nom).startsWith(q) ? 0 : 1) - (norm(b.nom).startsWith(q) ? 0 : 1) || a.nom.localeCompare(b.nom, 'fr') || parOrdre(mags[a.mag], mags[b.mag]));
+  box.innerHTML = l.length
+    ? `<div class="cat"><ul class="liste">` + l.slice(0, 80).map(a => `<li class="${a.achat ? 'on' : ''}" data-tog="${a.id}"><div class="bx">${a.achat ? '✓' : ''}</div><span>${esc(a.nom)}${a.qte ? ` <small>× ${esc(a.qte)}</small>` : ''}<em>${esc(mags[a.mag].nom)}${cats[a.cat] ? ' · ' + esc(cats[a.cat].nom) : ''}${a.achat ? (a.pris ? ' · dans le caddie' : ' · sur la liste') : ''}</em></span><button class="lien" data-ouvrir="${a.mag}">Ouvrir ›</button></li>`).join('') + `</ul></div>`
+    : `<div class="vide" style="padding:12px">Aucun article « ${esc(Q)} ». Ouvre un magasin pour l'ajouter.</div>`;
 }
 
 function rendreMag(m) {
@@ -182,6 +210,7 @@ function rendreMag(m) {
   const f = $('f-ajout');
   if (f) {
     const i = $('i-art');
+    Maison.dictee(i);
     i.oninput = () => { const q = norm(i.value); document.querySelectorAll('.art').forEach(b => { b.hidden = q && !norm(b.textContent).includes(q); }); document.querySelectorAll('.cat').forEach(s => { s.hidden = q && !s.querySelector('.art:not([hidden])'); }); };
     f.onsubmit = e => {
       e.preventDefault();
@@ -208,6 +237,10 @@ function dialogue(titre, champs, ok, suppr) {
 }
 
 document.addEventListener('click', e => {
+  const o = e.target.closest('[data-ouvrir]');
+  if (o) { V.mag = o.dataset.ouvrir; V.mode = 'liste'; V.edit = false; rendre(); scrollTo(0, 0); return; }
+  const g = e.target.closest('[data-tog]');
+  if (g) { const a = S.get(g.dataset.tog); if (a) { a.achat = !a.achat; a.pris = false; S.put(a); } resultats(); document.querySelectorAll('.mag[data-mag]').length && rendreCompteurs(); return; }
   const t = e.target.closest('[data-mag],[data-mode],[data-art],[data-pris],[data-a]');
   if (!t || t.closest('dialog')) return;
   const m = V.mag && S.get(V.mag);

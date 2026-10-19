@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mots de passe</title>
+<meta name="theme-color" content="#5b4a9e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icones/mdp-192.png">
+<link rel="apple-touch-icon" href="../icones/maison-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma maison">
+<style>
+:root{--bg:#f4f2f8;--surface:#fff;--fg:#1c1a24;--muted:#655f75;--line:#ddd8e8;--accent:#5b4a9e}
+@media (prefers-color-scheme:dark){:root{--bg:#121019;--surface:#1d1a27;--fg:#ece9f3;--muted:#a59fb5;--line:#322d41;--accent:#a493e8;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body,button,a,input{touch-action:manipulation}
+body{margin:0 auto;max-width:760px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0}
+h1{font-size:26px;margin:4px 0 14px;display:flex;align-items:center;gap:10px}
+h1 button{margin-left:auto;font-size:14px}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer}
+button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+input,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface);color:var(--fg);min-width:0}
+.barre{display:flex;gap:6px;margin-bottom:12px}
+.barre input{flex:1}
+.carte{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0}
+.carte .haut{display:flex;align-items:center;gap:8px}
+.carte b{font-size:17px;flex:1;overflow-wrap:anywhere;cursor:pointer}
+.ligne{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:15px}
+.ligne span{color:var(--muted);width:92px;flex:none;font-size:13px}
+.ligne code{flex:1;font:15px ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere;min-width:0}
+.ligne button{padding:5px 9px;font-size:14px}
+.note{color:var(--muted);font-size:14px;margin-top:6px;white-space:pre-wrap}
+.vide{color:var(--muted);text-align:center;padding:24px 10px}
+#porte{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:16px}
+#porte[hidden]{display:none}
+#porte form{display:grid;gap:12px;max-width:340px;width:100%;text-align:center;justify-items:center}
+#porte .ic{font-size:54px}
+#porte input{width:100%;text-align:center;font-size:20px;letter-spacing:2px}
+#porte button{width:100%;padding:13px}
+#porte .err{color:#c62828;min-height:1.3em;font-weight:600}
+dialog{border:0;border-radius:16px;padding:18px;width:min(440px,calc(100vw - 32px));background:var(--surface);color:var(--fg)}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 10px}
+dialog label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+dialog input,dialog textarea{width:100%}
+.mdpl{display:flex;gap:6px}.mdpl input{flex:1}
+dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+dialog .suppr{margin-right:auto;color:#c62828}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;z-index:60}
+</style>
+</head>
+<body>
+<div id="porte"><form id="porte-f"><div class="ic">🔐</div><b>Mots de passe</b><input id="porte-i" type="password" autocomplete="off" placeholder="Code" aria-label="Code"><button class="go">Ouvrir</button><div class="err" id="porte-m"></div><a class="retour" href="../">‹ Ma maison</a></form></div>
+<a class="retour" href="../">‹ Ma maison</a>
+<h1>🔐 Mots de passe <button id="verr" type="button">🔒 Verrouiller</button></h1>
+<div class="barre"><input id="q" type="search" placeholder="🔎 Rechercher un site, une appli, un identifiant" autocomplete="off"><button class="go" id="nouv" type="button">＋</button></div>
+<div id="liste"></div>
+<dialog id="dlg"><form id="dlg-f">
+  <h3 id="d-t">Ajouter</h3>
+  <label for="e-s">Site ou appli</label><input id="e-s" autocomplete="off" placeholder="ex. Gmail, Netflix, banque">
+  <label for="e-i">Identifiant</label><input id="e-i" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="adresse mail ou nom d'utilisateur">
+  <label for="e-p">Mot de passe</label><div class="mdpl"><input id="e-p" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" id="gen" title="Générer un mot de passe solide">🎲</button></div>
+  <label for="e-n">Note (facultatif)</label><textarea id="e-n" rows="2"></textarea>
+  <div class="btns"><button type="button" class="suppr" id="e-x">Supprimer</button><button type="button" id="e-a">Annuler</button><button class="go">OK</button></div>
+</form></dialog>
+<script src="../sync.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const fmtT = t => t ? new Date(t).toLocaleDateString('fr-BE') : '';
+
+// Le code n'est pas écrit ici en clair : seulement son empreinte.
+const EMPREINTE = '2eefad3cbba5f00348586a764e98a79e2df4fd7c1be69494190ec5f4d49ec534';
+const OUVERT = 'mdp:ouvert';
+const empreinte = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))).map(b => b.toString(16).padStart(2, '0')).join('');
+let ouvert = false; try { ouvert = sessionStorage.getItem(OUVERT) === EMPREINTE; } catch (e) {}
+function verrouiller() { ouvert = false; try { sessionStorage.removeItem(OUVERT); } catch (e) {} $('porte').hidden = false; $('porte-i').value = ''; $('liste').innerHTML = ''; }
+$('porte').hidden = ouvert;
+$('porte-f').onsubmit = async e => {
+  e.preventDefault();
+  if (await empreinte($('porte-i').value.trim()) !== EMPREINTE) { $('porte-m').textContent = 'Code incorrect'; $('porte-i').value = ''; return; }
+  ouvert = true; try { sessionStorage.setItem(OUVERT, EMPREINTE); } catch (err) {}
+  $('porte').hidden = true; $('porte-m').textContent = ''; rendre();
+};
+$('verr').onclick = verrouiller;
+// Se reverrouille après 5 minutes passées dans une autre appli
+let cache = 0;
+document.addEventListener('visibilitychange', () => { if (document.hidden) cache = Date.now(); else if (cache && Date.now() - cache > 5 * 60000) verrouiller(); });
+
+const S = Maison.store('mdp', {
+  recu: () => ouvert && rendre(),
+  tables: recs => ({'Mots de passe': [['Site / appli', 'Identifiant', 'Mot de passe', 'Note', 'Modifié le'],
+    ...recs.filter(r => r.type === 'mdp').sort((a, b) => a.site.localeCompare(b.site, 'fr')).map(r => [r.site, r.ident || '', r.mdp || '', r.note || '', fmtT(r.t)])]})
+});
+
+const vus = new Set();
+function rendre() {
+  if (!ouvert) return;
+  const q = norm($('q').value);
+  const l = S.tous('mdp').filter(r => !q || norm(r.site + ' ' + (r.ident || '') + ' ' + (r.note || '')).includes(q)).sort((a, b) => a.site.localeCompare(b.site, 'fr'));
+  $('liste').innerHTML = l.length ? l.map(r => `<div class="carte"><div class="haut"><b data-e="${r.id}">${esc(r.site)}</b><button data-e="${r.id}" aria-label="Modifier">✎</button></div>
+    ${r.ident ? `<div class="ligne"><span>Identifiant</span><code>${esc(r.ident)}</code><button data-cp="${r.id}" data-f="ident" aria-label="Copier l'identifiant">📋</button></div>` : ''}
+    <div class="ligne"><span>Mot de passe</span><code>${vus.has(r.id) ? esc(r.mdp) : '••••••••'}</code><button data-voir="${r.id}" aria-label="Afficher">${vus.has(r.id) ? '🙈' : '👁'}</button><button data-cp="${r.id}" data-f="mdp" aria-label="Copier le mot de passe">📋</button></div>
+    ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}</div>`).join('')
+    : `<div class="vide">${q ? 'Rien trouvé pour « ' + esc($('q').value) + ' ».' : 'Aucun mot de passe enregistré. Touche ＋ pour ajouter le premier.'}</div>`;
+}
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); }
+
+let ED = null;
+function editer(r) {
+  ED = r;
+  $('d-t').textContent = r ? 'Modifier' : 'Ajouter';
+  $('e-s').value = r ? r.site : ''; $('e-i').value = r ? r.ident || '' : ''; $('e-p').value = r ? r.mdp || '' : ''; $('e-n').value = r ? r.note || '' : '';
+  $('e-x').hidden = !r;
+  $('dlg').showModal();
+}
+$('nouv').onclick = () => { editer(null); if ($('q').value) $('e-s').value = $('q').value; };
+$('e-a').onclick = () => $('dlg').close();
+$('e-x').onclick = () => { if (ED && confirm('Supprimer « ' + ED.site + ' » ?')) { S.del(ED.id); $('dlg').close(); rendre(); } };
+$('gen').onclick = () => {
+  const A = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!?#%+-', v = new Uint32Array(16);
+  crypto.getRandomValues(v); $('e-p').value = Array.from(v, x => A[x % A.length]).join('');
+};
+$('dlg-f').onsubmit = e => {
+  e.preventDefault();
+  const site = $('e-s').value.trim(); if (!site) { $('e-s').focus(); return; }
+  const r = ED || {id: S.id(), type: 'mdp'};
+  Object.assign(r, {site, ident: $('e-i').value.trim(), mdp: $('e-p').value, note: $('e-n').value.trim()});
+  S.put(r); $('dlg').close(); rendre();
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-e],[data-voir],[data-cp]'); if (!b || b.closest('dialog') || !ouvert) return;
+  if (b.dataset.e) return editer(S.get(b.dataset.e));
+  if (b.dataset.voir) { const id = b.dataset.voir; vus.has(id) ? vus.delete(id) : vus.add(id); return rendre(); }
+  const r = S.get(b.dataset.cp); if (!r) return;
+  try { await navigator.clipboard.writeText(r[b.dataset.f] || ''); toast('Copié ✓'); } catch (err) { toast('Copie impossible ici'); }
+});
+$('q').oninput = rendre;
+Maison.dictee($('q'));
+Maison.pastille();
+rendre();
+</script>
+</body>
+</html>

@@ -20,9 +20,9 @@
   let etat = 'off';
   function statut(s) { etat = s; ecoute.forEach(f => { try { f(s); } catch (e) {} }); }
 
-  async function appel(c, corps, params) {
+  async function appel(c, corps, params, garder) {
     const r = corps
-      ? await fetch(c.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({cle: c.cle, qui: c.qui || ''}, corps))})
+      ? await fetch(c.url, {method: 'POST', keepalive: !!garder, headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({cle: c.cle, qui: c.qui || ''}, corps))})
       : await fetch(c.url + (c.url.includes('?') ? '&' : '?') + new URLSearchParams(Object.assign({cle: c.cle}, params)));
     const o = await r.json();
     if (!o.ok) throw new Error(o.err || 'erreur');
@@ -43,6 +43,17 @@
       neuf() { meta.r = 0; meta.h = ''; meta.init = false; meta.sale = {}; a.ids().forEach(id => { meta.sale[id] = 1; }); svMeta(); },
       sale(id) { meta.sale[id] = 1; svMeta(); e.bientot(); },
       poids() { return meta.init || touche ? Date.now() : 0; },
+      // On quitte la page avant l'envoi prévu : on envoie tout de suite ce qui reste (sans attendre la réponse).
+      partir() {
+        clearTimeout(minuteur);
+        const ids = Object.keys(meta.sale);
+        if (!ids.length || !relie() || !navigator.onLine) return;
+        const recs = ids.map(id => a.get(id)).filter(Boolean);
+        let tables = null; try { tables = a.tables ? a.tables() : null; } catch (err) {}
+        const corps = {m, recs, tables};
+        if (JSON.stringify(corps).length > 60000) { delete corps.tables; if (JSON.stringify(corps).length > 60000) return; }
+        appel(cfg(), corps, null, true).catch(() => {});
+      },
       bientot(ms) { clearTimeout(minuteur); minuteur = setTimeout(e.cycle, ms == null ? 1200 : ms); },
       async cycle() {
         if (!relie()) { statut('off'); return; }
@@ -154,8 +165,9 @@
 
   function toutSynchro() { moteurs.forEach(e => e.cycle()); }
   setInterval(() => { if (document.visibilityState === 'visible') toutSynchro(); }, 15000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') toutSynchro(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') toutSynchro(); else moteurs.forEach(e => e.partir()); });
   addEventListener('online', toutSynchro);
+  addEventListener('pagehide', () => moteurs.forEach(e => e.partir()));
 
   // Petite pastille d'état, en haut à droite de chaque appli
   function pastille(lien) {
@@ -170,7 +182,26 @@
     (document.body ? Promise.resolve() : new Promise(ok => document.addEventListener('DOMContentLoaded', ok))).then(() => document.body.appendChild(b));
   }
 
+  // Bouton 🎤 à côté d'un champ, quand le navigateur sait faire la dictée (Chrome, Safari récents)
+  function dictee(input, apres) {
+    const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!R || !input || input.dataset.dictee) return;
+    input.dataset.dictee = '1';
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'dictee'; b.textContent = '🎤'; b.setAttribute('aria-label', 'Dicter');
+    b.style.cssText = 'flex:none;border:1px solid currentColor;border-color:rgba(127,127,127,.35);background:none;border-radius:10px;padding:0 11px;font-size:18px;cursor:pointer';
+    b.onclick = () => {
+      const r = new R(); r.lang = 'fr-FR'; r.interimResults = false; r.maxAlternatives = 1;
+      b.textContent = '⏺'; b.style.color = '#c62828';
+      r.onresult = e => { input.value = e.results[0][0].transcript.replace(/[.!?]$/, ''); input.dispatchEvent(new Event('input', {bubbles: true})); apres && apres(); };
+      r.onend = () => { b.textContent = '🎤'; b.style.color = ''; };
+      try { r.start(); } catch (err) { r.onend(); }
+    };
+    input.insertAdjacentElement('afterend', b);
+  }
+
   window.Maison = {
+    dictee,
     cfg, relie, store, jardin, pastille, toutSynchro,
     regler(c) { lsSet(CFG, JSON.stringify(c)); toutSynchro(); },
     surStatut(f) { ecoute.add(f); f(relie() ? etat : 'off'); },

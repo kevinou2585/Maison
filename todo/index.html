@@ -51,6 +51,9 @@ dialog input,dialog textarea{width:100%;font:inherit;border:1px solid var(--line
 dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 dialog .suppr{margin-right:auto;color:#b3261e}
 .plus{display:block;margin:10px auto 0}
+.cherche{display:flex;gap:6px;margin:16px 0 0}
+.cherche input{flex:1}
+li .txt small.ou{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -58,7 +61,8 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 <h1>✅ À ne pas oublier</h1>
 <form class="ajout" id="f"><input type="text" id="i" placeholder="Nouvelle chose à faire…" autocomplete="off" enterkeyhint="done"><input type="date" id="dt" aria-label="Pour le (facultatif)" title="Pour le (facultatif)"><button class="go" aria-label="Ajouter">＋</button></form>
 <div class="idees" id="idees"></div>
-<div class="onglets"><button data-o="afaire" aria-pressed="true">À faire</button><button data-o="fait" aria-pressed="false">Fait</button></div>
+<div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher dans à faire et fait" autocomplete="off"></div>
+<div class="onglets" id="onglets"><button data-o="afaire" aria-pressed="true">À faire</button><button data-o="fait" aria-pressed="false">Fait</button></div>
 <div id="liste"></div>
 <dialog id="dlg"><form method="dialog" id="dlg-f">
   <h3>Modifier</h3>
@@ -71,6 +75,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 const IDEES = ['Tondre la pelouse', 'Ramasser les feuilles', 'Sortir les poubelles', 'Arroser le potager', 'Nettoyer les gouttières', 'Tailler la haie'];
 const jour = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 const auj = () => jour(Date.now());
@@ -82,7 +87,7 @@ const S = Maison.store('todo', {
   tables(recs) {
     const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || (b.faitLe || 0) - (a.faitLe || 0) || (a.quand || '9').localeCompare(b.quand || '9') || a.cree - b.cree);
     return {'To-Do': [['Tâche', 'Pour le', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
-      ...l.map(r => [r.titre, r.quand ? fmtD(r.quand) : '', r.fait ? 'Fait' : 'À faire', fmtT(r.cree), r.fait ? fmtT(r.faitLe) : '', [r.par, r.faitPar].filter(Boolean).join(' → '), r.note || ''])]};
+      ...l.map(r => [r.titre, r.quand ? fmtD(r.quand) : '', r.fait ? 'Fait' : 'À faire', fmtT(r.cree), r.fait ? fmtT(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
   }
 });
 const fmtD = s => s.split('-').reverse().join('/');
@@ -101,6 +106,13 @@ function rendre() {
     const sous = t.fait ? 'fait ' + fmtH(t.faitLe) + (t.faitPar ? ' par ' + t.faitPar : '') : [t.quand ? (retard ? '⏰ ' : '📅 ') + fmt(t.quand) : '', t.note].filter(Boolean).join(' · ');
     return `<li class="${t.fait ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${t.fait ? 'Remettre à faire' : 'Marquer comme fait'}">${t.fait ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous ? `<small class="${retard ? 'retard' : ''}">${esc(sous)}</small>` : ''}</div></li>`;
   };
+  const q = norm($('q').value);
+  $('onglets').hidden = !!q;
+  if (q) {
+    const l = T.filter(t => norm(t.titre + ' ' + (t.note || '')).includes(q)).sort((a, b) => (a.fait - b.fait) || (b.faitLe || 0) - (a.faitLe || 0));
+    $('liste').innerHTML = l.length ? `<ul>${l.map(ligne).join('')}</ul>` : `<div class="vide">Rien trouvé pour « ${esc($('q').value)} ».</div>`;
+    return;
+  }
   if (O === 'afaire') $('liste').innerHTML = afaire.length ? `<ul>${afaire.map(ligne).join('')}</ul>` : `<div class="vide">Rien à faire pour l'instant 🎉</div>`;
   else {
     const l = montrerTout ? fait : fait.slice(0, 60);
@@ -141,6 +153,9 @@ $('dlg-f').onsubmit = e => { e.preventDefault(); if (!ED || !$('e-t').value.trim
 $('e-a').onclick = () => $('dlg').close();
 $('e-s').onclick = () => { if (ED && confirm('Supprimer « ' + ED.titre + ' » ?')) { S.del(ED.id); $('dlg').close(); rendre(); } };
 
+$('q').oninput = rendre;
+Maison.dictee($('q'));
+Maison.dictee($('i'));
 Maison.pastille();
 rendre();
 </script>
