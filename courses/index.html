@@ -74,6 +74,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 .res li em{font-style:normal;color:var(--muted);font-size:13px;display:block}
 .mag.lieu{grid-column:1/-1}.mag.lieu b{font-size:22px}
 .verrou{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted,#777);font-size:14px;text-decoration:underline;cursor:pointer}
+.bouge{display:inline-flex;gap:4px;margin-left:auto}.cat>h3 .bouge+small{margin-left:0;min-width:44px;text-align:right}.bouge button{padding:2px 8px;font-size:12px;line-height:1.4;border-radius:8px;color:var(--muted,#777)}.bouge button:disabled{opacity:.3}
 </style>
 </head>
 <body>
@@ -210,7 +211,7 @@ function resultats() {
 function rendreMag(m) {
   document.title = m.nom + ' · Courses';
   const cats = S.tous('cat').filter(c => c.mag === m.id).sort(parOrdre);
-  const arts = S.tous('art').filter(a => a.mag === m.id).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  const arts = S.tous('art').filter(a => a.mag === m.id).sort((a, b) => a.nom.localeCompare(b.nom, 'fr', {sensitivity: 'base', numeric: true}));
   const groupes = cats.map(c => [c, arts.filter(a => a.cat === c.id)]);
   const sans = arts.filter(a => !cats.some(c => c.id === a.cat));
   if (sans.length || !cats.length) groupes.push([{id: '', nom: cats.length ? 'Sans catégorie' : 'Articles'}, sans]);
@@ -220,7 +221,7 @@ function rendreMag(m) {
   if (V.mode === 'liste') {
     h += `<form class="ajout-art" id="f-ajout"><input id="i-art" placeholder="Ajouter ou chercher un article…" autocomplete="off"><select id="s-cat" aria-label="Catégorie">${cats.map(c => `<option value="${c.id}">${esc(c.nom)}</option>`).join('')}<option value="">Sans catégorie</option></select><button class="go" aria-label="Ajouter">＋</button></form>
     <p class="astuce">Touche un article pour le mettre sur la liste (orange) ou l'enlever.${V.edit ? ' Mode modification : touche un article pour le renommer, changer la quantité ou le supprimer.' : ''}</p>
-    <div class="${V.edit ? 'edit' : ''}" id="cats">` + groupes.map(([c, l]) => `<section class="cat" data-cat="${c.id}"><h3>${esc(c.nom)}${c.id ? ` <button class="lien" data-a="ecat" data-id="${c.id}" aria-label="Modifier la catégorie">✎</button>` : ''}<small>${l.filter(a => a.achat).length}/${l.length}</small></h3><div class="arts">` +
+    <div class="${V.edit ? 'edit' : ''}" id="cats">` + groupes.map(([c, l]) => `<section class="cat" data-cat="${c.id}"><h3>${esc(c.nom)}${c.id ? ` <button class="lien" data-a="ecat" data-id="${c.id}" aria-label="Modifier la catégorie">✎</button><span class="bouge"><button data-a="haut" data-id="${c.id}" aria-label="Monter la catégorie" ${cats[0] === c ? 'disabled' : ''}>▲</button><button data-a="bas" data-id="${c.id}" aria-label="Descendre la catégorie" ${cats[cats.length - 1] === c ? 'disabled' : ''}>▼</button></span>` : ''}<small>${l.filter(a => a.achat).length}/${l.length}</small></h3><div class="arts">` +
       l.map(a => `<button class="art${a.achat ? ' on' : ''}" data-art="${a.id}">${esc(a.nom)}${a.qte ? ` <span class="q">× ${esc(a.qte)}</span>` : ''}</button>`).join('') + `</div></section>`).join('') +
       `</div><div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button data-a="ncat">＋ Catégorie</button><button data-a="edit" aria-pressed="${V.edit}">${V.edit ? '✓ Fini de modifier' : '✎ Modifier les articles'}</button>${achat.length ? '<button data-a="vider">Vider la liste</button>' : ''}</div>`;
   } else {
@@ -296,6 +297,13 @@ document.addEventListener('click', e => {
     case 'ncat': dialogue('Nouvelle catégorie', [{l: 'Nom', p: 'ex. Conserves'}], ([nom]) => { if (!nom) return false; S.put({id: S.id(), type: 'cat', mag: m.id, nom, ordre: S.tous('cat').filter(c => c.mag === m.id).length}); }); break;
     case 'ecat': { const c = S.get(t.dataset.id); dialogue('Catégorie', [{l: 'Nom', v: c.nom}], ([nom]) => { if (!nom) return false; c.nom = nom; S.put(c); },
       () => { S.tous('art').filter(a => a.cat === c.id).forEach(a => { a.cat = ''; S.put(a); }); S.del(c.id); }); break; }
+    case 'haut': case 'bas': {   // déplacer une catégorie d'une place
+      const cs = S.tous('cat').filter(c => c.mag === m.id).sort(parOrdre), i = cs.findIndex(c => c.id === t.dataset.id), j = i + (t.dataset.a === 'haut' ? -1 : 1);
+      if (i < 0 || j < 0 || j >= cs.length) break;
+      [cs[i], cs[j]] = [cs[j], cs[i]];
+      cs.forEach((c, k) => { if (c.ordre !== k) { c.ordre = k; S.put(c); } });
+      rendre(); const el = document.querySelector(`.cat[data-cat="${t.dataset.id}"]`); if (el) el.scrollIntoView({block: 'center'}); break;
+    }
     case 'edit': V.edit = !V.edit; rendre(); break;
     case 'vider': if (confirm('Enlever tous les articles de la liste de ' + m.nom + ' ?')) { S.tous('art').filter(a => a.mag === m.id && a.achat).forEach(a => { a.achat = false; a.pris = false; S.put(a); }); rendre(); } break;
     case 'fini': {
