@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>À ne pas oublier</title>
+<title>To do</title>
 <meta name="theme-color" content="#3c6ebe">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" href="../icones/todo-192.png">
@@ -12,62 +12,82 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ma maison">
 <style>
-:root{--bg:#f2f4f8;--surface:#fff;--fg:#161a22;--muted:#5f6878;--line:#d8dde7;--accent:#3567b8;--ok:#2e7d32;--late:#b3261e}
-@media (prefers-color-scheme:dark){:root{--bg:#10131a;--surface:#1a1f29;--fg:#e8ecf3;--muted:#9aa3b5;--line:#2c3443;--accent:#7aa5ee;--ok:#7cc884;--late:#ff8a80;color-scheme:dark}}
+:root{--bg:#f2f4f8;--surface:#fff;--fg:#161a22;--muted:#5f6878;--line:#d8dde7;--accent:#3567b8;--ok:#2e7d32;--late:#b3261e;--urg:#fdecea;--urg-l:#f3b9b3}
+@media (prefers-color-scheme:dark){:root{--bg:#10131a;--surface:#1a1f29;--fg:#e8ecf3;--muted:#9aa3b5;--line:#2c3443;--accent:#7aa5ee;--ok:#7cc884;--late:#ff8a80;--urg:#3a1d1b;--urg-l:#6b2e29;color-scheme:dark}}
 *{box-sizing:border-box}
-html,body,button,a,input{touch-action:manipulation}
+html,body,button,a,input,select{touch-action:manipulation}
 body{margin:0 auto;max-width:720px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
-.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0}
+.retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0;background:none;border:0;cursor:pointer}
 h1{font-size:26px;margin:4px 0 14px}
-h2{font-size:15px;margin:22px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+h2{font-size:15px;margin:22px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between}
+h2 span{text-transform:none;letter-spacing:0;font-weight:500}
+h2.urgent{color:var(--late)}
+h2 a{color:var(--accent);text-decoration:none;font-weight:600}
 button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer}
 button.go{background:var(--accent);border-color:var(--accent);color:#fff}
-input{font:inherit;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface);color:var(--fg);min-width:0}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface);color:var(--fg);min-width:0}
+.choix{display:grid;gap:12px;margin:8px 0 0}
+.choix button{display:flex;align-items:center;gap:14px;text-align:left;padding:18px 16px;border-radius:16px;font-size:20px}
+.choix button i{font-style:normal;font-size:30px}
+.choix button span{flex:1}
+.choix button small{display:block;font-size:14px;font-weight:500;color:var(--muted)}
+.choix button small b{color:var(--late)}
+.choix button.archives{font-size:16px;padding:12px 16px;color:var(--muted)}
 form.ajout{display:flex;gap:6px}
-form.ajout input[type=text]{flex:1}
-form.ajout input[type=date]{width:150px}
-@media (max-width:480px){form.ajout{flex-wrap:wrap}form.ajout input[type=text]{flex:1 1 100%}form.ajout input[type=date]{flex:1}}
+form.ajout input{flex:1}
+@media (max-width:480px){form.ajout{flex-wrap:wrap}form.ajout input{flex:1 1 100%}form.ajout select{flex:1}}
 .idees{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
 .idees button{border-radius:99px;padding:6px 11px;font-weight:500;font-size:14px;color:var(--muted)}
-.onglets{display:grid;grid-template-columns:1fr 1fr;background:var(--line);border-radius:12px;padding:3px;gap:3px;margin:16px 0 4px}
-.onglets button{border:0;border-radius:9px;background:none;padding:10px}
-.onglets button[aria-pressed=true]{background:var(--surface);box-shadow:0 1px 3px #0002}
+.cherche{display:flex;gap:6px;margin:14px 0 0}
+.cherche input{flex:1}
 ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+ul.urgent{background:var(--urg);border-color:var(--urg-l)}
 li{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--line)}
+ul.urgent li{border-color:var(--urg-l)}
 li:last-child{border-bottom:0}
 .rond{width:28px;height:28px;border-radius:50%;border:2px solid var(--muted);flex:none;background:none;padding:0;display:grid;place-items:center;color:#fff;font-weight:900}
+ul.urgent .rond{border-color:var(--late)}
 li.fait .rond{background:var(--ok);border-color:var(--ok)}
 li .txt{flex:1;cursor:pointer;min-width:0}
 li .txt b{font-weight:500;display:block;overflow-wrap:anywhere}
+ul.urgent li .txt b{font-weight:700}
 li.fait .txt b{color:var(--muted)}
-li .txt small{color:var(--muted)}
-li .txt small.retard{color:var(--late);font-weight:700}
-.vide{color:var(--muted);text-align:center;padding:24px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+li .txt small{color:var(--muted);display:block}
+li .txt small.glisse{color:var(--late)}
+.tag{font-size:12px;font-weight:700;border-radius:99px;padding:2px 8px;white-space:nowrap;flex:none;background:var(--line);color:var(--muted)}
+.vide{color:var(--muted);text-align:center;padding:14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;font-size:14px}
 dialog{border:0;border-radius:16px;padding:18px;width:min(420px,calc(100vw - 32px));background:var(--surface);color:var(--fg)}
 dialog::backdrop{background:#0006}
 dialog h3{margin:0 0 12px}
 dialog label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
-dialog input,dialog textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--fg)}
+dialog input,dialog textarea,dialog select{width:100%;background:var(--bg);padding:10px}
+dialog .deux{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 dialog .suppr{margin-right:auto;color:#b3261e}
 .plus{display:block;margin:10px auto 0}
-.cherche{display:flex;gap:6px;margin:16px 0 0}
-.cherche input{flex:1}
-li .txt small.ou{color:var(--accent)}
 </style>
 </head>
 <body>
-<a class="retour" href="../">‹ Ma maison</a>
-<h1>✅ À ne pas oublier</h1>
-<form class="ajout" id="f"><input type="text" id="i" placeholder="Nouvelle chose à faire…" autocomplete="off" enterkeyhint="done"><input type="date" id="dt" aria-label="Pour le (facultatif)" title="Pour le (facultatif)"><button class="go" aria-label="Ajouter">＋</button></form>
-<div class="idees" id="idees"></div>
-<div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher dans à faire et fait" autocomplete="off"></div>
-<div class="onglets" id="onglets"><button data-o="afaire" aria-pressed="true">À faire</button><button data-o="fait" aria-pressed="false">Fait</button></div>
-<div id="liste"></div>
+<a class="retour" id="retour" href="../">‹ Ma maison</a>
+<h1 id="titre">📝 To do</h1>
+<div id="accueil">
+  <div class="choix" id="choix"></div>
+  <div class="cherche"><input id="q0" type="search" placeholder="🔎 Rechercher dans toutes les listes" autocomplete="off"></div>
+  <div id="res0"></div>
+</div>
+<div id="vue" hidden>
+  <form class="ajout" id="f"><input type="text" id="i" placeholder="Nouvelle chose à faire…" autocomplete="off" enterkeyhint="done"><select id="niv" aria-label="Pour quand"></select><button class="go" aria-label="Ajouter">＋</button></form>
+  <div class="idees" id="idees"></div>
+  <div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher dans cette liste" autocomplete="off"></div>
+  <div id="liste"></div>
+</div>
 <dialog id="dlg"><form method="dialog" id="dlg-f">
   <h3>Modifier</h3>
   <label for="e-t">Quoi</label><input id="e-t" autocomplete="off">
-  <label for="e-d">Pour le (facultatif)</label><input id="e-d" type="date">
+  <div class="deux">
+    <div><label for="e-l">Liste</label><select id="e-l"></select></div>
+    <div><label for="e-v">Pour quand</label><select id="e-v"></select></div>
+  </div>
   <label for="e-n">Note (facultatif)</label><textarea id="e-n" rows="3"></textarea>
   <div class="btns"><button type="button" class="suppr" id="e-s">Supprimer</button><button type="button" id="e-a">Annuler</button><button class="go">OK</button></div>
 </form></dialog>
@@ -75,89 +95,157 @@ li .txt small.ou{color:var(--accent)}
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-const IDEES = ['Tondre la pelouse', 'Ramasser les feuilles', 'Sortir les poubelles', 'Arroser le potager', 'Nettoyer les gouttières', 'Tailler la haie'];
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const LISTES = {kevin: ['🙋‍♂️', 'Kevin'], camille: ['🙋‍♀️', 'Camille'], commun: ['🏡', 'Commun']};
+const NIV = ['urgent', 'semaine', 'mois', 'annee'];
+const NOM = {urgent: 'Urgent', semaine: 'Cette semaine', mois: 'Ce mois-ci', annee: 'Cette année'};
+const IDEES = ['Sortir les poubelles', 'Payer les factures', 'Prendre rendez-vous', 'Nettoyer les gouttières', 'Ranger le garage'];
 const jour = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
-const auj = () => jour(Date.now());
-const fmt = s => s ? new Date(s + 'T12:00').toLocaleDateString('fr-BE', {weekday: 'short', day: 'numeric', month: 'short'}) : '';
+const fmtJ = k => new Date(k + 'T12:00').toLocaleDateString('fr-BE', {weekday: 'long', day: 'numeric', month: 'long'});
 const fmtH = t => new Date(t).toLocaleString('fr-BE', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+const fmtD = t => t ? jour(t).split('-').reverse().join('/') : '';
+
+// Début de la semaine (lundi), du mois, de l'année
+const lundi = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return +d; };
+const debMois = t => { const d = new Date(t); return +new Date(d.getFullYear(), d.getMonth(), 1); };
+const debAn = t => +new Date(new Date(t).getFullYear(), 0, 1);
+// Ce qui n'est pas fait glisse : l'année passée → ce mois-ci, le mois passé → cette semaine, la semaine passée → urgent
+function niveau(t, now) {
+  let n = t.niveau || 'semaine', d = t.place || t.cree || now;
+  if (n === 'annee') { if (debAn(now) <= debAn(d)) return n; n = 'mois'; d = debAn(now) > debAn(d) ? +new Date(new Date(d).getFullYear() + 1, 0, 1) : d; }
+  if (n === 'mois') { if (debMois(now) <= debMois(d)) return n; n = 'semaine'; const x = new Date(d); d = +new Date(x.getFullYear(), x.getMonth() + 1, 1); }
+  if (n === 'semaine') { if (lundi(now) <= lundi(d)) return n; n = 'urgent'; }
+  return n;
+}
 
 const S = Maison.store('todo', {
-  recu: () => rendre(),
+  recu: () => { migrer(); rendre(); },
   tables(recs) {
-    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || (b.faitLe || 0) - (a.faitLe || 0) || (a.quand || '9').localeCompare(b.quand || '9') || a.cree - b.cree);
-    return {'To-Do': [['Tâche', 'Pour le', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
-      ...l.map(r => [r.titre, r.quand ? fmtD(r.quand) : '', r.fait ? 'Fait' : 'À faire', fmtT(r.cree), r.fait ? fmtT(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
+    const now = Date.now();
+    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || Object.keys(LISTES).indexOf(a.liste || 'commun') - Object.keys(LISTES).indexOf(b.liste || 'commun') || NIV.indexOf(niveau(a, now)) - NIV.indexOf(niveau(b, now)) || (b.faitLe || 0) - (a.faitLe || 0) || a.cree - b.cree);
+    return {'To-Do': [['Liste', 'Pour quand', 'Tâche', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
+      ...l.map(r => [LISTES[r.liste || 'commun'][1], r.fait ? '' : NOM[niveau(r, now)], r.titre, r.fait ? 'Archivé (fait)' : 'À faire', fmtD(r.cree), r.fait ? fmtD(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
   }
 });
-const fmtD = s => s.split('-').reverse().join('/');
-const fmtT = t => t ? fmtD(jour(t)) : '';
-let O = 'afaire', montrerTout = false;
+// Anciennes tâches (avant les trois listes) : dans « Commun », cette semaine
+function migrer() {
+  const vieux = S.tous('tache').filter(t => !t.liste);
+  if (vieux.length) S.putTous(vieux.map(t => Object.assign(t, {liste: 'commun', niveau: t.niveau || 'semaine', place: t.place || Date.now()})));
+}
+migrer();
+
+let L = '', montrerTout = false;
+const optNiv = sel => NIV.map(n => `<option value="${n}"${n === sel ? ' selected' : ''}>${NOM[n]}</option>`).join('');
+$('niv').innerHTML = optNiv('semaine');
+$('e-l').innerHTML = Object.keys(LISTES).map(k => `<option value="${k}">${LISTES[k][1]}</option>`).join('');
+$('e-v').innerHTML = optNiv('semaine');
+
+function ligne(t, now, avecListe) {
+  const n = niveau(t, now), glisse = !t.fait && n !== (t.niveau || 'semaine');
+  const sous = t.fait ? 'fait ' + fmtH(t.faitLe) + (t.faitPar ? ' par ' + t.faitPar : '')
+    : [glisse ? 'était « ' + NOM[t.niveau].toLowerCase() + ' »' : '', t.note].filter(Boolean).join(' · ');
+  const tag = avecListe ? `<span class="tag">${esc(LISTES[t.liste || 'commun'][1])}${t.fait ? '' : ' · ' + NOM[n]}</span>` : '';
+  return `<li class="${t.fait ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${t.fait ? 'Remettre à faire' : 'Marquer comme fait'}">${t.fait ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous ? `<small class="${glisse ? 'glisse' : ''}">${esc(sous)}</small>` : ''}</div>${tag}</li>`;
+}
+function cherche(T, q, now) {
+  const l = T.filter(t => norm(t.titre + ' ' + (t.note || '')).includes(norm(q))).sort((a, b) => (a.fait - b.fait) || NIV.indexOf(niveau(a, now)) - NIV.indexOf(niveau(b, now)) || (b.faitLe || 0) - (a.faitLe || 0));
+  return l.length ? `<ul>${l.map(t => ligne(t, now, true)).join('')}</ul>` : `<div class="vide">Rien trouvé pour « ${esc(q)} ».</div>`;
+}
+function archives(fait, now, avecListe) {
+  const l = montrerTout ? fait : fait.slice(0, 60);
+  let h = '', j = '';
+  l.forEach(t => { const k = jour(t.faitLe); if (k !== j) { if (j) h += '</ul>'; j = k; h += `<h2>${k === jour(now) ? "Aujourd'hui" : fmtJ(k)}</h2><ul>`; } h += ligne(t, now, avecListe); });
+  if (j) h += '</ul>';
+  h = h || `<div class="vide">Rien d'archivé pour l'instant.</div>`;
+  if (fait.length > l.length) h += `<button class="plus" id="plus">Voir toutes les archives (${fait.length})</button>`;
+  return h;
+}
 
 function rendre() {
-  const qui = Maison.cfg().qui || '';
-  const T = S.tous('tache');
-  document.querySelectorAll('[data-o]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.o === O)));
-  const afaire = T.filter(t => !t.fait).sort((a, b) => (a.quand || '9').localeCompare(b.quand || '9') || a.cree - b.cree);
-  const fait = T.filter(t => t.fait).sort((a, b) => b.faitLe - a.faitLe);
-  document.querySelector('[data-o=afaire]').textContent = 'À faire' + (afaire.length ? ' (' + afaire.length + ')' : '');
-  const ligne = t => {
-    const retard = !t.fait && t.quand && t.quand < auj();
-    const sous = t.fait ? 'fait ' + fmtH(t.faitLe) + (t.faitPar ? ' par ' + t.faitPar : '') : [t.quand ? (retard ? '⏰ ' : '📅 ') + fmt(t.quand) : '', t.note].filter(Boolean).join(' · ');
-    return `<li class="${t.fait ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${t.fait ? 'Remettre à faire' : 'Marquer comme fait'}">${t.fait ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous ? `<small class="${retard ? 'retard' : ''}">${esc(sous)}</small>` : ''}</div></li>`;
-  };
-  const q = norm($('q').value);
-  $('onglets').hidden = !!q;
-  if (q) {
-    const l = T.filter(t => norm(t.titre + ' ' + (t.note || '')).includes(q)).sort((a, b) => (a.fait - b.fait) || (b.faitLe || 0) - (a.faitLe || 0));
-    $('liste').innerHTML = l.length ? `<ul>${l.map(ligne).join('')}</ul>` : `<div class="vide">Rien trouvé pour « ${esc($('q').value)} ».</div>`;
+  const now = Date.now(), T = S.tous('tache');
+  L = (location.hash || '').slice(1);
+  if (L && L !== 'archives' && !LISTES[L]) L = '';
+  $('accueil').hidden = !!L; $('vue').hidden = !L;
+  $('retour').textContent = L ? '‹ To do' : '‹ Ma maison';
+  $('retour').href = L ? '#' : '../';
+  if (!L) {
+    $('titre').textContent = "📝 To do";
+    $('choix').innerHTML = Object.keys(LISTES).map(k => {
+      const a = T.filter(t => !t.fait && t.liste === k), u = a.filter(t => niveau(t, now) === 'urgent').length;
+      return `<button data-l="${k}"><i>${LISTES[k][0]}</i><span>${LISTES[k][1]}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}</small></span>›</button>`;
+    }).join('') + `<button class="archives" data-l="archives"><i>🗄️</i><span>Archives<small>${T.filter(t => t.fait).length} chose(s) faite(s)</small></span>›</button>`;
+    const q = $('q0').value.trim();
+    $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T, q, now) + '</div>' : '';
     return;
   }
-  if (O === 'afaire') $('liste').innerHTML = afaire.length ? `<ul>${afaire.map(ligne).join('')}</ul>` : `<div class="vide">Rien à faire pour l'instant 🎉</div>`;
-  else {
-    const l = montrerTout ? fait : fait.slice(0, 60);
-    let h = '', j = '';
-    l.forEach(t => { const k = jour(t.faitLe); if (k !== j) { if (j) h += '</ul>'; j = k; h += `<h2>${k === auj() ? "Aujourd'hui" : fmt(k)}</h2><ul>`; } h += ligne(t); });
-    if (j) h += '</ul>';
-    $('liste').innerHTML = h || `<div class="vide">Rien de fait pour l'instant.</div>`;
-    if (fait.length > l.length) $('liste').insertAdjacentHTML('beforeend', `<button class="plus" id="plus">Voir tout l'historique (${fait.length})</button>`);
-  }
+  const arch = L === 'archives';
+  $('titre').textContent = arch ? '🗄️ Archives' : LISTES[L][0] + ' ' + LISTES[L][1];
+  $('f').hidden = $('idees').hidden = arch;
+  $('q').placeholder = arch ? '🔎 Rechercher dans les archives' : '🔎 Rechercher dans cette liste';
+  const mes = arch ? T.filter(t => t.fait) : T.filter(t => t.liste === L);
+  const q = $('q').value.trim();
+  if (q) { $('liste').innerHTML = cherche(mes, q, now); return; }
+  if (arch) { $('liste').innerHTML = archives(mes.sort((a, b) => b.faitLe - a.faitLe), now, true); return; }
+  const afaire = mes.filter(t => !t.fait);
+  let h = '';
+  NIV.forEach(n => {
+    const l = afaire.filter(t => niveau(t, now) === n).sort((a, b) => (a.place || a.cree) - (b.place || b.cree));
+    if (n === 'urgent' && !l.length) return;
+    h += `<h2 class="${n === 'urgent' ? 'urgent' : ''}">${n === 'urgent' ? '🔥 ' : ''}${NOM[n]}<span>${l.length || ''}</span></h2>`;
+    h += l.length ? `<ul class="${n === 'urgent' ? 'urgent' : ''}">${l.map(t => ligne(t, now)).join('')}</ul>` : `<div class="vide">Rien pour l'instant.</div>`;
+  });
+  const fait = mes.filter(t => t.fait).sort((a, b) => b.faitLe - a.faitLe);
+  if (fait.length) h += `<h2>Fait récemment<span><a href="#archives">Toutes les archives ›</a></span></h2><ul>${fait.slice(0, 5).map(t => ligne(t, now)).join('')}</ul>`;
+  $('liste').innerHTML = h;
   $('idees').innerHTML = IDEES.filter(x => !afaire.some(t => t.titre === x)).slice(0, 4).map(x => `<button type="button" data-i="${esc(x)}">＋ ${esc(x)}</button>`).join('');
 }
 
-function ajouter(titre, quand) {
-  titre = titre.trim(); if (!titre) return;
-  S.put({id: S.id(), type: 'tache', titre: titre[0].toUpperCase() + titre.slice(1), quand: quand || '', note: '', fait: false, cree: Date.now(), par: Maison.cfg().qui || ''});
-  O = 'afaire'; rendre();
+function ajouter(titre, niv) {
+  titre = titre.trim(); if (!titre || !LISTES[L]) return;
+  const now = Date.now();
+  S.put({id: S.id(), type: 'tache', liste: L, niveau: niv || 'semaine', place: now, titre: titre[0].toUpperCase() + titre.slice(1), note: '', fait: false, cree: now, par: Maison.cfg().qui || ''});
+  rendre();
 }
-$('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('dt').value); $('i').value = ''; $('dt').value = ''; $('i').focus(); };
+$('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('niv').value); $('i').value = ''; $('i').focus(); };
 let ED = null;
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-o],[data-c],[data-e],[data-i],#plus');
+  const b = e.target.closest('[data-l],[data-c],[data-e],[data-i],#plus');
   if (!b || b.closest('dialog')) return;
   if (b.id === 'plus') { montrerTout = true; rendre(); return; }
-  if (b.dataset.o) { O = b.dataset.o; rendre(); return; }
-  if (b.dataset.i) { ajouter(b.dataset.i); return; }
+  if (b.dataset.l) { location.hash = b.dataset.l; return; }
+  if (b.dataset.i) { ajouter(b.dataset.i, $('niv').value); return; }
   if (b.dataset.c) {
     const t = S.get(b.dataset.c); if (!t) return;
     t.fait = !t.fait; t.faitLe = t.fait ? Date.now() : null; t.faitPar = t.fait ? (Maison.cfg().qui || '') : '';
+    // Remise à faire : elle reprend sa place telle qu'elle était au moment où elle a été faite
+    if (!t.fait) { t.niveau = niveau(t, Date.now()); t.place = Date.now(); }
     S.put(t); rendre(); return;
   }
   if (b.dataset.e) {
     ED = S.get(b.dataset.e); if (!ED) return;
-    $('e-t').value = ED.titre; $('e-d').value = ED.quand || ''; $('e-n').value = ED.note || '';
+    $('e-t').value = ED.titre; $('e-l').value = ED.liste || 'commun'; $('e-v').value = niveau(ED, Date.now()); $('e-n').value = ED.note || '';
     $('dlg').showModal();
   }
 });
-$('dlg-f').onsubmit = e => { e.preventDefault(); if (!ED || !$('e-t').value.trim()) return; Object.assign(ED, {titre: $('e-t').value.trim(), quand: $('e-d').value, note: $('e-n').value.trim()}); S.put(ED); $('dlg').close(); rendre(); };
+$('dlg-f').onsubmit = e => {
+  e.preventDefault(); if (!ED || !$('e-t').value.trim()) return;
+  const v = $('e-v').value;
+  if (v !== niveau(ED, Date.now())) { ED.niveau = v; ED.place = Date.now(); }
+  Object.assign(ED, {titre: $('e-t').value.trim(), liste: $('e-l').value, note: $('e-n').value.trim()});
+  S.put(ED); $('dlg').close(); rendre();
+};
 $('e-a').onclick = () => $('dlg').close();
 $('e-s').onclick = () => { if (ED && confirm('Supprimer « ' + ED.titre + ' » ?')) { S.del(ED.id); $('dlg').close(); rendre(); } };
 
+addEventListener('hashchange', () => { $('q').value = ''; montrerTout = false; rendre(); scrollTo(0, 0); });
 $('q').oninput = rendre;
+$('q0').oninput = rendre;
 Maison.dictee($('q'));
+Maison.dictee($('q0'));
 Maison.dictee($('i'));
 Maison.pastille();
 rendre();
+setInterval(() => { if (document.visibilityState === 'visible' && !$('dlg').open) rendre(); }, 60000);
 </script>
 </body>
 </html>
