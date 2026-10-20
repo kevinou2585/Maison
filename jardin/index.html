@@ -101,6 +101,8 @@ main .lgh h2{border:0;padding:0;margin:0;color:#fff}.lgh p{margin:4px 0 8px;font
 #maison-maj{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9999;display:flex;gap:10px;align-items:center;background:#1f3b29;color:#fff;padding:10px 14px;border-radius:14px;font:600 14px system-ui,-apple-system,sans-serif;box-shadow:0 4px 18px #0005;max-width:calc(100vw - 24px)}
 #maison-maj button{font:inherit;border:0;border-radius:9px;padding:7px 12px;background:#fff;color:#1f3b29}
 html,body{touch-action:manipulation}
+/* Sur le plan : la petite flèche, plus précise que la main (demande de Kevin) */
+#mw,#mw *,#omw,#omw *{cursor:default!important}
 @media (max-width:640px){
   html,body{overflow-x:hidden}
   .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
