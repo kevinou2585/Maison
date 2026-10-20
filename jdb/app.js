@@ -99,11 +99,12 @@ function ligneGeste(g, mc) {
 
 // ---------- Mes arbres / mes plantes
 let Q = '', FST = '';
+const basculeBilan = (k, b) => { const base = k === 'f' ? 'verger/arbres' : 'ornement/plantes'; return `<div class="seg" style="margin-bottom:12px"><a class="segl" href="#${base}" aria-pressed="${!b}">${k === 'f' ? '🌳 Mes arbres' : '🌸 Mes plantes'}</a><a class="segl" href="#${base}/bilan" aria-pressed="${b}">📊 Bilan de l'année</a></div>`; };
 function vueArbres(k) {
   const T = J.arbres(k).slice().sort((a, b) => (+a.n || 9999) - (+b.n || 9999) || String(a.name).localeCompare(String(b.name), 'fr'));
   const q = J.norm(Q), base = k === 'f' ? 'verger/arbre' : 'ornement/plante';
   const l = T.filter(t => (!FST || t.st === FST) && (!q || J.norm((t.name || '') + ' ' + (t.note || '') + ' ' + (t.n || '')).includes(q)));
-  let h = `<div class="chercher"><input id="q" type="search" placeholder="🔎 Chercher ${k === 'f' ? 'un arbre' : 'une plante'}" value="${esc(Q)}" autocomplete="off"></div>`;
+  let h = basculeBilan(k, false) + `<div class="chercher"><input id="q" type="search" placeholder="🔎 Chercher ${k === 'f' ? 'un arbre' : 'une plante'}" value="${esc(Q)}" autocomplete="off"></div>`;
   h += `<div class="puces">${[['', 'Tous (' + T.length + ')'], ...Object.entries(ST[k]).map(([s, v]) => [s, v[0] + ' (' + T.filter(t => t.st === s).length + ')'])].map(([v, t]) => `<button data-fst="${v}" aria-pressed="${v === FST}">${esc(t)}</button>`).join('')}</div>`;
   h += `<button class="btn go plein" data-nouvel="${k}">＋ Ajouter ${k === 'f' ? 'un arbre' : 'une plante'}</button><div style="height:10px"></div>`;
   h += l.length ? `<ul class="l">${l.map(t => {
@@ -140,6 +141,23 @@ function vueArbre(k, id) {
     ${f ? `<a class="btn plein" href="#${part}/fiche/${encodeURIComponent(f.id)}">📖 Ouvrir la fiche ${esc(f.a[1])}</a>` : ''}</div>`;
   h += `<div class="carte"><span class="lab" style="margin-top:0">📷 Photos</span>${blocPhotos('arbre-' + k + '-' + t.id)}</div>`;
   h += `<button class="btn danger plein" data-enlever="${k}:${t.id}">🗑 Enlever ${k === 'f' ? 'cet arbre' : 'cette plante'} de la liste</button>`;
+  return h;
+}
+
+// ---------- Bilan de l'année, arbre par arbre (comme le tableau de l'ancienne appli)
+function vueBilan(k) {
+  const fr = k === 'f', q = J.norm(Q), L = suivis(k), r = x => J.suivi(AN, x.key);
+  const tT = L.filter(x => x.s.T.size), tR = L.filter(x => x.s.R.size), nB = L.filter(x => { const v = r(x); return v.rec || v.vig || v.mal || v.note; }).length;
+  const sel = (x, champ, o) => `<select data-svs="${x.key}" data-f="${champ}" aria-label="${champ === 'rec' ? 'Récolte' : 'Vigueur'}">${['', ...o].map(v => `<option ${v === (r(x)[champ] || '') ? 'selected' : ''} value="${v}">${v || '—'}</option>`).join('')}</select>`;
+  const coche = (x, c) => { const v = r(x)[c]; return `<td class="c"><button class="rond${v ? ' fait' : ''}" data-sv="${x.key}" data-f="${c}" aria-label="${c === 't' ? 'Taillé' : 'Récolté'}">${v ? '✓' : ''}</button>${v ? `<small>${fmtJ(v)}</small>` : ''}</td>`; };
+  const l = L.filter(x => !q || J.norm(etiquette(x)).includes(q));
+  let h = basculeBilan(k, true) + `<div class="seg">${[ANNEE - 2, ANNEE - 1, ANNEE].map(y => `<button data-an="${y}" aria-pressed="${y === AN}">${y}</button>`).join('')}</div>
+  <div class="stats"><div><b>${L.length}</b><small>${fr ? 'arbres suivis' : 'plantes suivies'}</small></div><div><b>${tT.filter(x => r(x).t).length}/${tT.length}</b><small>✂️ taillé${fr ? '' : 'e'}s</small></div>${fr ? `<div><b>${tR.filter(x => r(x).r).length}/${tR.length}</b><small>🧺 récoltés</small></div>` : ''}<div><b>${nB}</b><small>📒 bilans notés</small></div></div>
+  <div class="chercher"><input id="q" type="search" placeholder="🔎 Chercher ${fr ? 'un arbre' : 'une plante'}" value="${esc(Q)}" autocomplete="off"></div>`;
+  h += l.length ? `<div class="tableau-bilan"><table><thead><tr><th>${fr ? 'Arbre' : 'Plante'}</th><th>✂️ Taillé</th>${fr ? '<th>🧺 Récolté</th><th>Récolte</th>' : ''}<th>Vigueur</th><th>Maladie, ravageur</th><th>Note</th></tr></thead><tbody>${l.map(x => { const v = r(x); return `<tr>
+    <th><a href="#${fr ? 'verger/arbre' : 'ornement/plante'}/${x.t.id}">${esc(etiquette(x))}</a></th>${coche(x, 't')}${fr ? coche(x, 'r') + `<td>${sel(x, 'rec', ['aucune', 'petite', 'moyenne', 'bonne', 'très bonne'])}</td>` : ''}<td>${sel(x, 'vig', ['faible', 'moyenne', 'bonne', 'très bonne'])}</td>
+    <td><input data-svs="${x.key}" data-f="mal" value="${esc(v.mal || '')}" placeholder="${fr ? 'ex. tavelure' : 'ex. oïdium'}"></td><td><input data-svs="${x.key}" data-f="note" value="${esc(v.note || '')}" placeholder="${fr ? 'ex. gel tardif' : 'ex. belle floraison'}"></td></tr>`; }).join('')}</tbody></table></div>
+  <p class="mut">Glisse le tableau vers la gauche pour voir toutes les colonnes. Ce que tu notes ici s'ajoute au carnet de ${fr ? "l'arbre" : 'la plante'}.</p>` : vide('Aucun résultat.');
   return h;
 }
 
@@ -308,9 +326,9 @@ function rendre() {
   const P = PARTIES[p];
   document.documentElement.style.setProperty('--c', P ? P.c : ({projet: PARTIES.projets.c, pensee: PARTIES.pensees.c}[p] || '#3f8f4a'));
   if (p === 'verger') { html = titre('verger') + onglets('verger', v === 'arbre' ? 'arbres' : v === 'fiche' ? 'fiches' : v);
-    html += v === 'arbres' ? vueArbres('f') : v === 'arbre' ? vueArbre('f', arg) : v === 'fiches' ? vueFiches('f', arg) : v === 'fiche' ? vueFiche('f', arg) : v === 'calendrier' ? vueCalendrier('c') : v === 'soins' ? vueSoins() : vueMoisArbres('f'); }
+    html += v === 'arbres' ? (arg === 'bilan' ? vueBilan('f') : vueArbres('f')) : v === 'arbre' ? vueArbre('f', arg) : v === 'fiches' ? vueFiches('f', arg) : v === 'fiche' ? vueFiche('f', arg) : v === 'calendrier' ? vueCalendrier('c') : v === 'soins' ? vueSoins() : vueMoisArbres('f'); }
   else if (p === 'ornement') { html = titre('ornement') + onglets('ornement', v === 'plante' ? 'plantes' : v === 'fiche' ? 'fiches' : v);
-    html += v === 'plantes' ? vueArbres('o') : v === 'plante' ? vueArbre('o', arg) : v === 'fiches' ? vueFiches('o', arg) : v === 'fiche' ? vueFiche('o', arg) : vueMoisArbres('o'); }
+    html += v === 'plantes' ? (arg === 'bilan' ? vueBilan('o') : vueArbres('o')) : v === 'plante' ? vueArbre('o', arg) : v === 'fiches' ? vueFiches('o', arg) : v === 'fiche' ? vueFiche('o', arg) : vueMoisArbres('o'); }
   else if (p === 'potager') { html = titre('potager') + onglets('potager', v === 'legume' ? 'legumes' : v);
     html += v === 'legumes' ? vueLegumes() : v === 'legume' ? vueLegume(arg) : v === 'calendrier' ? vueCalendrier('p') : v === 'conseils' ? vueConseils() : v === 'compost' ? vueCompost() : vueMoisPotager(); }
   else if (p === 'projets') html = titre('projets') + vueProjets();
@@ -320,7 +338,9 @@ function rendre() {
   else html = vueAccueil();
   if (p) retour = ['#', '‹ Jardin du Bonheur'];
   $('retour').href = retour[0]; $('retour').textContent = retour[1];
+  const tb = document.querySelector('.tableau-bilan'), sl = tb ? tb.scrollLeft : 0;
   $('vue').innerHTML = html;
+  if (!changement && sl && document.querySelector('.tableau-bilan')) document.querySelector('.tableau-bilan').scrollLeft = sl;
   const q = $('q'); if (q) { q.oninput = () => { Q = q.value; const pos = q.selectionStart; rendre(); const n = $('q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }; Maison.dictee(q); }
   if ($('i-etape')) Maison.dictee($('i-etape'));
   if ($('i-rep')) Maison.dictee($('i-rep'));
