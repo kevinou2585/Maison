@@ -22,12 +22,23 @@ const PARTIES = {
   pensees: {nom: 'Pensée permacole', e: '💬', c: '#6a55b8', c3: '#9a83e0', sous: 'Le carnet ouvert à tous pour échanger nos idées'}
 };
 const ST = {f: ST1, o: ST2};
+// Paramètres : textes renommés, éléments cachés et blocs ajoutés sur n'importe quelle page (partagés via le Drive)
+const RG = {
+  textes: () => J.lit('jdb:textes:v1', {}), caches: () => J.lit('jdb:caches:v1', {}), blocs: () => J.lit('jdb:blocs:v1', {}),
+  texte(cle, defaut) { const t = this.textes()[cle]; return t == null || t === '' ? defaut : t; },
+  nommer(cle, v) { const t = this.textes(); if (v) t[cle] = v; else delete t[cle]; J.ecrit('jdb:textes:v1', t); },
+  cache: cle => !!RG.caches()[cle],
+  cacher(cle, oui) { const c = this.caches(); if (oui) c[cle] = 1; else delete c[cle]; J.ecrit('jdb:caches:v1', c); }
+};
+const nomP = k => RG.texte('nom:' + k, PARTIES[k].nom), sousP = k => RG.texte('sous:' + k, PARTIES[k].sous);
+const edition = () => document.body.classList.contains('edition');
+const crayon = (cle, defaut, titreDlg) => `<button type="button" class="crayon" data-texte="${esc(cle)}" data-def="${esc(defaut)}" data-tdlg="${esc(titreDlg)}" aria-label="Modifier">✎</button>`;
 const groupeEmoji = g => (GC[g] || ['🌱', '#3f8f4a']);
 const nomCourt = g => String(g).split(' (')[0];
 
 // ---------- Synchro
 const SYNC_J = Maison.jardin({
-  cles: /^(plan:v2|plan:orn:v2|verger:edit:v1|suivi:v1|jdb:fond:v1|jdb:coche:.*|ph:.*)$/,
+  cles: /^(plan:v2|plan:orn:v2|verger:edit:v1|suivi:v1|jdb:fond:v1|jdb:coche:.*|jdb:(textes|caches|blocs):v1|ph:.*)$/,
   plein: () => alert("Mémoire du téléphone pleine : certaines photos du Drive n'ont pas pu être copiées ici."),
   recu: () => { if (!$('dlg').open) rendre(); },
   tables: () => J.tables()
@@ -36,8 +47,8 @@ const TS = Maison.store('terrain', {recu: () => { if (!$('dlg').open) rendre(); 
 Maison.pastille();
 
 // ---------- Petits morceaux d'affichage
-const onglets = (p, actif) => `<nav class="onglets">${PARTIES[p].onglets.map(([k, l, u]) => `<a href="${u || '#' + p + '/' + k}" ${k === actif ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
-const titre = (p, sous) => { const P = PARTIES[p]; return `<div class="titre"><div class="ic" style="background:linear-gradient(150deg,${P.c},${P.c3})">${P.e}</div><div><h1>${esc(P.nom)}</h1><p>${esc(sous || P.sous)}</p></div></div>`; };
+const onglets = (p, actif) => `<nav class="onglets">${PARTIES[p].onglets.filter(([k]) => k === actif || !RG.cache('onglet:' + p + '/' + k)).map(([k, l, u]) => `<a href="${u || '#' + p + '/' + k}" ${k === actif ? 'aria-current="page"' : ''}>${esc(RG.texte('onglet:' + p + '/' + k, l))}</a>`).join('')}</nav>`;
+const titre = (p, sous) => { const P = PARTIES[p]; return `<div class="titre"><div class="ic" style="background:linear-gradient(150deg,${P.c},${P.c3})">${P.e}</div><div><h1>${esc(nomP(p))}${crayon('nom:' + p, P.nom, 'Nom de la page')}</h1><p>${esc(sous || sousP(p))}${sous ? '' : crayon('sous:' + p, P.sous, 'Sous-titre')}</p></div></div>`; };
 const choixMois = () => `<div class="mois"><button data-mois="-1" aria-label="Mois précédent">◀</button><b>${MOIS[MI].toLowerCase()} ${AN}</b><button data-mois="1" aria-label="Mois suivant">▶</button></div>`;
 const barre = (n, t) => t ? `<div class="barre"><i style="width:${Math.round(100 * n / t)}%"></i></div>` : '';
 const ed = id => `<span class="ed"><button type="button" data-modif="${esc(id)}" aria-label="Modifier">✎</button><button type="button" data-suppr="${esc(id)}" aria-label="Supprimer">🗑</button></span>`;
@@ -80,6 +91,7 @@ function vueMoisArbres(k) {
   return h;
 }
 let FILTRE_C = '', FILTRE_P = '';
+const sousMois = (kind, mi) => RG.texte('mois:' + kind + ':' + mi, kind === 'c' ? M[mi][1] : PM[mi][0]);
 function blocGestes(kind, mi, gestes, mc) {
   const f = kind === 'c' ? FILTRE_C : FILTRE_P;
   const chips = kind === 'c'
@@ -87,7 +99,7 @@ function blocGestes(kind, mi, gestes, mc) {
     : [['', 'Tout'], ['🌱', '🌱 Semis'], ['🪴', '🪴 Plantation'], ['🧺', '🧺 Récolte'], ['🛠️', '🛠️ Entretien']];
   const l = gestes.filter(g => !f || (kind === 'c' ? g.a[1] === 'all' || g.a[1].split(' ').includes(f) : g.a[0] === f));
   const n = l.filter(g => J.coche(mc, g.id)).length;
-  return `<h2>📋 Les gestes du mois<span>${n} / ${l.length}</span></h2><p class="mut" style="margin:-4px 0 0">${esc((kind === 'c' ? M[mi][1] : PM[mi][0]))}</p><div class="puces">${chips.map(([v, t]) => `<button data-filtre="${kind}" data-v="${esc(v)}" aria-pressed="${v === f}">${esc(t)}</button>`).join('')}</div>` +
+  return `<h2>📋 Les gestes du mois<span>${n} / ${l.length}</span></h2><p class="mut" style="margin:-4px 0 0">${esc(sousMois(kind, mi))}${crayon('mois:' + kind + ':' + mi, kind === 'c' ? M[mi][1] : PM[mi][0], 'Titre du mois')}</p><div class="puces">${chips.map(([v, t]) => `<button data-filtre="${kind}" data-v="${esc(v)}" aria-pressed="${v === f}">${esc(t)}</button>`).join('')}</div>` +
     (l.length ? `<ul class="l" style="margin-top:10px">${l.map(g => ligneGeste(g, mc)).join('')}</ul>` : vide('Rien pour ce filtre.')) + plusEd(kind, 'Ajouter un geste en ' + MOIS[mi].toLowerCase(), mi);
 }
 function ligneGeste(g, mc) {
@@ -198,7 +210,7 @@ function vueCalendrier(kind) {
   const cur = new Date().getMonth();
   return MOIS.map((m, mi) => {
     const l = J.liste(kind, mi), mc = J.moisCle(ANNEE, mi), n = l.filter(g => J.coche(mc, g.id)).length;
-    return `<details class="acc" ${mi === cur ? 'open' : ''}><summary><span>${m}${mi === cur ? ' · ce mois-ci' : ''}<br><small class="mut" style="font-weight:500">${esc(kind === 'c' ? M[mi][1] : PM[mi][0])}</small></span><span class="tag">${n ? n + ' / ' : ''}${l.length}</span></summary><div class="in"><ul class="l">${l.map(g => ligneGeste(g, mc)).join('')}</ul>${plusEd(kind, 'Ajouter un geste en ' + m.toLowerCase(), mi)}</div></details>`;
+    return `<details class="acc" ${mi === cur ? 'open' : ''}><summary><span>${m}${mi === cur ? ' · ce mois-ci' : ''}<br><small class="mut" style="font-weight:500">${esc(sousMois(kind, mi))}</small></span><span class="tag">${n ? n + ' / ' : ''}${l.length}</span></summary><div class="in"><ul class="l">${l.map(g => ligneGeste(g, mc)).join('')}</ul>${plusEd(kind, 'Ajouter un geste en ' + m.toLowerCase(), mi)}</div></details>`;
   }).join('') + `<p class="mut">Coche les gestes faits dans « Ce mois-ci ». Pour ajouter ou modifier un geste, active ✏️ Modifier en bas de l'accueil du jardin.</p>`;
 }
 function vueSoins() {
@@ -303,16 +315,53 @@ function vueAccueil() {
   const gv = J.liste('c', m).filter(g => !J.coche(mc, g.id)).length, gp = J.liste('p', m).filter(g => !J.coche(mc, g.id)).length;
   const bulles = {verger: reste('f') + gv, potager: gp, ornement: reste('o'), projets: TS.tous('projet').filter(p => p.statut === 'encours').length, pensees: TS.tous('pensee').length};
   const sous = {verger: (reste('f') + gv) + ' chose(s) à faire en ' + MOIS[m].toLowerCase(), potager: gp + ' geste(s) en ' + MOIS[m].toLowerCase(), ornement: reste('o') + ' à tailler ce mois-ci'};
-  let h = `<div class="titre"><div class="ic" style="background:linear-gradient(150deg,#3f8f4a,#9ccc65)">🌳</div><div><h1>Jardin du Bonheur</h1><p>Verger, potager, ornement et terrain, en permaculture</p></div></div><div class="hub">`;
-  Object.entries(PARTIES).forEach(([k, P]) => {
-    h += `<a class="tuile" href="${P.lien || '#' + k + (P.onglets ? '/' + P.onglets[0][0] : '')}" style="--c:${P.c};--c3:${P.c3}">${bulles[k] ? `<span class="bulle">${bulles[k]}</span>` : ''}<span class="e">${P.e}</span><b>${esc(P.nom)}</b><small>${esc(sous[k] || P.sous)}</small></a>`;
+  let h = `<div class="titre"><div class="ic" style="background:linear-gradient(150deg,#3f8f4a,#9ccc65)">🌳</div><div><h1>${esc(RG.texte('nom:jardin', 'Jardin du Bonheur'))}${crayon('nom:jardin', 'Jardin du Bonheur', 'Nom du jardin')}</h1><p>${esc(RG.texte('sous:jardin', 'Verger, potager, ornement et terrain, en permaculture'))}${crayon('sous:jardin', 'Verger, potager, ornement et terrain, en permaculture', 'Sous-titre')}</p></div></div><div class="hub">`;
+  Object.entries(PARTIES).filter(([k]) => !RG.cache('tuile:' + k)).forEach(([k, P]) => {
+    h += `<a class="tuile" href="${P.lien || '#' + k + (P.onglets ? '/' + P.onglets[0][0] : '')}" style="--c:${P.c};--c3:${P.c3}">${bulles[k] ? `<span class="bulle">${bulles[k]}</span>` : ''}<span class="e">${P.e}</span><b>${esc(nomP(k))}</b><small>${esc(sous[k] || sousP(k))}</small></a>`;
   });
-  h += `</div><details class="acc reglages"><summary>⚙️ Modifier, sauvegarder</summary><div class="in">
-    <p class="mut">En mode modification, des boutons ✎ 🗑 ＋ apparaissent dans les calendriers, les soins et les conseils.</p>
-    <div class="ligne"><button class="btn" id="b-edit" aria-pressed="${document.body.classList.contains('edition')}">✏️ Mode modification : ${document.body.classList.contains('edition') ? 'activé' : 'désactivé'}</button><button class="btn" id="b-rest">↺ Restaurer les éléments supprimés</button></div>
-    <div class="ligne" style="margin-top:8px"><button class="btn" id="b-exp">💾 Exporter une sauvegarde</button><label class="btn">📂 Importer une sauvegarde<input type="file" id="b-imp" accept=".json" hidden></label></div>
-    <p class="mut">Tout se sauvegarde déjà tout seul sur le Drive. Le fichier de sauvegarde sert seulement de copie de sécurité.</p></div></details>`;
+  h += `</div>`;
   return h;
+}
+
+// ---------- Blocs ajoutés par l'utilisateur, sur n'importe quelle page
+// Une page = sa partie et son onglet (les pages d'un arbre ou d'une fiche partagent le bloc « fiche »).
+const pageCle = (p, v, arg) => !p ? 'accueil' : ['projet', 'pensee'].includes(p) ? p : (p + '/' + (v || 'mois') + (v === 'arbres' || v === 'plantes' ? (arg === 'bilan' ? '/bilan' : '') : ''));
+function blocsDe(cle) {
+  const B = (RG.blocs()[cle] || []);
+  return B.map(b => `<div class="carte bloc"><div class="ligne" style="justify-content:space-between;flex-wrap:nowrap"><b>${esc(b.titre)}</b><span class="ed"><button type="button" data-bloc="${esc(cle)}" data-bid="${b.id}" aria-label="Modifier">✎</button><button type="button" data-blocsup="${esc(cle)}" data-bid="${b.id}" aria-label="Supprimer">🗑</button></span></div>${b.texte ? `<p>${esc(b.texte).replace(/\n/g, '<br>')}</p>` : ''}${(b.cases || []).length ? `<ul class="l" style="margin-top:8px">${b.cases.map((c, i) => `<li class="${c.f ? 'ok' : ''}"><button class="rond" data-bcase="${esc(cle)}" data-bid="${b.id}" data-i="${i}" aria-label="${c.f ? 'Décocher' : 'Cocher'}">${c.f ? '✓' : ''}</button><div class="tx"><b>${esc(c.t)}</b></div></li>`).join('')}</ul>` : ''}</div>`).join('')
+    + `<button type="button" class="btn plein plus-ed" data-bloc="${esc(cle)}">＋ Ajouter un bloc sur cette page (texte, liste à cocher)</button>`;
+}
+function formBloc(cle, id) {
+  const T = RG.blocs(), L = T[cle] || [], b = L.find(x => x.id === id);
+  dialogue(b ? 'Modifier le bloc' : 'Ajouter un bloc', `<div><label for="bl-t">Titre</label><input id="bl-t" value="${esc(b ? b.titre : '')}" placeholder="ex. Mes idées pour la haie"></div><div><label for="bl-x">Texte (facultatif)</label><textarea id="bl-x" rows="4">${esc(b ? b.texte : '')}</textarea></div><div><label for="bl-c">Liste à cocher (facultatif, une ligne par case)</label><textarea id="bl-c" rows="4" placeholder="Acheter du paillage\nRéparer le grillage">${esc(b ? (b.cases || []).map(c => c.t).join('\n') : '')}</textarea></div>`,
+    `<button type="button" class="btn" data-annule>Annuler</button><button class="btn go">Enregistrer</button>`, () => {
+      const t = $('bl-t').value.trim(); if (!t) { $('dlg-e').textContent = 'Donne un titre au bloc.'; return; }
+      const anc = b ? (b.cases || []) : [], cases = $('bl-c').value.split('\n').map(x => x.trim()).filter(Boolean).map(x => ({t: x, f: (anc.find(c => c.t === x) || {}).f || false}));
+      const n = Object.assign(b || {id: Date.now().toString(36)}, {titre: t, texte: $('bl-x').value.trim(), cases});
+      if (!b) L.push(n); T[cle] = L; J.ecrit('jdb:blocs:v1', T); $('dlg').close(); rendre();
+    });
+  ['bl-t', 'bl-x', 'bl-c'].forEach(i => Maison.dictee($(i)));
+}
+function formTexte(cle, defaut, t) {
+  dialogue(t, `<div><label for="tx-v">Texte</label><input id="tx-v" value="${esc(RG.texte(cle, defaut))}"></div><p class="mut">Laisse vide pour revenir au texte d'origine : « ${esc(defaut)} ».</p>`,
+    `<button type="button" class="btn" data-annule>Annuler</button><button class="btn go">Enregistrer</button>`, () => { const v = $('tx-v').value.trim(); RG.nommer(cle, v === defaut ? '' : v); $('dlg').close(); rendre(); });
+  Maison.dictee($('tx-v'));
+}
+
+// ---------- Le menu Paramètres
+function parametres() {
+  const ligne = (cle, nom, defNom) => `<label class="opt"><input type="checkbox" data-montre="${cle}" ${RG.cache(cle) ? '' : 'checked'}><span>${esc(nom)}</span></label>`;
+  const parts = Object.entries(PARTIES);
+  dialogue('⚙️ Paramètres', `
+    <button type="button" class="btn ${edition() ? '' : 'go'} plein" id="p-edit">${edition() ? '✓ Mode modification activé : le couper' : "✏️ Activer le mode modification"}</button>
+    <p class="mut" style="margin:6px 0 0">En mode modification, chaque page montre ✎ pour renommer, 🗑 pour enlever et ＋ pour ajouter (gestes, fiches, légumes, conseils, et tes propres blocs).</p>
+    <span class="lab">Tuiles affichées dans le jardin</span><div class="opts">${parts.map(([k]) => ligne('tuile:' + k, nomP(k))).join('')}</div>
+    ${parts.filter(([, P]) => P.onglets).map(([k, P]) => `<span class="lab">Onglets de ${esc(nomP(k))}</span><div class="opts">${P.onglets.map(([o, l]) => ligne('onglet:' + k + '/' + o, RG.texte('onglet:' + k + '/' + o, l))).join('')}</div>`).join('')}
+    <span class="lab">Noms des onglets</span><p class="mut" style="margin:0">Touche un onglet pour le renommer.</p><div class="opts">${parts.filter(([, P]) => P.onglets).flatMap(([k, P]) => P.onglets.map(([o, l]) => `<button type="button" class="btn" data-texte="onglet:${k}/${o}" data-def="${esc(l)}" data-tdlg="Nom de l'onglet">${P.e} ${esc(RG.texte('onglet:' + k + '/' + o, l))}</button>`)).join('')}</div>
+    <span class="lab">Sauvegarde</span><div class="ligne"><button type="button" class="btn" id="b-exp">💾 Exporter une sauvegarde</button><label class="btn">📂 Importer une sauvegarde<input type="file" id="b-imp" accept=".json" hidden></label></div>
+    <div class="ligne" style="margin-top:8px"><button type="button" class="btn" id="b-rest">↺ Restaurer les éléments supprimés</button><button type="button" class="btn" id="b-raz">↺ Remettre noms et onglets d'origine</button></div>
+    <p class="mut">Tout se sauvegarde déjà tout seul sur le Drive, pour toute la famille. Le fichier de sauvegarde sert seulement de copie de sécurité.</p>`,
+    `<button type="button" class="btn go" data-annule>Fermer</button>`, () => $('dlg').close());
 }
 
 // ---------- Rendu selon l'adresse
@@ -336,7 +385,8 @@ function rendre() {
   else if (p === 'pensees') html = titre('pensees') + vuePensees();
   else if (p === 'pensee') html = titre('pensees') + vuePensee(v);
   else html = vueAccueil();
-  if (p) retour = ['#', '‹ Jardin du Bonheur'];
+  html = (edition() ? `<div class="bandeau">✏️ <span>Mode modification : touche ✎ pour renommer, 🗑 pour enlever, ＋ pour ajouter.</span><button class="btn" id="b-fin">Terminer</button></div>` : '') + html + blocsDe(pageCle(p, v, arg));
+  if (p) retour = ['#', '‹ ' + RG.texte('nom:jardin', 'Jardin du Bonheur')];
   $('retour').href = retour[0]; $('retour').textContent = retour[1];
   const tb = document.querySelector('.tableau-bilan'), sl = tb ? tb.scrollLeft : 0;
   $('vue').innerHTML = html;
@@ -398,6 +448,18 @@ function formulaire(kind, id, m, g) {
 }
 
 // ---------- Les gestes de l'utilisateur
+function modeEdition(oui) { document.body.classList.toggle('edition', oui); try { localStorage.setItem('jdb:edition', oui ? '1' : ''); } catch (e) {} rendre(); }
+try { if (localStorage.getItem('jdb:edition')) document.body.classList.add('edition'); } catch (e) {}
+// Les boutons du menu Paramètres (dans la fenêtre)
+document.addEventListener('click', e => {
+  const b = e.target.closest('#dlg button'); if (!b) return; const d = b.dataset;
+  if (b.id === 'p-edit') { $('dlg').close(); modeEdition(!edition()); }
+  else if (d.texte) { $('dlg').close(); formTexte(d.texte, d.def, d.tdlg); }
+  else if (b.id === 'b-exp') J.exporter();
+  else if (b.id === 'b-rest') { const u = J.lit('verger:edit:v1', null); if (u && u.del) { u.del = {}; J.ecrit('verger:edit:v1', u); } alert('Les éléments supprimés sont revenus.'); rendre(); }
+  else if (b.id === 'b-raz') { if (confirm('Remettre les noms d\'origine et réafficher toutes les tuiles et tous les onglets ? Tes blocs ajoutés restent.')) { J.ecrit('jdb:textes:v1', {}); J.ecrit('jdb:caches:v1', {}); $('dlg').close(); rendre(); } }
+});
+document.addEventListener('change', e => { const i = e.target; if (i.dataset && i.dataset.montre && i.closest('#dlg')) { RG.cacher(i.dataset.montre, !i.checked); rendre(); } });
 document.addEventListener('click', async e => {
   const b = e.target.closest('button,[data-zoom]');
   if (!b || b.closest('dialog')) return;
@@ -416,7 +478,12 @@ document.addEventListener('click', async e => {
   if (d.enlever) { const [k, id] = d.enlever.split(':'), t = J.arbres(k).find(x => x.id === +id); if (t && confirm('Enlever « ' + (t.name || 'cet élément') + ' » de la liste ?')) { J.enleverArbre(k, +id); location.hash = k === 'f' ? 'verger/arbres' : 'ornement/plantes'; } return; }
   if (b.matches('[data-zoom]')) { const z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = `<img src="${b.src}" alt="">`; z.onclick = () => z.remove(); document.body.appendChild(z); return; }
   if (d.phsup != null) { const k = b.closest('[data-ph]').dataset.ph, a = J.photos(k); if (confirm('Enlever cette photo ?')) { a.splice(+d.phsup, 1); J.garderPhotos(k, a); rendre(); } return; }
-  if (b.id === 'b-edit') { document.body.classList.toggle('edition'); rendre(); return; }
+  if (b.id === 'b-param') { parametres(); return; }
+  if (b.id === 'b-fin') { modeEdition(false); return; }
+  if (d.texte) { formTexte(d.texte, d.def, d.tdlg); return; }
+  if (d.bloc) { formBloc(d.bloc, d.bid); return; }
+  if (d.blocsup) { const T = RG.blocs(), L = T[d.blocsup] || [], x = L.find(y => y.id === d.bid); if (x && confirm('Supprimer le bloc « ' + x.titre + ' » ?')) { T[d.blocsup] = L.filter(y => y !== x); J.ecrit('jdb:blocs:v1', T); rendre(); } return; }
+  if (d.bcase) { const T = RG.blocs(), x = (T[d.bcase] || []).find(y => y.id === d.bid); if (x) { x.cases[+d.i].f = !x.cases[+d.i].f; J.ecrit('jdb:blocs:v1', T); rendre(); } return; }
   if (b.id === 'b-rest') { const u = J.lit('verger:edit:v1', null); if (u && u.del) { u.del = {}; J.ecrit('verger:edit:v1', u); } alert('Les éléments supprimés sont revenus.'); rendre(); return; }
   if (b.id === 'b-exp') { J.exporter(); return; }
   // Projets

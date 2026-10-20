@@ -20,7 +20,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-app
 main{max-width:860px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(60px + env(safe-area-inset-bottom,0px))}
 a{color:inherit}
 button{font:inherit;color:inherit;cursor:pointer}
-.haut{display:flex;align-items:center;gap:8px;min-height:40px;padding-right:96px}
+.haut{display:flex;align-items:center;gap:8px;min-height:40px;padding-right:118px}
 .haut .retour{font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0;background:none;border:0}
 .titre{display:flex;align-items:center;gap:12px;margin:6px 0 12px}
 .titre .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:30px;background:var(--c);flex:none;box-shadow:0 3px 10px #0002}
@@ -100,6 +100,15 @@ details.acc>.in{padding:0 14px 14px}
 .pourquoi{color:var(--muted);font-size:14px}
 .qui{font-size:13px;color:var(--c);font-weight:700}
 .ed{display:none;gap:4px;flex:none}
+.haut .param{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:7px 11px;font-weight:600;font-size:14px;color:var(--fg)}
+.crayon{display:none;margin-left:8px;vertical-align:middle;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:2px 8px;font-size:14px;font-weight:600;color:var(--fg)}
+body.edition .crayon{display:inline-block}
+.bandeau{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,#f9a825 20%,var(--surface));border:1px solid #f9a825;font-size:14px;font-weight:600}
+.bandeau span{flex:1}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:12px;padding:7px 10px;font-size:14px}
+.opt input{width:auto}
+.bloc{border-left:4px solid var(--c)}
 body.edition .ed{display:flex}
 .ed button{border:1px solid var(--line);background:var(--soft);border-radius:9px;width:34px;height:34px;padding:0}
 .plus-ed{display:none}
@@ -177,7 +186,7 @@ dialog .tags input{width:auto}
 </head>
 <body>
 <main>
-  <div class="haut"><a class="retour" id="retour" href="../">‹ Happiness</a></div>
+  <div class="haut"><a class="retour" id="retour" href="../">‹ Happiness</a><button type="button" class="param" id="b-param" aria-label="Paramètres">⚙️ Paramètres</button></div>
   <div id="vue"></div>
 </main>
 <dialog id="dlg"><form method="dialog" id="dlg-f"><h3 id="dlg-t"></h3><div class="form" id="dlg-c"></div><p class="erreur" id="dlg-e"></p><div class="btns" id="dlg-b"></div></form></dialog>

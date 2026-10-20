@@ -3,7 +3,8 @@
 Appli de la maison, servie par GitHub Pages et installable sur téléphone et ordinateur :
 
 - `jdb/` : le Jardin du Bonheur, la grande tuile de l'accueil : verger, potager, ornement, gestion du terrain,
-  projets pour le terrain et pensée permacole. `donnees.js` (fiches, calendriers, légumes, extraits par
+  projets pour le terrain et pensée permacole. ⚙️ Paramètres sur chaque page : tuiles et onglets à cacher ou
+  renommer, mode modification (✎ 🗑 ＋ partout, blocs texte ou liste à cocher sur n'importe quelle page ; clés jdb:textes/caches/blocs:v1). `donnees.js` (fiches, calendriers, légumes, extraits par
   `outils/extraire-donnees-jardin.js`), `moteur.js` (données, mêmes clés que l'ancien jardin), `app.js` (les écrans).
   `plan.html` est le plan du terrain de l'ancien jardin, seul (`?k=f` verger, `?k=o` ornement), fabriqué par
   `python3 outils/construire-plan.py` depuis `jardin/index.html`.
