@@ -150,7 +150,9 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 <script>
 const $ = id => document.getElementById(id);
 const c = Maison.cfg();
-$('d-url').value = c.url || ''; $('d-cle').value = c.cle || ''; $('d-qui').value = c.qui || '';
+// L'adresse du script de la famille est pré-remplie : il ne reste qu'à taper le mot de passe (ligne CLE du script).
+const SCRIPT = 'https://script.google.com/macros/s/AKfycbx--DY2I4FIoVvEgs8mAXhBaELZlBabLe49XQL0xsARiV2Xt2aA6P4dWxVDkvZPZWHx_g/exec';
+$('d-url').value = c.url || SCRIPT; $('d-cle').value = c.cle || ''; $('d-qui').value = c.qui || '';
 const etat = (t, err) => { $('etat').textContent = t; $('etat').className = err ? 'err' : 'note'; };
 function pill() {
   const d = +localStorage.getItem('maison:derniere') || 0, ok = Maison.relie();
