@@ -3,7 +3,7 @@
 
     python3 outils/construire-jardin.py chemin/vers/test-jardin-du-bonheur.html
 
-Ajouts : icône et installation de l'appli, lien « Ma maison », synchro Drive (../sync.js),
+Ajouts : icône et installation de l'appli, lien « Happiness », synchro Drive (../sync.js),
 réglages pour petit écran, et les onglets lisibles envoyés à la feuille Google.
 """
 import pathlib
@@ -24,12 +24,12 @@ TETE = """<link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icones/maison-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Ma maison">
+<meta name="apple-mobile-web-app-title" content="Happiness">
 <meta name="theme-color" content="#2e6b3f">
 <title>Jardin du Bonheur</title>"""
 
 STYLE = """
-/* Ma maison : retour à l'accueil et petits écrans */
+/* Happiness : retour à l'accueil et petits écrans */
 .maison-retour{display:inline-block;margin:calc(6px + env(safe-area-inset-top,0px)) 0 0;font:600 14px system-ui,-apple-system,sans-serif;color:inherit;opacity:.7;text-decoration:none}
 #maison-maj{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9999;display:flex;gap:10px;align-items:center;background:#1f3b29;color:#fff;padding:10px 14px;border-radius:14px;font:600 14px system-ui,-apple-system,sans-serif;box-shadow:0 4px 18px #0005;max-width:calc(100vw - 24px)}
 #maison-maj button{font:inherit;border:0;border-radius:9px;padding:7px 12px;background:#fff;color:#1f3b29}
@@ -90,7 +90,7 @@ Maison.pastille();
 s = src
 # Le titre « Test » devient le vrai nom dans l'appli
 s = remplacer(s, "<title>Test jardin du bonheur</title>", TETE)
-s = remplacer(s, '<header class="hero"><h1>Test jardin du bonheur</h1>', '<a class="maison-retour" href="../">‹ Ma maison</a><header class="hero"><h1>Jardin du Bonheur</h1>')
+s = remplacer(s, '<header class="hero"><h1>Test jardin du bonheur</h1>', '<a class="maison-retour" href="../">‹ Happiness</a><header class="hero"><h1>Jardin du Bonheur</h1>')
 s = remplacer(s, "</style></head>", STYLE + "</style></head>")
 s = remplacer(s, "<script>\nconst N={", SYNCHRO + "<script>\nconst N={")
 out.write_text(s, encoding="utf-8")

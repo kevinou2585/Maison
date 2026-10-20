@@ -1,4 +1,4 @@
-# Ma maison
+# Happiness
 
 Appli de la maison, servie par GitHub Pages et installable sur téléphone et ordinateur :
 

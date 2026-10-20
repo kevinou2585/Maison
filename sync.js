@@ -1,4 +1,4 @@
-// Ma maison : synchronisation de chaque appli avec la feuille Google du Drive (voir google/Code.gs).
+// Happiness : synchronisation de chaque appli avec la feuille Google du Drive (voir google/Code.gs).
 // Chaque appli garde ses données dans le téléphone (marche sans internet) et échange ses changements
 // avec la feuille : la modification la plus récente gagne, élément par élément.
 (() => {

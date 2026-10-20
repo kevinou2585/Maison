@@ -5,22 +5,23 @@
 <base href="../">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ma maison</title>
-<meta name="theme-color" content="#2e6b3f">
+<title>Happiness</title>
+<meta name="theme-color" content="#ff8a65">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/maison-192.png">
 <link rel="apple-touch-icon" href="icones/maison-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Ma maison">
+<meta name="apple-mobile-web-app-title" content="Happiness">
 <style>
-:root{--bg:#f3f5f1;--surface:#fff;--fg:#18201a;--muted:#5d6a60;--line:#d9ded4;--accent:#2e6b3f;--err:#b3261e}
+:root{--bg:#fff8ee;--surface:#fff;--fg:#18201a;--muted:#5d6a60;--line:#d9ded4;--accent:#2e6b3f;--err:#b3261e}
 @media (prefers-color-scheme:dark){:root{--bg:#111613;--surface:#1a211c;--fg:#e8eee9;--muted:#9aa89e;--line:#2c362f;--accent:#5fae74;--err:#ff8a80;color-scheme:dark}}
 *{box-sizing:border-box}
 html,body,a,button,input{touch-action:manipulation}
 body{margin:0 auto;max-width:720px;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
-.top{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.top img{width:52px;height:52px;border-radius:14px}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding:16px;border-radius:22px;background:linear-gradient(135deg,#ff8a65,#ffb74d 55%,#ffd54f);color:#3a1f0b;box-shadow:0 6px 18px #ff8a6533}
+.top img{width:60px;height:60px;border-radius:16px;box-shadow:0 2px 8px #0002}
+.top .sub{color:#5a3416}
 h1{font-size:28px;margin:0;line-height:1.1}
 .sub{color:var(--muted);margin:2px 0 0;font-size:14px}
 .tuiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -58,7 +59,7 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 </style>
 </head>
 <body>
-<div class="top"><img src="icones/maison-192.png" alt=""><div><h1>Ma maison</h1><p class="sub">Le jardin, les courses, les choses à faire, les notes, les mots de passe… et les fléchettes.</p></div></div>
+<div class="top"><img src="icones/maison-192.png" alt=""><div><h1>Happiness</h1><p class="sub">Le jardin, les courses, les choses à faire, les notes, les mots de passe… et les fléchettes.</p></div></div>
 <div id="installe-bloc">
   <b>📲 Mettre l'appli sur ton téléphone</b>
   <div id="ib-1"><p class="note" style="margin:6px 0 0">Ouvre ce lien dans <b>Safari</b> (iPhone) ou <b>Chrome</b> (Android), pas depuis WhatsApp, un mail ou l'appli Claude. Puis touche le bouton :</p>
@@ -96,7 +97,7 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
   <p id="etat" class="note"></p>
   <details><summary>Première fois : créer la feuille Google</summary>
     <ol class="note">
-      <li>Sur ton ordinateur, ouvre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> (une feuille vide sur ton Drive) et nomme-la « Ma maison ».</li>
+      <li>Sur ton ordinateur, ouvre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> (une feuille vide sur ton Drive) et nomme-la « Happiness ».</li>
       <li>Menu <b>Extensions › Apps Script</b>. Efface ce qui s'y trouve et colle le contenu de <a href="google/" target="_blank">ce script</a> (bouton « Copier »).</li>
       <li>À la ligne <code>const CLE = 'change-moi';</code>, remplace <code>change-moi</code> par ton mot de passe, puis 💾 Enregistrer.</li>
       <li><b>Déployer › Nouveau déploiement</b>, roue dentée › <b>Application Web</b>. Exécuter en tant que : <b>Moi</b>. Qui a accès : <b>Tout le monde</b>. Touche Déployer et autorise l'accès.</li>
@@ -106,7 +107,7 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 </details>
 
 <h2>Installer l'appli</h2>
-<details><summary>iPhone</summary><ol><li>Ouvre cette page dans Safari.</li><li>Touche le bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ».</li><li>Touche Ajouter : l'icône <b>Ma maison</b> apparaît.</li></ol></details>
+<details><summary>iPhone</summary><ol><li>Ouvre cette page dans Safari.</li><li>Touche le bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ».</li><li>Touche Ajouter : l'icône <b>Happiness</b> apparaît.</li></ol></details>
 <details><summary>Android</summary><ol><li>Ouvre cette page dans Chrome.</li><li>Menu ⋮ › « Installer l'application » (ou « Ajouter à l'écran d'accueil »).</li></ol><button id="installer" type="button" hidden>Installer maintenant</button></details>
 <details><summary>Ordinateur</summary><p class="note">Dans Chrome ou Edge, l'icône d'installation apparaît à droite de la barre d'adresse. Tu peux aussi simplement mettre cette page en favori.</p></details>
 

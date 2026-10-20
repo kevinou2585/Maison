@@ -1,8 +1,8 @@
 /**
- * Ma maison : sauvegarde partagée sur Google Drive.
+ * Happiness : sauvegarde partagée sur Google Drive.
  *
  * Installation (une seule fois) :
- * 1. Crée une feuille Google vide sur ton Drive (sheets.new), nomme-la « Ma maison ».
+ * 1. Crée une feuille Google vide sur ton Drive (sheets.new), nomme-la « Happiness ».
  * 2. Menu Extensions > Apps Script. Efface tout et colle ce fichier.
  * 3. Change le mot de passe ci-dessous (CLE), puis 💾 Enregistrer.
  * 4. Déployer > Nouveau déploiement > type « Application Web » :
@@ -184,7 +184,7 @@ function accueil(m, qui) {
   const sh = feuille('Accueil'), props = PropertiesService.getScriptProperties();
   const quand = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Brussels', 'dd/MM/yyyy à HH:mm');
   props.setProperty('maj-' + m, quand + (qui ? ' par ' + qui : ''));
-  const l = [['🏡 Ma maison', ''], ['Sauvegarde de l\'appli : chaque onglet se met à jour tout seul quand quelqu\'un modifie quelque chose.', ''], ['', ''], ['Partie', 'Dernière modification']];
+  const l = [['🌻 Happiness', ''], ['Sauvegarde de l\'appli : chaque onglet se met à jour tout seul quand quelqu\'un modifie quelque chose.', ''], ['', ''], ['Partie', 'Dernière modification']];
   Object.keys(MODULES).forEach(k => l.push([MODULES[k], props.getProperty('maj-' + k) || '—']));
   sh.clear();
   sh.setHiddenGridlines(true);
@@ -243,7 +243,7 @@ function rappelDuMatin(essai) {
     });
     if (!urg && !dec && !essai) return;
     const sujet = urg ? '🔥 To do : ' + urg + ' chose' + (urg > 1 ? 's' : '') + ' urgente' + (urg > 1 ? 's' : '') : dec ? '⏳ To do : ' + dec + ' à décider' : '✅ To do : rien d\'urgent (essai du rappel)';
-    MailApp.sendEmail({to: a, subject: sujet, name: 'Ma maison',
+    MailApp.sendEmail({to: a, subject: sujet, name: 'Happiness',
       htmlBody: '<div style="font:15px/1.5 Arial,sans-serif;color:#161a22">Bonjour ' + NOMS[qui] + ',' +
         (html || '<p>Rien d\'urgent aujourd\'hui. Le rappel arrivera chaque matin vers 9 h quand il y aura quelque chose.</p>') +
         '<p style="margin-top:20px"><a href="' + APPLI + '#' + qui + '" style="background:#3567b8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:bold">Ouvrir ma To do</a></p></div>'});

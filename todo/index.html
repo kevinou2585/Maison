@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="../icones/maison-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Ma maison">
+<meta name="apple-mobile-web-app-title" content="Happiness">
 <style>
 :root{--bg:#f2f4f8;--surface:#fff;--fg:#161a22;--muted:#5f6878;--line:#d8dde7;--accent:#3567b8;--ok:#2e7d32;--late:#b3261e;--urg:#fdecea;--urg-l:#f3b9b3}
 @media (prefers-color-scheme:dark){:root{--bg:#10131a;--surface:#1a1f29;--fg:#e8ecf3;--muted:#9aa3b5;--line:#2c3443;--accent:#7aa5ee;--ok:#7cc884;--late:#ff8a80;--urg:#3a1d1b;--urg-l:#6b2e29;color-scheme:dark}}
@@ -73,7 +73,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 </style>
 </head>
 <body>
-<a class="retour" id="retour" href="../">‹ Ma maison</a>
+<a class="retour" id="retour" href="../">‹ Happiness</a>
 <h1 id="titre">📝 To do</h1>
 <div id="accueil">
   <div class="choix" id="choix"></div>
@@ -171,7 +171,7 @@ function rendre() {
   L = (location.hash || '').slice(1);
   if (L && L !== 'archives' && !LISTES[L]) L = '';
   $('accueil').hidden = !!L; $('vue').hidden = !L;
-  $('retour').textContent = L ? '‹ To do' : '‹ Ma maison';
+  $('retour').textContent = L ? '‹ To do' : '‹ Happiness';
   $('retour').href = L ? '#' : '../';
   if (!L) {
     $('titre').textContent = "📝 To do";
