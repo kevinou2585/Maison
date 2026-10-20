@@ -19,7 +19,9 @@ html,body,button,a,input{touch-action:manipulation}
 body{margin:0 auto;max-width:760px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
 .retour{display:inline-block;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none;padding:6px 0}
 h1{font-size:26px;margin:4px 0 14px;display:flex;align-items:center;gap:10px}
-h1 button{margin-left:auto;font-size:14px}
+h1 button{font-size:14px}#impr{margin-left:auto}
+@media(max-width:440px){h1{font-size:23px;gap:8px}h1 button{padding:7px 10px;font-size:13px}#impr span{display:none}}
+#titre{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer}
 button.go{background:var(--accent);border-color:var(--accent);color:#fff}
 input,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface);color:var(--fg);min-width:0}
@@ -31,7 +33,7 @@ input,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padd
 .ligne{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:15px}
 .ligne span{color:var(--muted);width:92px;flex:none;font-size:13px}
 .ligne code{flex:1;font:15px ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere;min-width:0}
-.ligne button{padding:5px 9px;font-size:14px}
+.ligne button{padding:5px 9px;font-size:14px}.ligne .copier{font-weight:600;white-space:nowrap}
 .note{color:var(--muted);font-size:14px;margin-top:6px;white-space:pre-wrap}
 .vide{color:var(--muted);text-align:center;padding:24px 10px}
 #porte{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:16px}
@@ -60,6 +62,20 @@ dialog .suppr{margin-right:auto;color:#c62828}
 .pied button{font-size:14px;color:var(--muted)}
 .info{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;margin:8px 0}
 .apercu{margin-top:10px;padding:10px;border-radius:12px;background:rgba(80,160,80,.13);font-size:14px}.apercu table{width:100%;border-collapse:collapse;margin:6px 0}.apercu td{padding:3px 4px;border-top:1px solid rgba(80,160,80,.25);word-break:break-all}
+#impression{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body>*:not(#impression){display:none!important}
+  body{background:#fff!important;color:#000!important;padding:0!important;margin:0!important}
+  #impression{display:block;font:10pt/1.3 Arial,Helvetica,sans-serif;color:#000}
+  #impression h2{font-size:14pt;margin:0 0 8px}#impression h2 small{font-size:9pt;font-weight:normal;color:#444;margin-left:8px}
+  #impression table{width:100%;border-collapse:collapse;table-layout:fixed}
+  #impression th,#impression td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+  #impression th{background:#eee;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #impression thead{display:table-header-group}#impression tr{break-inside:avoid}
+  #impression th:nth-child(1){width:24%}#impression th:nth-child(2){width:28%}#impression th:nth-child(3){width:24%}
+  #impression td.m{font-family:Consolas,'Courier New',monospace}
+}
 </style>
 </head>
 <body>
@@ -70,7 +86,7 @@ dialog .suppr{margin-right:auto;color:#c62828}
   <div id="p-code" hidden><div class="petit" id="p-qui"></div><input id="porte-i" type="password" autocomplete="off" placeholder="Ton code" aria-label="Ton code" style="margin-top:8px"><button class="go" style="margin-top:12px">Ouvrir</button><button type="button" class="lien" id="p-autre">‹ Changer de compte</button></div>
   <div class="err" id="porte-m"></div><a class="retour" href="../">‹ Happiness</a></form></div>
 <a class="retour" href="../">‹ Happiness</a>
-<h1>🔐 <span id="titre">Mots de passe</span> <button id="verr" type="button">🔒 Verrouiller</button></h1>
+<h1>🔐 <span id="titre">Mots de passe</span> <button id="impr" type="button" aria-label="Imprimer">🖨️<span> Imprimer</span></button><button id="verr" type="button">🔒 Verrouiller</button></h1>
 <div class="barre"><input id="q" type="search" placeholder="🔎 Rechercher un site, une appli, un identifiant" autocomplete="off"><button class="go" id="nouv" type="button">＋</button></div>
 <div id="liste"></div>
 <div class="pied"><button type="button" id="b-imp">📥 Importer une liste</button><button type="button" id="b-cpt">⚙️ Mon compte</button></div>
@@ -110,7 +126,7 @@ const S = Maison.store('mdp', {
     const cpt = recs.filter(r => r.type === 'compte'), nom = id => (cpt.find(c => c.id === id) || {}).nom || 'Ancienne liste';
     const clairs = recs.filter(r => r.type === 'mdp' && !r.c);
     return {'Mots de passe': [['Compte', 'Site / appli', 'Identifiant', 'Mot de passe', 'Note', 'Modifié le'],
-      ...clairs.sort((a, b) => nom(a.compte).localeCompare(nom(b.compte), 'fr') || String(a.site).localeCompare(b.site, 'fr')).map(r => [nom(r.compte), r.site, r.ident || '', r.mdp || '', r.note || '', fmtT(r.t)]),
+      ...clairs.sort((a, b) => nom(a.compte).localeCompare(nom(b.compte), 'fr') || String(a.site).localeCompare(b.site, 'fr', {numeric: true})).map(r => [nom(r.compte), r.site, r.ident || '', r.mdp || '', r.note || '', fmtT(r.t)]),
       ...cpt.filter(c => recs.some(r => r.type === 'mdp' && r.c && r.compte === c.id)).map(c => [c.nom, '🔒 ' + recs.filter(r => r.type === 'mdp' && r.c && r.compte === c.id).length + ' mots de passe chiffrés', '', '', 'Lisibles seulement dans l\'appli, avec le code de ' + c.nom, ''])]};
   }
 });
@@ -278,13 +294,31 @@ const vus = new Set();
 function rendre() {
   if (!C) return;
   const q = norm($('q').value);
-  const l = L.filter(r => !q || norm(r.site + ' ' + (r.ident || '') + ' ' + (r.note || '')).includes(q)).sort((a, b) => String(a.site).localeCompare(b.site, 'fr'));
+  const l = L.filter(r => !q || norm(r.site + ' ' + (r.ident || '') + ' ' + (r.note || '')).includes(q)).sort((a, b) => String(a.site).localeCompare(b.site, 'fr', {numeric: true}));
   $('liste').innerHTML = l.length ? l.map(r => `<div class="carte"><div class="haut"><b data-e="${r.id}">${esc(r.site)}</b><button data-e="${r.id}" aria-label="Modifier">✎</button></div>
     ${r.ident ? `<div class="ligne"><span>Identifiant</span><code>${esc(r.ident)}</code><button data-cp="${r.id}" data-f="ident" aria-label="Copier l'identifiant">📋</button></div>` : ''}
-    <div class="ligne"><span>Mot de passe</span><code>${vus.has(r.id) ? esc(r.mdp) : '••••••••'}</code><button data-voir="${r.id}" aria-label="Afficher">${vus.has(r.id) ? '🙈' : '👁'}</button><button data-cp="${r.id}" data-f="mdp" aria-label="Copier le mot de passe">📋</button></div>
+    <div class="ligne"><span>Mot de passe</span><code>${vus.has(r.id) ? esc(r.mdp) : '••••••••'}</code><button data-voir="${r.id}" aria-label="Afficher">${vus.has(r.id) ? '🙈' : '👁'}</button><button class="copier" data-cp="${r.id}" data-f="mdp" aria-label="Copier le mot de passe">📋 Copier</button></div>
     ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}</div>`).join('')
     : `<div class="vide">${q ? 'Rien trouvé pour « ' + esc($('q').value) + ' ».' : 'Aucun mot de passe enregistré. Touche ＋ pour ajouter le premier, ou 📥 Importer une liste.'}</div>`;
 }
+// Copie : presse-papiers moderne, sinon l'ancienne méthode (certains navigateurs de téléphone)
+async function copier(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.cssText = 'position:fixed;top:0;opacity:0';
+  document.body.appendChild(a); a.select(); a.setSelectionRange(0, t.length);
+  let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} a.remove(); return ok;
+}
+// Impression : un tableau propre de toute la liste, sur une ou plusieurs pages A4, effacé après
+$('impr').onclick = () => {
+  if (!C) return;
+  const l = L.slice().sort((a, b) => String(a.site).localeCompare(b.site, 'fr', {numeric: true})), d = new Date().toLocaleDateString('fr-BE');
+  const z = document.createElement('div'); z.id = 'impression';
+  z.innerHTML = `<h2>🔐 Mots de passe de ${esc(C.nom)} <small>imprimé le ${d} · ${l.length} compte${l.length > 1 ? 's' : ''}</small></h2><table><thead><tr><th>Site ou appli</th><th>Identifiant</th><th>Mot de passe</th><th>Note</th></tr></thead><tbody>` +
+    l.map(r => `<tr><td>${esc(r.site)}</td><td>${esc(r.ident || '')}</td><td class="m">${esc(r.mdp || '')}</td><td>${esc(r.note || '')}</td></tr>`).join('') + `</tbody></table>`;
+  document.body.appendChild(z);
+  const fin = () => { z.remove(); removeEventListener('afterprint', fin); };
+  addEventListener('afterprint', fin); print();
+};
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
 
 let ED = null;
@@ -316,7 +350,7 @@ document.addEventListener('click', async e => {
   if (b.dataset.e) return editer(r);
   if (b.dataset.voir) { const id = b.dataset.voir; vus.has(id) ? vus.delete(id) : vus.add(id); return rendre(); }
   if (!r) return;
-  try { await navigator.clipboard.writeText(r[b.dataset.f] || ''); toast('Copié ✓'); } catch (err) { toast('Copie impossible ici'); }
+  copier(r[b.dataset.f] || '').then(ok => toast(ok ? (b.dataset.f === 'mdp' ? 'Mot de passe copié ✓' : 'Identifiant copié ✓') : 'Copie impossible ici'));
 });
 $('q').oninput = rendre;
 Maison.dictee($('q'));
