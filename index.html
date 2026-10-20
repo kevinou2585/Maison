@@ -20,6 +20,8 @@ body{margin:0 auto;max-width:720px;padding:calc(20px + env(safe-area-inset-top,0
 .top{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding:16px;border-radius:22px;background:linear-gradient(135deg,#ff8a65,#ffb74d 55%,#ffd54f);color:#3a1f0b;box-shadow:0 6px 18px #ff8a6533}
 .top img{width:60px;height:60px;border-radius:16px;box-shadow:0 2px 8px #0002}
 .top .sub{color:#5a3416}
+#citation{margin:6px 0 0;font-size:15px;line-height:1.4;font-style:italic}
+#citation cite{display:block;margin-top:4px;font-style:normal;font-weight:700;font-size:13px}
 h1{font-size:28px;margin:0;line-height:1.1}
 .sub{color:var(--muted);margin:2px 0 0;font-size:14px}
 .tuiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -57,7 +59,7 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 </style>
 </head>
 <body>
-<div class="top"><img src="icones/maison-192.png" alt=""><div><h1>Happiness</h1><p class="sub">Le jardin, les courses, les choses à faire, les notes, les mots de passe… et les fléchettes.</p></div></div>
+<div class="top"><img src="icones/maison-192.png" alt=""><div><h1>Happiness</h1><blockquote id="citation" class="sub"></blockquote></div></div>
 <div id="installe-bloc">
   <b>📲 Mettre l'appli sur ton téléphone</b>
   <div id="ib-1"><p class="note" style="margin:6px 0 0">Ouvre ce lien dans <b>Safari</b> (iPhone) ou <b>Chrome</b> (Android), pas depuis WhatsApp, un mail ou l'appli Claude. Puis touche le bouton :</p>
@@ -110,6 +112,17 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 <details><summary>Ordinateur</summary><p class="note">Dans Chrome ou Edge, l'icône d'installation apparaît à droite de la barre d'adresse. Tu peux aussi simplement mettre cette page en favori.</p></details>
 
 <script src="sync.js"></script>
+<script src="citations.js"></script>
+<script>
+// Une nouvelle citation chaque jour (la même pour tout le monde ce jour-là, dans un ordre mélangé)
+(() => {
+  const d = new Date(), j = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+  const [t, a] = CITATIONS[(j * 157) % CITATIONS.length];
+  const b = document.getElementById('citation');
+  b.textContent = '« ' + t + ' »';
+  const c = document.createElement('cite'); c.textContent = '— ' + a; b.appendChild(c);
+})();
+</script>
 <script>
 const $ = id => document.getElementById(id);
 const c = Maison.cfg();
