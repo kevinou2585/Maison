@@ -74,6 +74,8 @@ button.go{background:var(--accent);border-color:var(--accent);color:#fff}
 .pill.ok{background:#d8efdc;color:#1d5a2c}
 ol{padding-left:20px}
 code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
+.relie{background:#d8efdc;color:#1d5a2c;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;margin:6px 0 10px}.relie b{font-size:15px}.relie span{margin-left:4px}.relie .lien{background:none;border:0;padding:4px 0 0;color:inherit;text-decoration:underline;font-weight:600;font-size:13px}
+@media (prefers-color-scheme:dark){.relie{background:#1f3a26;color:#bfe6c8}}
 </style>
 </head>
 <body>
@@ -106,6 +108,7 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
   </div>
 </div>
 <h2 id="drive-titre">☁️ Sauvegarde sur le Drive <span id="pill" class="pill">non reliée</span></h2>
+<div id="relie-ok" class="relie" hidden><b>✅ Cet appareil est relié à ta feuille Google.</b><span id="relie-d"></span><br>Tout ce que tu fais est enregistré automatiquement sur le Drive, il n'y a rien d'autre à faire.<br><button type="button" class="lien" id="relie-modif">Modifier ou délier cet appareil</button></div>
 <details id="drive">
   <summary>Relier cet appareil à la feuille Google</summary>
   <p class="note">Tout ce que tu fais dans le jardin, le terrain, les courses, la to-do, les notes et les mots de passe est envoyé dans une feuille Google de ton Drive (téléchargeable en Excel), et revient sur les autres téléphones et ordinateurs reliés à la même feuille. Sans internet, l'appli marche quand même et envoie tout au retour du réseau.</p>
@@ -186,7 +189,13 @@ function pill() {
   const d = +localStorage.getItem('maison:derniere') || 0, ok = Maison.relie();
   $('pill').textContent = ok ? (d ? 'reliée · dernier échange ' + new Date(d).toLocaleString('fr-BE', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : 'reliée') : 'non reliée';
   $('pill').className = 'pill' + (ok ? ' ok' : '');
+  // Relié : on le dit clairement et on cache le formulaire (il reste accessible par « Modifier »)
+  $('relie-ok').hidden = !ok; $('drive').hidden = ok && !modifDrive;
+  const c = Maison.cfg();
+  $('relie-d').textContent = ok ? (c.qui ? ' Prénom : ' + c.qui + '.' : '') + (d ? ' Dernier échange : ' + new Date(d).toLocaleString('fr-BE', {day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'}) + '.' : '') : '';
 }
+let modifDrive = false;
+$('relie-modif').onclick = () => { modifDrive = true; pill(); $('drive').open = true; };
 pill();
 // Paramètres en bas de page : Drive, installation
 const ouvrirParam = oui => { $('param').hidden = !oui; $('b-param').setAttribute('aria-expanded', String(oui)); };
@@ -197,7 +206,7 @@ $('d-ok').onclick = async () => {
   if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(n.url)) { etat("Colle l'adresse complète du script (elle commence par https://script.google.com).", true); return; }
   if (!n.cle) { etat('Il manque le mot de passe.', true); return; }
   etat('Vérification…');
-  try { await Maison.tester(n); Maison.regler(n); etat('C\'est relié ✓ Ouvre une appli : ses données partent vers le Drive.'); pill(); }
+  try { await Maison.tester(n); Maison.regler(n); etat('C\'est relié ✓ Ouvre une appli : ses données partent vers le Drive.'); modifDrive = false; pill(); }
   catch (e) { etat(/mot de passe/.test(e.message) ? 'Mot de passe incorrect (celui écrit dans le script, ligne CLE).' : 'Le script ne répond pas. Vérifie l\'adresse et que l\'accès est bien « Tout le monde ».', true); }
 };
 $('d-non').onclick = () => { Maison.regler({}); ['d-url', 'd-cle'].forEach(i => $(i).value = ''); etat('Cet appareil n\'est plus relié. Ses données restent dessus.'); pill(); };
