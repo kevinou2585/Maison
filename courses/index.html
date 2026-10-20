@@ -155,8 +155,8 @@ function rendre() {
   if (V.mag) V.lieu = lieuDe(S.get(V.mag));
   if (V.lieu && !Maison.lieu.ouvert(V.lieu)) { V.lieu = null; V.mag = null; }
   garderVue();
-  $('retour').textContent = V.lieu && !V.mag ? '‹ Courses' : '‹ Happiness';
-  $('retour').href = V.lieu && !V.mag ? '#' : '../';
+  $('retour').textContent = V.mag ? '‹ ' + LIEUX[V.lieu][1] : V.lieu ? '‹ Courses' : '‹ Happiness';
+  $('retour').href = V.lieu ? '#' : '../';
   if (!V.lieu) return rendreLieux();
   if (!V.mag) { if (document.activeElement && document.activeElement.id === 'q') { rendreCompteurs(); resultats(); return; } return rendreMags(); }
   rendreMag(S.get(V.mag));
@@ -169,7 +169,10 @@ function rendreLieux() {
     return `<button class="mag lieu${n ? ' plein' : ''}" data-lieu="${k}"><b>${e} ${nom}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
   }).join('') + `</div>`;
 }
-document.getElementById('retour').addEventListener('click', e => { if (V.lieu && !V.mag) { e.preventDefault(); V.lieu = null; Q = ''; rendre(); scrollTo(0, 0); } });
+document.getElementById('retour').addEventListener('click', e => {
+  if (V.mag) { e.preventDefault(); V.mag = null; rendre(); scrollTo(0, 0); }   // magasin → liste des magasins
+  else if (V.lieu) { e.preventDefault(); V.lieu = null; Q = ''; rendre(); scrollTo(0, 0); }   // magasins → Maison / Chalet
+});
 
 function rendreMags() {
   document.title = 'Courses';
@@ -226,7 +229,8 @@ function rendreMag(m) {
     h += l.length ? `<div class="cat"><ul class="liste">` + l.map(a => `<li class="${a.pris ? 'pris' : ''}" data-pris="${a.id}"><div class="bx">${a.pris ? '✓' : ''}</div><span>${esc(a.nom)}${a.qte ? ` <small>× ${esc(a.qte)}</small>` : ''}</span><small>${esc((cats.find(c => c.id === a.cat) || {}).nom || '')}</small></li>`).join('') + `</ul></div>`
       : `<div class="vide">La liste est vide.<br>Passe dans « 📝 Ma liste » pour choisir quoi acheter.</div>`;
   }
-  h += `<div class="barre"><button data-a="mags">‹ Magasins ${LIEUX[lieuDe(m)][0]}</button>${V.mode === 'magasin' && achat.length ? `<span class="tot">${pris}/${achat.length} dans le caddie</span>${pris ? '<button class="go" data-a="fini">✓ Courses terminées</button>' : ''}` : `<span class="tot">${achat.length} à acheter</span>`}</div>`;
+  // Barre du bas seulement au magasin, pour le caddie (le retour aux magasins se fait en haut à gauche)
+  if (V.mode === 'magasin' && achat.length) h += `<div class="barre"><span class="tot">${pris}/${achat.length} dans le caddie</span>${pris ? '<button class="go" data-a="fini">✓ Courses terminées</button>' : ''}</div>`;
   $('app').innerHTML = h;
   const f = $('f-ajout');
   if (f) {
