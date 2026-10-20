@@ -22,3 +22,7 @@ Synchro : `sync.js` échange les données avec une feuille Google de ton Drive v
 (mode d'emploi en tête du script). La feuille garde un onglet lisible par partie, téléchargeable en Excel.
 
 `sw.js` : cache hors ligne. Changer `VERSION` à chaque mise en ligne.
+
+## Sauvegarde complète
+
+`sauvegarde.js` : dans ⚙️ Paramètres de l'accueil, « 💾 Sauvegarde complète » télécharge un seul `.zip` avec l'appli (`appli/`, liste des fichiers lue sur GitHub, sinon dans `sw.js`), toutes les données (`donnees/happiness-donnees.json`, prises sur le Drive et complétées par l'appareil) et les fichiers joints des notes. « Restaurer une sauvegarde » remet ces données sur l'appareil et les renvoie au Drive (la plus récente gagne). Mode d'emploi dans `LISEZ-MOI.txt`, à l'intérieur du zip.

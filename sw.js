@@ -1,8 +1,8 @@
 // Fait marcher l'appli sans internet. Changer VERSION à chaque mise en ligne pour rafraîchir le cache.
 // Le Drive (script.google.com) n'est jamais mis en cache : la synchro passe toujours par internet.
-const VERSION = 'maison-v25';
+const VERSION = 'maison-v26';
 const FICHIERS = [
-  './', './index.html', './manifest.webmanifest', './sync.js', './citations.js',
+  './', './index.html', './manifest.webmanifest', './sync.js', './citations.js', './sauvegarde.js',
   './jardin/', './courses/', './todo/', './terrain/', './mdp/', './notes/', './installer/', './le-fist/', './essai.html',
   './jdb/', './jdb/donnees.js', './jdb/moteur.js', './jdb/echanges.js', './jdb/app.js', './jdb/plan.html',
   './icones/maison-180.png', './icones/maison-192.png', './icones/maison-512.png',

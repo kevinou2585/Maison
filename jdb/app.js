@@ -287,6 +287,8 @@ function vueProjet(id) {
   <h2>✅ Étapes<span>${e.length ? n + ' / ' + e.length : ''}</span></h2>${e.length ? barre(n, e.length) : ''}
   <ul class="l" style="margin-top:8px">${e.map((x, i) => `<li class="${x.fait ? 'ok' : ''}"><button class="rond" data-etape="${i}" aria-label="${x.fait ? 'Décocher' : 'Cocher'}">${x.fait ? '✓' : ''}</button><div class="tx"><b>${esc(x.t)}</b>${x.fait ? `<small class="v">✓ ${esc(x.par || '')} ${x.le ? fmtJ(x.le) : ''}</small>` : ''}</div><span class="ed" style="display:flex"><button data-etsup="${i}" aria-label="Enlever l'étape">✕</button></span></li>`).join('')}
   <li><form id="f-etape" class="ligne" style="flex:1;flex-wrap:nowrap"><input id="i-etape" placeholder="＋ Ajouter une étape" autocomplete="off" enterkeyhint="done"><button class="btn go" aria-label="Ajouter">＋</button></form></li></ul>
+  <button class="btn go plein" data-projsauve="${p.id}" style="margin-top:16px">💾 Sauver</button>
+  <p class="mut" style="text-align:center;margin:6px 0 14px">Tout est aussi enregistré au fur et à mesure.</p>
   <button class="btn danger plein" data-projsup="${p.id}">🗑 Supprimer ce projet</button>`;
 }
 
@@ -488,6 +490,14 @@ document.addEventListener('click', async e => {
   if (b.id === 'b-exp') { J.exporter(); return; }
   // Projets
   if (d.nouveau === 'projet') { nouveauProjet(); return; }
+  if (d.projsauve) {   // Sauver : reprend chaque case (et l'étape en cours de frappe), puis retour à la liste
+    const p = TS.get(d.projsauve); if (!p) return;
+    document.querySelectorAll('[data-projet]').forEach(i => { const v = i.value.trim(); if (i.dataset.projet !== 'titre' || v) p[i.dataset.projet] = v; });
+    const et = $('i-etape') && $('i-etape').value.trim(); if (et) (p.etapes = p.etapes || []).push({t: et[0].toUpperCase() + et.slice(1), fait: false});
+    TS.put(p); location.hash = 'projets';
+    const t = document.createElement('div'); t.textContent = '✓ Projet « ' + p.titre + ' » enregistré'; t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2b2b;color:#fff;padding:10px 16px;border-radius:12px;z-index:50;font-weight:600;max-width:90vw';
+    document.body.appendChild(t); setTimeout(() => t.remove(), 2200); return;
+  }
   if (d.statut) { const p = TS.get(derniere.split('/')[1]); if (p) { p.statut = d.statut; TS.put(p); rendre(); } return; }
   if (d.etape != null) { const p = TS.get(derniere.split('/')[1]); if (p) { const x = p.etapes[+d.etape]; x.fait = !x.fait; x.par = x.fait ? qui() : ''; x.le = x.fait ? J.auj() : ''; if (p.etapes.length && p.etapes.every(y => y.fait) && p.statut !== 'fait') p.statut = 'fait'; else if (p.statut === 'idee' || p.statut === 'prevu' || (p.statut === 'fait' && !p.etapes.every(y => y.fait))) p.statut = 'encours'; TS.put(p); rendre(); } return; }
   if (d.etsup != null) { const p = TS.get(derniere.split('/')[1]); if (p) { p.etapes.splice(+d.etsup, 1); TS.put(p); rendre(); } return; }
