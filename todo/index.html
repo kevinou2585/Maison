@@ -36,8 +36,6 @@ input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:10
 form.ajout{display:flex;gap:6px}
 form.ajout input{flex:1}
 @media (max-width:480px){form.ajout{flex-wrap:wrap}form.ajout input{flex:1 1 100%}form.ajout select{flex:1}}
-.idees{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
-.idees button{border-radius:99px;padding:6px 11px;font-weight:500;font-size:14px;color:var(--muted)}
 .cherche{display:flex;gap:6px;margin:14px 0 0}
 .cherche input{flex:1}
 ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -77,7 +75,6 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 </div>
 <div id="vue" hidden>
   <form class="ajout" id="f"><input type="text" id="i" placeholder="Nouvelle chose à faire…" autocomplete="off" enterkeyhint="done"><select id="niv" aria-label="Pour quand"></select><button class="go" aria-label="Ajouter">＋</button></form>
-  <div class="idees" id="idees"></div>
   <div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher dans cette liste" autocomplete="off"></div>
   <div id="liste"></div>
 </div>
@@ -99,7 +96,6 @@ const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 const LISTES = {kevin: ['🙋‍♂️', 'Kevin'], camille: ['🙋‍♀️', 'Camille'], commun: ['🏡', 'Commun']};
 const NIV = ['urgent', 'semaine', 'mois', 'annee'];
 const NOM = {urgent: 'Urgent', semaine: 'Cette semaine', mois: 'Ce mois-ci', annee: 'Cette année'};
-const IDEES = ['Sortir les poubelles', 'Payer les factures', 'Prendre rendez-vous', 'Nettoyer les gouttières', 'Ranger le garage'];
 const jour = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 const fmtJ = k => new Date(k + 'T12:00').toLocaleDateString('fr-BE', {weekday: 'long', day: 'numeric', month: 'long'});
 const fmtH = t => new Date(t).toLocaleString('fr-BE', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
@@ -180,7 +176,7 @@ function rendre() {
   }
   const arch = L === 'archives';
   $('titre').textContent = arch ? '🗄️ Archives' : LISTES[L][0] + ' ' + LISTES[L][1];
-  $('f').hidden = $('idees').hidden = arch;
+  $('f').hidden = arch;
   $('q').placeholder = arch ? '🔎 Rechercher dans les archives' : '🔎 Rechercher dans cette liste';
   const mes = arch ? T.filter(t => t.fait) : T.filter(t => t.liste === L);
   const q = $('q').value.trim();
@@ -197,7 +193,6 @@ function rendre() {
   const fait = mes.filter(t => t.fait).sort((a, b) => b.faitLe - a.faitLe);
   if (fait.length) h += `<h2>Fait récemment<span><a href="#archives">Toutes les archives ›</a></span></h2><ul>${fait.slice(0, 5).map(t => ligne(t, now)).join('')}</ul>`;
   $('liste').innerHTML = h;
-  $('idees').innerHTML = IDEES.filter(x => !afaire.some(t => t.titre === x)).slice(0, 4).map(x => `<button type="button" data-i="${esc(x)}">＋ ${esc(x)}</button>`).join('');
 }
 
 function ajouter(titre, niv) {
@@ -209,11 +204,10 @@ function ajouter(titre, niv) {
 $('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('niv').value); $('i').value = ''; $('i').focus(); };
 let ED = null;
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-l],[data-c],[data-e],[data-i],#plus');
+  const b = e.target.closest('[data-l],[data-c],[data-e],#plus');
   if (!b || b.closest('dialog')) return;
   if (b.id === 'plus') { montrerTout = true; rendre(); return; }
   if (b.dataset.l) { location.hash = b.dataset.l; return; }
-  if (b.dataset.i) { ajouter(b.dataset.i, $('niv').value); return; }
   if (b.dataset.c) {
     const t = S.get(b.dataset.c); if (!t) return;
     t.fait = !t.fait; t.faitLe = t.fait ? Date.now() : null; t.faitPar = t.fait ? (Maison.cfg().qui || '') : '';
