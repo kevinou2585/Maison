@@ -100,7 +100,8 @@ details.acc>.in{padding:0 14px 14px}
 .pourquoi{color:var(--muted);font-size:14px}
 .qui{font-size:13px;color:var(--c);font-weight:700}
 .ed{display:none;gap:4px;flex:none}
-.haut .param{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:7px 11px;font-weight:600;font-size:14px;color:var(--fg)}
+.pied{text-align:center;margin:30px 0 6px}
+.pied .param{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:7px 11px;font-weight:600;font-size:14px;color:var(--fg)}
 .crayon{display:none;margin-left:8px;vertical-align:middle;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:2px 8px;font-size:14px;font-weight:600;color:var(--fg)}
 body.edition .crayon{display:inline-block}
 .bandeau{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,#f9a825 20%,var(--surface));border:1px solid #f9a825;font-size:14px;font-weight:600}
@@ -186,8 +187,9 @@ dialog .tags input{width:auto}
 </head>
 <body>
 <main>
-  <div class="haut"><a class="retour" id="retour" href="../">‹ Happiness</a><button type="button" class="param" id="b-param" aria-label="Paramètres">⚙️ Paramètres</button></div>
+  <div class="haut"><a class="retour" id="retour" href="../">‹ Happiness</a></div>
   <div id="vue"></div>
+  <div class="pied"><button type="button" class="param" id="b-param">⚙️ Paramètres</button></div>
 </main>
 <dialog id="dlg"><form method="dialog" id="dlg-f"><h3 id="dlg-t"></h3><div class="form" id="dlg-c"></div><p class="erreur" id="dlg-e"></p><div class="btns" id="dlg-b"></div></form></dialog>
 <script src="../sync.js"></script>

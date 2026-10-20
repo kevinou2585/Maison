@@ -35,18 +35,22 @@ a.tuile.principale img{width:88px;height:88px}
 a.tuile.principale b{font-size:20px}
 a.tuile.principale span{font-size:14px}
 @media (min-width:640px){.tuiles{grid-template-columns:repeat(3,1fr)}}
-a.grand{display:flex;align-items:center;gap:16px;padding:20px 18px;border-radius:24px;background:linear-gradient(140deg,#2e7d32,#66bb6a 60%,#c5e1a5);color:#fff;text-decoration:none;box-shadow:0 8px 22px #2e7d3240}
+a.grand{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:24px;background:linear-gradient(140deg,#2e7d32,#66bb6a 60%,#c5e1a5);color:#fff;text-decoration:none;box-shadow:0 8px 22px #2e7d3240}
 a.grand:active,.petites a:active,.sections a:active{transform:scale(.97)}
-a.grand img{width:96px;height:96px;border-radius:24px;box-shadow:0 3px 10px #0003;flex:none}
-a.grand b{display:block;font-size:24px;line-height:1.15}
+a.grand img{width:70px;height:70px;border-radius:19px;box-shadow:0 3px 10px #0003;flex:none}
+a.grand b{display:block;font-size:21px;line-height:1.15}
 a.grand span{display:block;margin-top:4px;font-size:14px;opacity:.92}
 .sections{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 0}
 .sections a{padding:10px 6px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:inherit;text-decoration:none;text-align:center;font-weight:600;font-size:14px}
-.petites{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:22px}
+.petites{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:22px}
 .petites a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px;border-radius:16px;color:inherit;text-decoration:none;text-align:center}
-.petites img{width:54px;height:54px;border-radius:15px;box-shadow:0 2px 6px #0002}
-.petites b{font-size:12px;font-weight:600;line-height:1.2}
-@media (min-width:640px){.sections{grid-template-columns:repeat(6,1fr)}.petites img{width:64px;height:64px}.petites b{font-size:14px}}
+.petites img{width:64px;height:64px;border-radius:17px;box-shadow:0 2px 6px #0002}
+.petites b{font-size:13px;font-weight:600;line-height:1.2}
+@media (min-width:640px){.sections{grid-template-columns:repeat(6,1fr)}.petites img{width:76px;height:76px}.petites b{font-size:14px}}
+.pied{text-align:center;margin:34px 0 0}
+.pied button{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:8px 12px}
+#param{margin-top:8px}
+#installe-bloc{margin-top:8px!important}
 h2{font-size:17px;margin:30px 0 8px}
 details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
 summary{font-weight:600;cursor:pointer}
@@ -72,6 +76,20 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 </head>
 <body>
 <div class="top"><img src="icones/maison-192.png" alt=""><div><h1>Happiness</h1><blockquote id="citation" class="sub"></blockquote></div></div>
+<a class="grand" href="jdb/"><img src="icones/jardin-192.png" alt=""><div><b>Jardin du Bonheur</b><span>Verger, potager, ornement, terrain, projets et pensées</span></div></a>
+<div class="sections">
+  <a href="jdb/#verger/mois">🍎 Verger</a><a href="jdb/#potager/mois">🥕 Potager</a><a href="jdb/#ornement/mois">🌸 Ornement</a><a href="terrain/">🚜 Terrain</a><a href="jdb/#projets">🏗️ Projets</a><a href="jdb/#pensees">💬 Pensées</a>
+</div>
+<div class="petites">
+  <a href="todo/"><img src="icones/todo-192.png" alt=""><b>To do</b></a>
+  <a href="courses/"><img src="icones/courses-192.png" alt=""><b>Courses</b></a>
+  <a href="mdp/"><img src="icones/mdp-192.png" alt=""><b>Mots de passe</b></a>
+  <a href="le-fist/"><img src="icones/le-fist-192.png" alt=""><b>Le Fist</b></a>
+  <a href="notes/"><img src="icones/notes-192.png" alt=""><b>Notes</b></a>
+</div>
+
+<div class="pied"><button type="button" id="b-param" aria-expanded="false">⚙️ Paramètres</button></div>
+<section id="param" hidden>
 <div id="installe-bloc">
   <b>📲 Mettre l'appli sur ton téléphone</b>
   <div id="ib-1"><p class="note" style="margin:6px 0 0">Ouvre ce lien dans <b>Safari</b> (iPhone) ou <b>Chrome</b> (Android), pas depuis WhatsApp, un mail ou l'appli Claude. Puis touche le bouton :</p>
@@ -85,18 +103,6 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
     <button id="installer2" class="go" type="button" hidden style="width:100%;margin-top:10px">Installer maintenant</button>
   </div>
 </div>
-<a class="grand" href="jdb/"><img src="icones/jardin-192.png" alt=""><div><b>Jardin du Bonheur</b><span>Verger, potager, ornement, terrain, projets et pensées</span></div></a>
-<div class="sections">
-  <a href="jdb/#verger/mois">🍎 Verger</a><a href="jdb/#potager/mois">🥕 Potager</a><a href="jdb/#ornement/mois">🌸 Ornement</a><a href="terrain/">🚜 Terrain</a><a href="jdb/#projets">🏗️ Projets</a><a href="jdb/#pensees">💬 Pensées</a>
-</div>
-<div class="petites">
-  <a href="todo/"><img src="icones/todo-192.png" alt=""><b>To do</b></a>
-  <a href="courses/"><img src="icones/courses-192.png" alt=""><b>Courses</b></a>
-  <a href="mdp/"><img src="icones/mdp-192.png" alt=""><b>Mots de passe</b></a>
-  <a href="le-fist/"><img src="icones/le-fist-192.png" alt=""><b>Le Fist</b></a>
-  <a href="notes/"><img src="icones/notes-192.png" alt=""><b>Notes</b></a>
-</div>
-
 <h2 id="drive-titre">☁️ Sauvegarde sur le Drive <span id="pill" class="pill">non reliée</span></h2>
 <details id="drive">
   <summary>Relier cet appareil à la feuille Google</summary>
@@ -125,6 +131,8 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 <details><summary>Android</summary><ol><li>Ouvre cette page dans Chrome.</li><li>Menu ⋮ › « Installer l'application » (ou « Ajouter à l'écran d'accueil »).</li></ol><button id="installer" type="button" hidden>Installer maintenant</button></details>
 <details><summary>Ordinateur</summary><p class="note">Dans Chrome ou Edge, l'icône d'installation apparaît à droite de la barre d'adresse. Tu peux aussi simplement mettre cette page en favori.</p></details>
 
+</section>
+
 <script src="sync.js"></script>
 <script src="citations.js"></script>
 <script>
@@ -148,7 +156,10 @@ function pill() {
   $('pill').className = 'pill' + (ok ? ' ok' : '');
 }
 pill();
-if (location.hash === '#drive' || !Maison.relie()) $('drive').open = location.hash === '#drive';
+// Paramètres en bas de page : Drive, installation
+const ouvrirParam = oui => { $('param').hidden = !oui; $('b-param').setAttribute('aria-expanded', String(oui)); };
+$('b-param').onclick = () => { ouvrirParam($('param').hidden); if (!$('param').hidden) $('param').scrollIntoView({behavior: 'smooth', block: 'start'}); };
+if (location.hash === '#drive') { ouvrirParam(true); $('drive').open = true; setTimeout(() => $('drive-titre').scrollIntoView(), 50); }
 $('d-ok').onclick = async () => {
   const n = {url: $('d-url').value.trim(), cle: $('d-cle').value.trim(), qui: $('d-qui').value.trim()};
   if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(n.url)) { etat("Colle l'adresse complète du script (elle commence par https://script.google.com).", true); return; }
@@ -161,7 +172,7 @@ $('d-non').onclick = () => { Maison.regler({}); ['d-url', 'd-cle'].forEach(i => 
 // Appli installée : pas de bloc d'installation. Page installer/ : les étapes ②.
 if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) document.body.classList.add('installe');
 const surInstaller = /\/installer\/(index\.html)?$/.test(location.pathname);
-if (surInstaller) { if (document.body.classList.contains('installe')) location.replace('./'); $('ib-1').hidden = true; $('ib-2').hidden = false; }
+if (surInstaller) { if (document.body.classList.contains('installe')) location.replace('./'); $('ib-1').hidden = true; $('ib-2').hidden = false; ouvrirParam(true); }
 let invite = null;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); invite = e; $('installer').hidden = false; $('installer2').hidden = false; });
 $('installer2').onclick = () => $('installer').click();
