@@ -75,6 +75,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 .mag.lieu{grid-column:1/-1}.mag.lieu b{font-size:22px}
 .verrou{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted,#777);font-size:14px;text-decoration:underline;cursor:pointer}
 .bouge{display:inline-flex;gap:4px;margin-left:auto}.cat>h3 .bouge+small{margin-left:0;min-width:44px;text-align:right}.bouge button{padding:2px 8px;font-size:12px;line-height:1.4;border-radius:8px;color:var(--muted,#777)}.bouge button:disabled{opacity:.3}
+.affiche{display:flex;gap:8px;margin:0 0 12px}.affiche button{flex:1;padding:8px;font-size:14px}.affiche button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 </style>
 </head>
 <body>
@@ -148,6 +149,7 @@ const S = Maison.store('courses', {
 });
 
 let V = {lieu: null, mag: null, mode: 'liste', edit: false};
+const catsOn = () => { try { return localStorage.getItem('courses:cats') !== '0'; } catch (e) { return true; } };
 try { V = Object.assign(V, JSON.parse(sessionStorage.getItem('courses:vue')) || {}); } catch (e) {}
 const garderVue = () => { try { sessionStorage.setItem('courses:vue', JSON.stringify(V)); } catch (e) {} };
 
@@ -226,9 +228,18 @@ function rendreMag(m) {
       `</div><div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button data-a="ncat">＋ Catégorie</button><button data-a="edit" aria-pressed="${V.edit}">${V.edit ? '✓ Fini de modifier' : '✎ Modifier les articles'}</button>${achat.length ? '<button data-a="vider">Vider la liste</button>' : ''}</div>`;
   } else {
     const ordre = a => { const c = cats.findIndex(x => x.id === a.cat); return c < 0 ? 1e9 : c; };
-    const l = achat.slice().sort((a, b) => (a.pris - b.pris) || ordre(a) - ordre(b) || a.nom.localeCompare(b.nom, 'fr'));
-    h += l.length ? `<div class="cat"><ul class="liste">` + l.map(a => `<li class="${a.pris ? 'pris' : ''}" data-pris="${a.id}"><div class="bx">${a.pris ? '✓' : ''}</div><span>${esc(a.nom)}${a.qte ? ` <small>× ${esc(a.qte)}</small>` : ''}</span><small>${esc((cats.find(c => c.id === a.cat) || {}).nom || '')}</small></li>`).join('') + `</ul></div>`
-      : `<div class="vide">La liste est vide.<br>Passe dans « 📝 Ma liste » pour choisir quoi acheter.</div>`;
+    const alpha = (a, b) => a.nom.localeCompare(b.nom, 'fr', {sensitivity: 'base', numeric: true});
+    const li = (a, cat) => `<li class="${a.pris ? 'pris' : ''}" data-pris="${a.id}"><div class="bx">${a.pris ? '✓' : ''}</div><span>${esc(a.nom)}${a.qte ? ` <small>× ${esc(a.qte)}</small>` : ''}</span>${cat ? `<small>${esc((cats.find(c => c.id === a.cat) || {}).nom || '')}</small>` : ''}</li>`;
+    if (!achat.length) h += `<div class="vide">La liste est vide.<br>Passe dans « 📝 Ma liste » pour choisir quoi acheter.</div>`;
+    else {
+      // Afficher les catégories ou une seule liste : le choix reste retenu
+      h += `<div class="affiche"><button data-a="vcats" aria-pressed="${catsOn()}">🗂️ Par catégorie</button><button data-a="vliste" aria-pressed="${!catsOn()}">📃 Une seule liste</button></div>`;
+      if (!catsOn()) h += `<div class="cat"><ul class="liste">` + achat.slice().sort((a, b) => (a.pris - b.pris) || alpha(a, b)).map(a => li(a, false)).join('') + `</ul></div>`;
+      else {
+        const gr = [...cats, {id: '__', nom: 'Sans catégorie'}].map(c => [c, achat.filter(a => c.id === '__' ? ordre(a) === 1e9 : a.cat === c.id).sort((a, b) => (a.pris - b.pris) || alpha(a, b))]).filter(([, l]) => l.length);
+        h += gr.map(([c, l]) => `<section class="cat"><h3>${esc(c.nom)}<small>${l.filter(a => a.pris).length}/${l.length}</small></h3><ul class="liste">${l.map(a => li(a, false)).join('')}</ul></section>`).join('');
+      }
+    }
   }
   // Barre du bas seulement au magasin, pour le caddie (le retour aux magasins se fait en haut à gauche)
   if (V.mode === 'magasin' && achat.length) h += `<div class="barre"><span class="tot">${pris}/${achat.length} dans le caddie</span>${pris ? '<button class="go" data-a="fini">✓ Courses terminées</button>' : ''}</div>`;
@@ -304,6 +315,7 @@ document.addEventListener('click', e => {
       cs.forEach((c, k) => { if (c.ordre !== k) { c.ordre = k; S.put(c); } });
       rendre(); const el = document.querySelector(`.cat[data-cat="${t.dataset.id}"]`); if (el) el.scrollIntoView({block: 'center'}); break;
     }
+    case 'vcats': case 'vliste': V.cats = t.dataset.a === 'vcats'; try { localStorage.setItem('courses:cats', V.cats ? '1' : '0'); } catch (e) {} rendre(); break;
     case 'edit': V.edit = !V.edit; rendre(); break;
     case 'vider': if (confirm('Enlever tous les articles de la liste de ' + m.nom + ' ?')) { S.tous('art').filter(a => a.mag === m.id && a.achat).forEach(a => { a.achat = false; a.pris = false; S.put(a); }); rendre(); } break;
     case 'fini': {
