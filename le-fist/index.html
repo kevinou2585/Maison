@@ -35,6 +35,7 @@ h2{font-size:18px;margin:18px 0 8px}
 .choix{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .choix button{min-width:0;padding:12px 2px;font-weight:700;font-size:19px;text-align:center;white-space:nowrap}
 .choix button.txt{font-size:14px;letter-spacing:-.01em}
+.choix.format{grid-template-columns:repeat(3,1fr)}.choix.format button{white-space:normal;line-height:1.2;padding:10px 4px;font-size:15px}
 .choix button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .joueur{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .joueur input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
@@ -136,7 +137,7 @@ function accueil(){
     <div class="choix">${[101,301,501,'cricket'].map(n=>`<button data-dep="${n}" class="${S.depart===n?'on':''} ${n==='cricket'?'txt':''}">${n==='cricket'?'Cricket':n}</button>`).join('')}</div>
     ${S.depart==='cricket'?'<p class="sous" style="margin:10px 0 0;font-size:14px">Ferme 15 à 20 et le Bull (3 touches chacun : simple 1, double 2, triple 3). Une fois fermé, chaque touche en plus marque des points tant qu\'un adversaire ne l\'a pas fermé. Gagne celui qui a tout fermé avec au moins autant de points que les autres.</p>':''}
     <h2>Format</h2>
-    <div class="choix">${[[1,'Chacun pour soi'],[2,'Équipes de 2'],[3,'Équipes de 3']].map(([e,t])=>`<button data-eq="${e}" class="txt ${S.equipe===e?'on':''}">${t}</button>`).join('')}</div>
+    <div class="choix format">${[[1,'Chacun pour soi'],[2,'Équipes de 2'],[3,'Équipes de 3']].map(([e,t])=>`<button data-eq="${e}" class="txt ${S.equipe===e?'on':''}">${t}</button>`).join('')}</div>
     <h2>Joueurs <span class="sous" style="font-weight:400;font-size:14px">(${S.equipe>1?'rangés par équipe, ↑ pour changer d\'équipe':'dans l\'ordre de jeu'})</span></h2>
     <div id="joueurs">${S.noms.map((n,i)=>`${S.equipe>1&&i%S.equipe===0?`<div class="eq-tit">Équipe ${i/S.equipe+1}</div>`:''}
       <div class="joueur"><input data-i="${i}" value="${esc(n)}" placeholder="Joueur ${i+1}" autocomplete="off">
