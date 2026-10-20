@@ -69,7 +69,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 </style>
 </head>
 <body>
-<a class="retour" href="../">‹ Happiness</a>
+<a class="retour" href="../jdb/">‹ Jardin du Bonheur</a>
 <h1>🚜 Gestion du terrain</h1>
 <p class="sous" id="periode"></p>
 <div class="onglets" id="onglets"><button data-o="semaine" aria-pressed="true">Cette semaine</button><button data-o="mois" aria-pressed="false">Ce mois-ci</button><button data-o="histo" aria-pressed="false">Historique</button></div>
@@ -91,6 +91,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
   <div class="btns"><button type="button" class="suppr" id="e-s">Supprimer</button><button type="button" id="e-a">Annuler</button><button class="go">OK</button></div>
 </form></dialog>
 <script src="../sync.js"></script>
+<script src="../jdb/echanges.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -152,12 +153,12 @@ const S = Maison.store('terrain', {
     const etat = t => { const c = C.find(c => c.tache === t.id && c.periode === periode(t.freq, now)); return c ? ['Fait', fmtD(c.le), c.par || ''] : [enSaison(t, now) ? 'À faire' : 'Hors saison', '', '']; };
     const tache = id => T.find(t => t.id === id);
     const h = C.filter(c => tache(c.tache)).sort((a, b) => b.le - a.le);
-    return {
+    return Object.assign(ECHANGES.tables(recs), {
       'Terrain – canevas': [['Quand', 'Où', 'Tâche', 'Saison', 'Qui', 'En ce moment', 'Fait le', 'Par', 'Note'],
         ...l.map(t => [FREQ[t.freq], t.zone, t.titre, saisonTxt(t.saison), t.pour || 'Tout le monde', ...etat(t), t.note || ''])],
       'Terrain – historique': [['Fait le', 'Tâche', 'Où', 'Quand', 'Par'],
         ...h.map(c => { const t = tache(c.tache); return [fmtD(c.le), t.titre, t.zone, FREQ[t.freq], c.par || '']; })]
-    };
+    });
   }
 });
 
