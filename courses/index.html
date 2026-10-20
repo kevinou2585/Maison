@@ -72,10 +72,11 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 .res li{cursor:pointer}
 .res li.on .bx{background:var(--accent);border-color:var(--accent)}
 .res li em{font-style:normal;color:var(--muted);font-size:13px;display:block}
+.mag.lieu{grid-column:1/-1}.mag.lieu b{font-size:22px}
 </style>
 </head>
 <body>
-<a class="retour" href="../">‹ Happiness</a>
+<a class="retour" id="retour" href="../">‹ Happiness</a>
 <main id="app"></main>
 <dialog id="dlg"><form method="dialog" id="dlg-f"></form></dialog>
 <script src="../sync.js"></script>
@@ -113,49 +114,66 @@ const PRE = [
     ['Hygiène', 'Papier toilette, Gel douche, Dentifrice'],
     ['Animaux', 'Croquettes chien, Friandises chien']]]
 ];
+// Deux habitats sur le terrain : la maison et le chalet ont chacun leurs magasins et leurs listes.
+// Les magasins de la maison gardent leurs identifiants d'avant ; ceux du chalet commencent par « ch- ».
+const LIEUX = {maison: ['🏡', 'Maison'], chalet: ['🛖', 'Chalet']};
+const lieuDe = m => (m && m.lieu) || 'maison';
 const GR = [];
-PRE.forEach(([mag, cats], mi) => {
-  const m = 'm-' + slug(mag);
-  GR.push({id: m, type: 'mag', nom: mag, ordre: mi});
+[['maison', ''], ['chalet', 'ch-']].forEach(([lieu, px]) => PRE.forEach(([mag, cats], mi) => {
+  const m = px + 'm-' + slug(mag);
+  GR.push({id: m, type: 'mag', nom: mag, ordre: mi, lieu});
   cats.forEach(([cat, arts], ci) => {
     const c = m + '-' + slug(cat);
     GR.push({id: c, type: 'cat', mag: m, nom: cat, ordre: ci});
     arts.split(', ').forEach(a => GR.push({id: c + '-' + slug(a), type: 'art', mag: m, cat: c, nom: a, achat: false, pris: false, qte: ''}));
   });
-});
+}));
 
 const parOrdre = (a, b) => (a.ordre ?? 1e9) - (b.ordre ?? 1e9) || a.nom.localeCompare(b.nom, 'fr');
 const S = Maison.store('courses', {
   graines: GR,
   recu: () => rendre(),
   tables(recs) {
-    const mags = recs.filter(r => r.type === 'mag').sort(parOrdre), cats = {};
+    const mags = recs.filter(r => r.type === 'mag').sort((a, b) => lieuDe(b).localeCompare(lieuDe(a)) || parOrdre(a, b)), cats = {};
     recs.filter(r => r.type === 'cat').forEach(c => { cats[c.id] = c; });
     const lignes = [];
     mags.forEach(m => recs.filter(r => r.type === 'art' && r.mag === m.id)
       .sort((a, b) => ((cats[a.cat] || {}).ordre ?? 1e9) - ((cats[b.cat] || {}).ordre ?? 1e9) || a.nom.localeCompare(b.nom, 'fr'))
-      .forEach(a => lignes.push([m.nom, (cats[a.cat] || {}).nom || '—', a.nom, a.qte || '', a.achat ? 'Oui' : '', a.achat && a.pris ? 'Oui' : ''])));
-    const t = ['Magasin', 'Catégorie', 'Article', 'Quantité', 'À acheter', 'Dans le caddie'];
-    return {'Courses – à acheter': [t, ...lignes.filter(l => l[4])], 'Courses – tous les articles': [t, ...lignes]};
+      .forEach(a => lignes.push([LIEUX[lieuDe(m)][1], m.nom, (cats[a.cat] || {}).nom || '—', a.nom, a.qte || '', a.achat ? 'Oui' : '', a.achat && a.pris ? 'Oui' : ''])));
+    const t = ['Lieu', 'Magasin', 'Catégorie', 'Article', 'Quantité', 'À acheter', 'Dans le caddie'];
+    return {'Courses – à acheter': [t, ...lignes.filter(l => l[5])], 'Courses – tous les articles': [t, ...lignes]};
   }
 });
 
-let V = {mag: null, mode: 'liste', edit: false};
+let V = {lieu: null, mag: null, mode: 'liste', edit: false};
 try { V = Object.assign(V, JSON.parse(sessionStorage.getItem('courses:vue')) || {}); } catch (e) {}
 const garderVue = () => { try { sessionStorage.setItem('courses:vue', JSON.stringify(V)); } catch (e) {} };
 
 function rendre() {
   if (V.mag && !S.get(V.mag)) V.mag = null;
+  if (V.mag) V.lieu = lieuDe(S.get(V.mag));
   garderVue();
+  $('retour').textContent = V.lieu && !V.mag ? '‹ Courses' : '‹ Happiness';
+  $('retour').href = V.lieu && !V.mag ? '#' : '../';
+  if (!V.lieu) return rendreLieux();
   if (!V.mag) { if (document.activeElement && document.activeElement.id === 'q') { rendreCompteurs(); resultats(); return; } return rendreMags(); }
   rendreMag(S.get(V.mag));
 }
 
+function rendreLieux() {
+  document.title = 'Courses';
+  $('app').innerHTML = `<h1>🧺 Courses</h1><div class="mags">` + Object.entries(LIEUX).map(([k, [e, nom]]) => {
+    const ms = S.tous('mag').filter(m => lieuDe(m) === k).map(m => m.id), n = S.tous('art').filter(a => ms.includes(a.mag) && a.achat && !a.pris).length;
+    return `<button class="mag lieu${n ? ' plein' : ''}" data-lieu="${k}"><b>${e} ${nom}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
+  }).join('') + `</div>`;
+}
+document.getElementById('retour').addEventListener('click', e => { if (V.lieu && !V.mag) { e.preventDefault(); V.lieu = null; Q = ''; rendre(); scrollTo(0, 0); } });
+
 function rendreMags() {
   document.title = 'Courses';
   setTimeout(() => { const i = $('q'); if (!i) return; i.oninput = () => { Q = i.value; resultats(); }; Maison.dictee(i); resultats(); }, 0);
-  const mags = S.tous('mag').sort(parOrdre);
-  $('app').innerHTML = `<h1>🧺 Courses</h1><div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher un article dans tous les magasins" autocomplete="off" value="${esc(Q)}"></div><div id="res" class="res"></div><div class="mags">` + mags.map(m => {
+  const mags = S.tous('mag').filter(m => lieuDe(m) === V.lieu).sort(parOrdre);
+  $('app').innerHTML = `<h1>${LIEUX[V.lieu][0]} Courses · ${LIEUX[V.lieu][1]}</h1><div class="cherche"><input id="q" type="search" placeholder="🔎 Rechercher un article dans tous les magasins" autocomplete="off" value="${esc(Q)}"></div><div id="res" class="res"></div><div class="mags">` + mags.map(m => {
     const n = S.tous('art').filter(a => a.mag === m.id && a.achat && !a.pris).length;
     return `<button class="mag${n ? ' plein' : ''}" data-mag="${m.id}"><b>${esc(m.nom)}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
   }).join('') + `<button class="mag ajout" data-a="nmag">＋ Nouveau magasin</button></div>
@@ -175,7 +193,7 @@ function resultats() {
   const q = norm(Q);
   if (!q) { box.innerHTML = ''; return; }
   const mags = {}, cats = {};
-  S.tous('mag').forEach(m => { mags[m.id] = m; }); S.tous('cat').forEach(c => { cats[c.id] = c; });
+  S.tous('mag').filter(m => lieuDe(m) === V.lieu).forEach(m => { mags[m.id] = m; }); S.tous('cat').forEach(c => { cats[c.id] = c; });
   const l = S.tous('art').filter(a => mags[a.mag] && norm(a.nom).includes(q))
     .sort((a, b) => (norm(a.nom).startsWith(q) ? 0 : 1) - (norm(b.nom).startsWith(q) ? 0 : 1) || a.nom.localeCompare(b.nom, 'fr') || parOrdre(mags[a.mag], mags[b.mag]));
   box.innerHTML = l.length
@@ -205,7 +223,7 @@ function rendreMag(m) {
     h += l.length ? `<div class="cat"><ul class="liste">` + l.map(a => `<li class="${a.pris ? 'pris' : ''}" data-pris="${a.id}"><div class="bx">${a.pris ? '✓' : ''}</div><span>${esc(a.nom)}${a.qte ? ` <small>× ${esc(a.qte)}</small>` : ''}</span><small>${esc((cats.find(c => c.id === a.cat) || {}).nom || '')}</small></li>`).join('') + `</ul></div>`
       : `<div class="vide">La liste est vide.<br>Passe dans « 📝 Ma liste » pour choisir quoi acheter.</div>`;
   }
-  h += `<div class="barre"><button data-a="mags">‹ Magasins</button>${V.mode === 'magasin' && achat.length ? `<span class="tot">${pris}/${achat.length} dans le caddie</span>${pris ? '<button class="go" data-a="fini">✓ Courses terminées</button>' : ''}` : `<span class="tot">${achat.length} à acheter</span>`}</div>`;
+  h += `<div class="barre"><button data-a="mags">‹ Magasins ${LIEUX[lieuDe(m)][0]}</button>${V.mode === 'magasin' && achat.length ? `<span class="tot">${pris}/${achat.length} dans le caddie</span>${pris ? '<button class="go" data-a="fini">✓ Courses terminées</button>' : ''}` : `<span class="tot">${achat.length} à acheter</span>`}</div>`;
   $('app').innerHTML = h;
   const f = $('f-ajout');
   if (f) {
@@ -241,9 +259,10 @@ document.addEventListener('click', e => {
   if (o) { V.mag = o.dataset.ouvrir; V.mode = 'liste'; V.edit = false; rendre(); scrollTo(0, 0); return; }
   const g = e.target.closest('[data-tog]');
   if (g) { const a = S.get(g.dataset.tog); if (a) { a.achat = !a.achat; a.pris = false; S.put(a); } resultats(); document.querySelectorAll('.mag[data-mag]').length && rendreCompteurs(); return; }
-  const t = e.target.closest('[data-mag],[data-mode],[data-art],[data-pris],[data-a]');
+  const t = e.target.closest('[data-lieu],[data-mag],[data-mode],[data-art],[data-pris],[data-a]');
   if (!t || t.closest('dialog')) return;
   const m = V.mag && S.get(V.mag);
+  if (t.dataset.lieu) { V.lieu = t.dataset.lieu; V.mag = null; Q = ''; rendre(); scrollTo(0, 0); return; }
   if (t.dataset.mag) { V.mag = t.dataset.mag; V.mode = S.tous('art').some(a => a.mag === V.mag && a.achat && !a.pris) && V.mode === 'magasin' ? 'magasin' : 'liste'; V.edit = false; rendre(); scrollTo(0, 0); return; }
   if (t.dataset.mode) { V.mode = t.dataset.mode; V.edit = false; rendre(); return; }
   if (t.dataset.art) {
@@ -260,7 +279,7 @@ document.addEventListener('click', e => {
     case 'mags': V.mag = null; rendre(); scrollTo(0, 0); break;
     case 'nmag': dialogue('Nouveau magasin', [{l: 'Nom du magasin', p: 'ex. Delhaize'}], ([nom]) => {
       if (!nom) return false;
-      const id = S.id(); S.put({id, type: 'mag', nom, ordre: S.tous('mag').length});
+      const id = S.id(); S.put({id, type: 'mag', nom, ordre: S.tous('mag').filter(x => lieuDe(x) === V.lieu).length, lieu: V.lieu});
       ['Fruits et légumes', 'Frais', 'Épicerie'].forEach((c, i) => S.put({id: S.id() + i, type: 'cat', mag: id, nom: c, ordre: i}));
       V.mag = id; V.mode = 'liste';
     }); break;

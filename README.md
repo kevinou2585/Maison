@@ -10,9 +10,9 @@ Appli de la maison, servie par GitHub Pages et installable sur téléphone et or
   `python3 outils/construire-plan.py` depuis `jardin/index.html`.
 - `jardin/` : l'ancien Jardin du Bonheur, d'où vient le plan. Page générée par
   `python3 outils/construire-jardin.py <fichier du jardin>.html` à partir du fichier d'origine, qui n'est pas modifié.
-- `courses/` : une liste par magasin, à préparer à la maison et cocher au magasin.
+- `courses/` : on choisit d'abord 🏡 Maison ou 🛖 Chalet (chacun ses magasins), puis une liste par magasin, à préparer à la maison et cocher au magasin.
 - `terrain/` : gestion du terrain, le canevas d'entretien partagé (cette semaine, chaque semaine, chaque mois) avec l'historique.
-- `todo/` : To do en trois listes (Kevin, Camille, Commun) : urgent, cette semaine, ce mois-ci, cette année. Quand une période passe sans que ce soit fait, l'appli demande s'il faut passer au niveau suivant ou garder une période de plus ; ce qui est fait part aux archives.
+- `todo/` : To do, d'abord 🏡 Maison (Kevin, Camille, Commun) ou 🛖 Chalet (Maxime, Camille, Commun) : urgent, cette semaine, ce mois-ci, cette année. Quand une période passe sans que ce soit fait, l'appli demande s'il faut passer au niveau suivant ou garder une période de plus ; ce qui est fait part aux archives.
 - `notes/` : notes (carnets, étiquettes, recherche), fichiers joints rangés dans un dossier du Drive, import des exports Evernote (.enex).
 - `mdp/` : mots de passe, un compte par personne avec son propre code. Chiffrés (PBKDF2 + AES-GCM) avec ce code, sauf si le compte
   choisit une copie lisible dans la feuille. Import de listes (CSV de Chrome, iPhone, Firefox… ou collée).

@@ -100,7 +100,14 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-const LISTES = {kevin: ['🙋‍♂️', 'Kevin'], camille: ['🙋‍♀️', 'Camille'], commun: ['🏡', 'Commun']};
+// Deux habitats sur le terrain : la maison et le chalet, chacun avec ses listes.
+// Les listes de la maison gardent leurs anciens noms (le rappel du matin du script les utilise).
+const LIEUX = {
+  maison: {e: '🏡', nom: 'Maison', listes: {kevin: ['🙋‍♂️', 'Kevin'], camille: ['🙋‍♀️', 'Camille'], commun: ['🏡', 'Commun']}},
+  chalet: {e: '🛖', nom: 'Chalet', listes: {maxime: ['🙋‍♂️', 'Maxime'], 'camille-chalet': ['🙋‍♀️', 'Camille'], 'commun-chalet': ['🛖', 'Commun']}}
+};
+const LISTES = Object.assign({}, LIEUX.maison.listes, LIEUX.chalet.listes);
+const lieuDe = l => LIEUX.chalet.listes[l] ? 'chalet' : 'maison';
 const NIV = ['urgent', 'semaine', 'mois', 'annee'];
 const NOM = {urgent: 'Urgent', semaine: 'Cette semaine', mois: 'Ce mois-ci', annee: 'Cette année'};
 const jour = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
@@ -127,9 +134,9 @@ const S = Maison.store('todo', {
   recu: () => { migrer(); rendre(); },
   tables(recs) {
     const now = Date.now();
-    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || Object.keys(LISTES).indexOf(a.liste || 'commun') - Object.keys(LISTES).indexOf(b.liste || 'commun') || NIV.indexOf(niveau(a)) - NIV.indexOf(niveau(b)) || (b.faitLe || 0) - (a.faitLe || 0) || a.cree - b.cree);
-    return {'To-Do': [['Liste', 'Pour quand', 'Tâche', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
-      ...l.map(r => [LISTES[r.liste || 'commun'][1], r.fait ? '' : NOM[niveau(r)] + (echue(r, now) ? ' (à décider)' : ''), r.titre, r.fait ? 'Archivé (fait)' : 'À faire', fmtD(r.cree), r.fait ? fmtD(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
+    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || lieuDe(a.liste || 'commun').localeCompare(lieuDe(b.liste || 'commun')) * -1 || Object.keys(LISTES).indexOf(a.liste || 'commun') - Object.keys(LISTES).indexOf(b.liste || 'commun') || NIV.indexOf(niveau(a)) - NIV.indexOf(niveau(b)) || (b.faitLe || 0) - (a.faitLe || 0) || a.cree - b.cree);
+    return {'To-Do': [['Lieu', 'Liste', 'Pour quand', 'Tâche', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
+      ...l.map(r => [LIEUX[lieuDe(r.liste || 'commun')].nom, LISTES[r.liste || 'commun'][1], r.fait ? '' : NOM[niveau(r)] + (echue(r, now) ? ' (à décider)' : ''), r.titre, r.fait ? 'Archivé (fait)' : 'À faire', fmtD(r.cree), r.fait ? fmtD(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
   }
 });
 // Anciennes tâches (avant les trois listes) : dans « Commun », cette semaine
@@ -139,17 +146,16 @@ function migrer() {
 }
 migrer();
 
-let L = '', montrerTout = false;
+let L = '', LIEU = '', montrerTout = false;
 const optNiv = sel => NIV.map(n => `<option value="${n}"${n === sel ? ' selected' : ''}>${NOM[n]}</option>`).join('');
 $('niv').innerHTML = optNiv('semaine');
-$('e-l').innerHTML = Object.keys(LISTES).map(k => `<option value="${k}">${LISTES[k][1]}</option>`).join('');
 $('e-v').innerHTML = optNiv('semaine');
 
 function ligne(t, now, avecListe) {
   const n = niveau(t), glisse = echue(t, now);
   const sous = t.fait ? 'fait ' + fmtH(t.faitLe) + (t.faitPar ? ' par ' + t.faitPar : '')
     : [glisse ? '⏳ ' + PASSE[n] + ' : à décider' : '', t.note].filter(Boolean).join(' · ');
-  const tag = avecListe ? `<span class="tag">${esc(LISTES[t.liste || 'commun'][1])}${t.fait ? '' : ' · ' + NOM[n]}</span>` : '';
+  const tag = avecListe ? `<span class="tag">${LIEU ? '' : LIEUX[lieuDe(t.liste || 'commun')].e + ' '}${esc(LISTES[t.liste || 'commun'][1])}${t.fait ? '' : ' · ' + NOM[n]}</span>` : '';
   return `<li class="${t.fait ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${t.fait ? 'Remettre à faire' : 'Marquer comme fait'}">${t.fait ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous ? `<small class="${glisse ? 'glisse' : ''}">${esc(sous)}</small>` : ''}</div>${tag}</li>`;
 }
 function cherche(T, q, now) {
@@ -168,26 +174,43 @@ function archives(fait, now, avecListe) {
 
 function rendre() {
   const now = Date.now(), T = S.tous('tache');
-  L = (location.hash || '').slice(1);
-  if (L && L !== 'archives' && !LISTES[L]) L = '';
+  let h0 = decodeURIComponent((location.hash || '').slice(1));
+  if (LISTES[h0]) { location.replace('#' + lieuDe(h0) + '/' + h0); return; }   // anciens liens (#kevin)
+  if (h0 === 'archives') { location.replace('#maison/archives'); return; }
+  [LIEU, L] = h0.split('/'); L = L || '';
+  if (!LIEUX[LIEU]) { LIEU = ''; L = ''; }
+  if (L && L !== 'archives' && !LIEUX[LIEU].listes[L]) L = '';
+  const LL = LIEU ? LIEUX[LIEU].listes : {}, chez = t => lieuDe(t.liste || 'commun') === LIEU;
   $('accueil').hidden = !!L; $('vue').hidden = !L;
-  $('retour').textContent = L ? '‹ To do' : '‹ Happiness';
-  $('retour').href = L ? '#' : '../';
+  $('retour').textContent = L ? '‹ ' + LIEUX[LIEU].nom : LIEU ? '‹ To do' : '‹ Happiness';
+  $('retour').href = L ? '#' + LIEU : LIEU ? '#' : '../';
+  if (!LIEU) {
+    $('titre').textContent = '📝 To do';
+    $('choix').innerHTML = Object.entries(LIEUX).map(([k, x]) => {
+      const a = T.filter(t => !t.fait && lieuDe(t.liste || 'commun') === k), u = a.filter(t => niveau(t) === 'urgent').length;
+      return `<button data-lieu="${k}"><i>${x.e}</i><span>${x.nom}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}</small></span>›</button>`;
+    }).join('');
+    const q = $('q0').value.trim();
+    $('q0').placeholder = '🔎 Rechercher dans toutes les listes';
+    $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T, q, now) + '</div>' : '';
+    return;
+  }
   if (!L) {
-    $('titre').textContent = "📝 To do";
-    $('choix').innerHTML = Object.keys(LISTES).map(k => {
+    $('titre').textContent = LIEUX[LIEU].e + ' To do · ' + LIEUX[LIEU].nom;
+    $('q0').placeholder = '🔎 Rechercher dans les listes ' + (LIEU === 'chalet' ? 'du chalet' : 'de la maison');
+    $('choix').innerHTML = Object.keys(LL).map(k => {
       const a = T.filter(t => !t.fait && t.liste === k), u = a.filter(t => niveau(t) === 'urgent').length, dd = a.filter(t => echue(t, now)).length;
       return `<button data-l="${k}"><i>${LISTES[k][0]}</i><span>${LISTES[k][1]}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}${dd ? ` · ⏳ ${dd} à décider` : ''}</small></span>›</button>`;
-    }).join('') + `<button class="archives" data-l="archives"><i>🗄️</i><span>Archives<small>${T.filter(t => t.fait).length} chose(s) faite(s)</small></span>›</button>`;
+    }).join('') + `<button class="archives" data-l="archives"><i>🗄️</i><span>Archives<small>${T.filter(t => t.fait && chez(t)).length} chose(s) faite(s)</small></span>›</button>`;
     const q = $('q0').value.trim();
-    $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T, q, now) + '</div>' : '';
+    $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T.filter(chez), q, now) + '</div>' : '';
     return;
   }
   const arch = L === 'archives';
   $('titre').textContent = arch ? '🗄️ Archives' : LISTES[L][0] + ' ' + LISTES[L][1];
   $('f').hidden = arch;
   $('q').placeholder = arch ? '🔎 Rechercher dans les archives' : '🔎 Rechercher dans cette liste';
-  const mes = arch ? T.filter(t => t.fait) : T.filter(t => t.liste === L);
+  const mes = arch ? T.filter(t => t.fait && chez(t)) : T.filter(t => t.liste === L);
   const q = $('q').value.trim();
   if (q) { $('liste').innerHTML = cherche(mes, q, now); return; }
   if (arch) { $('liste').innerHTML = archives(mes.sort((a, b) => b.faitLe - a.faitLe), now, true); return; }
@@ -202,7 +225,7 @@ function rendre() {
     h += l.length ? `<ul class="${n === 'urgent' ? 'urgent' : ''}">${l.map(t => ligne(t, now)).join('')}</ul>` : `<div class="vide">Rien pour l'instant.</div>`;
   });
   const fait = mes.filter(t => t.fait).sort((a, b) => b.faitLe - a.faitLe);
-  if (fait.length) h += `<h2>Fait récemment<span><a href="#archives">Toutes les archives ›</a></span></h2><ul>${fait.slice(0, 5).map(t => ligne(t, now)).join('')}</ul>`;
+  if (fait.length) h += `<h2>Fait récemment<span><a href="#${LIEU}/archives">Toutes les archives ›</a></span></h2><ul>${fait.slice(0, 5).map(t => ligne(t, now)).join('')}</ul>`;
   $('liste').innerHTML = h;
 }
 
@@ -215,10 +238,11 @@ function ajouter(titre, niv) {
 $('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('niv').value); $('i').value = ''; $('i').focus(); };
 let ED = null;
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-l],[data-c],[data-d],[data-e],#plus');
+  const b = e.target.closest('[data-lieu],[data-l],[data-c],[data-d],[data-e],#plus');
   if (!b || b.closest('dialog')) return;
   if (b.id === 'plus') { montrerTout = true; rendre(); return; }
-  if (b.dataset.l) { location.hash = b.dataset.l; return; }
+  if (b.dataset.lieu) { location.hash = b.dataset.lieu; return; }
+  if (b.dataset.l) { location.hash = LIEU + '/' + b.dataset.l; return; }
   if (b.dataset.d) {
     const t = S.get(b.dataset.d); if (!t) return;
     if (b.dataset.v === 'passe') t.niveau = SUIV[niveau(t)];
@@ -233,6 +257,7 @@ document.addEventListener('click', e => {
   }
   if (b.dataset.e) {
     ED = S.get(b.dataset.e); if (!ED) return;
+    const LL = LIEUX[lieuDe(ED.liste || 'commun')].listes; $('e-l').innerHTML = Object.keys(LL).map(k => `<option value="${k}">${LL[k][1]}</option>`).join('');
     $('e-t').value = ED.titre; $('e-l').value = ED.liste || 'commun'; $('e-v').value = niveau(ED); $('e-n').value = ED.note || '';
     $('dlg').showModal();
   }

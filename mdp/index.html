@@ -59,6 +59,7 @@ dialog .suppr{margin-right:auto;color:#c62828}
 .pied{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
 .pied button{font-size:14px;color:var(--muted)}
 .info{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;margin:8px 0}
+.apercu{margin-top:10px;padding:10px;border-radius:12px;background:rgba(80,160,80,.13);font-size:14px}.apercu table{width:100%;border-collapse:collapse;margin:6px 0}.apercu td{padding:3px 4px;border-top:1px solid rgba(80,160,80,.25);word-break:break-all}
 </style>
 </head>
 <body>
@@ -212,6 +213,8 @@ $('b-cpt').onclick = () => {
 // ---------- Importer une liste (fichier exporté de Chrome, de l'iPhone, de Firefox, d'un tableur, ou collée)
 function lireCSV(t) {
   t = t.replace(/^﻿/, '');
+  // ni tabulation, ni point-virgule, ni virgule sur la 1re ligne : une case par ligne (tableau collé depuis un téléphone)
+  if (!/[\t;]/.test(t) && !t.trim().split('\n')[0].includes(',')) return t.split(/\r?\n/).map(x => [x]).filter(r => r[0].trim());
   const sep = [',', ';', '\t'].map(s => [s, (t.split('\n')[0].match(new RegExp(s === '\t' ? '\t' : s, 'g')) || []).length]).sort((a, b) => b[1] - a[1])[0][0];
   const rows = [], row = [], push = () => { rows.push(row.splice(0)); };
   let v = '', q = false;
@@ -223,9 +226,20 @@ function lireCSV(t) {
   if (v || row.length) { row.push(v); push(); }
   return rows.filter(r => r.some(x => x.trim()));
 }
+// Tableau copié depuis un téléphone (Evernote…) : chaque case arrive sur sa propre ligne.
+// On regroupe alors les lignes par le nombre de colonnes (titres en tête s'il y en a, sinon 3 : site, identifiant, mot de passe).
+function uneCaseParLigne(rows) {
+  if (rows.length < 2 || rows.some(r => r.length > 1)) return rows;
+  const l = rows.map(r => r[0].trim()), titre = x => /^(site|sites|nom|titre|identifiants?|login|utilisateur|e-?mail|mots? de passe|mdp|password|notes?|commentaires?|a quoi ca sert|quoi)$/.test(norm(x));
+  let n = 0; while (n < l.length && titre(l[n])) n++;
+  const cols = n >= 2 ? n : 3, out = n >= 2 ? [l.slice(0, n)] : [];
+  for (let i = n; i < l.length; i += cols) out.push(l.slice(i, i + cols));
+  return out;
+}
 function versMdp(rows) {
+  rows = uneCaseParLigne(rows);
   const h = rows[0].map(norm), trouve = (...n) => h.findIndex(x => n.some(y => x === y || x.includes(y)));
-  let iS = trouve('name', 'title', 'titre', 'site', 'nom'), iU = trouve('url', 'adresse', 'website'), iI = trouve('username', 'login', 'identifiant', 'utilisateur', 'email', 'e-mail'), iP = trouve('password', 'mot de passe', 'mdp'), iN = trouve('note', 'notes', 'comment');
+  let iS = trouve('name', 'title', 'titre', 'site', 'nom'), iU = trouve('url', 'adresse', 'website'), iI = trouve('username', 'login', 'identifiant', 'utilisateur', 'email', 'e-mail'), iP = trouve('password', 'mot de passe', 'mots de passe', 'mdp'), iN = trouve('note', 'notes', 'comment');
   let data = rows, colle = false;
   if (iP >= 0) data = rows.slice(1); else { iS = 0; iU = -1; iI = 1; iP = 2; iN = 3; colle = true; }  // pas d'en-tête : site ; identifiant ; mot de passe ; note
   const hote = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u || ''; } };
@@ -235,6 +249,8 @@ $('b-imp').onclick = () => {
   dialogue('📥 Importer une liste', `<p style="margin:0;font-size:14px">Choisis le fichier exporté de ton gestionnaire de mots de passe (Chrome, iPhone, Firefox, Bitwarden…), ou colle ta liste : une ligne par compte, <b>site ; identifiant ; mot de passe ; note</b>.</p>
     <label for="i-f">Fichier (.csv)</label><input id="i-f" type="file" accept=".csv,.txt,text/csv,text/plain">
     <label for="i-t">Ou colle ta liste ici</label><textarea id="i-t" rows="6" placeholder="Gmail ; kevin@exemple.be ; MonMotDePasse&#10;Netflix ; kevin@exemple.be ; AutreMotDePasse"></textarea>
+    <div class="info">Tu peux aussi copier un tableau (Evernote, Word…) et le coller ici, même si chaque case arrive sur sa propre ligne.</div>
+    <div class="apercu" id="i-ap" hidden></div>
     <div class="info">Après l'import, supprime le fichier exporté de ton téléphone ou de ton ordinateur : il contient tes mots de passe en clair.</div>`,
     '<button type="button" data-annule>Annuler</button><button class="go">Importer</button>', async () => {
       let t = $('i-t').value; const f = $('i-f').files[0];
@@ -242,6 +258,14 @@ $('b-imp').onclick = () => {
       if (!t.trim()) { $('d2-m').textContent = 'Choisis un fichier ou colle ta liste.'; return; }
       const nv = versMdp(lireCSV(t)), cleF = o => norm(o.site) + '|' + norm(o.ident);
       if (!nv.length) { $('d2-m').textContent = "Je n'ai trouvé aucun mot de passe dans ce texte."; return; }
+      // Aperçu avant d'enregistrer : on vérifie que les colonnes sont bien dans l'ordre
+      if ($('i-ap').dataset.pour !== t) {
+        const cache = x => x.length > 2 ? x.slice(0, 2) + '•'.repeat(Math.min(6, x.length - 2)) : x;
+        $('i-ap').dataset.pour = t; $('i-ap').hidden = false;
+        $('i-ap').innerHTML = `<b>${nv.length} mot${nv.length > 1 ? 's' : ''} de passe trouvé${nv.length > 1 ? 's' : ''}.</b> Vérifie les premiers, puis touche encore « Importer » :<table>` +
+          nv.slice(0, 4).map(o => `<tr><td>${esc(o.site)}</td><td>${esc(o.ident)}</td><td>${esc(cache(o.mdp))}</td></tr>`).join('') + `</table>` + (nv.length > 4 ? `<small>… et ${nv.length - 4} autre${nv.length > 5 ? 's' : ''}</small>` : '');
+        $('d2-m').textContent = ''; return;
+      }
       const deja = new Map(L.map(o => [cleF(o), o])), R = []; let n = 0, m = 0;
       for (const o of nv) { const v = deja.get(cleF(o)); if (v && v.mdp === o.mdp) continue; R.push(await enregistrer(o, v ? v.id : null)); deja.set(cleF(o), Object.assign({}, o, {id: R[R.length - 1].id})); v ? m++ : n++; }
       S.putTous(R); $('dlg2').close(); await ouvrir(C, K);
