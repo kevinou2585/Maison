@@ -224,3 +224,31 @@
     tester: async c => appel(c, null, {m: 'todo', r: 1e15})
   };
 })();
+
+// To do et Courses : un petit code par habitat (maison, chalet), juste pour ne pas voir les listes de l'autre.
+// Ce n'est pas une vraie protection. Une fois le code tapé, ce téléphone reste ouvert pour ce lieu.
+Maison.lieu = (() => {
+  const CODES = {maison: '123', chalet: '456'}, K = 'maison:lieux-ouverts';
+  const lit = () => { try { return JSON.parse(localStorage.getItem(K)) || {}; } catch (e) { return {}; } };
+  const ecrit = o => { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) {} };
+  return {
+    ouvert: l => !!lit()[l],
+    fermer(l) { const o = lit(); delete o[l]; ecrit(o); },
+    // Demande le code ; ok() est appelé quand il est bon
+    demander(l, titre, ok) {
+      let d = document.getElementById('dlg-lieu');
+      if (!d) { d = document.createElement('dialog'); d.id = 'dlg-lieu'; document.body.appendChild(d); }
+      d.innerHTML = `<form method="dialog" style="min-width:240px"><h3 style="margin:0 0 10px">${titre}</h3>
+        <input id="lieu-c" type="password" inputmode="numeric" autocomplete="off" placeholder="Code" aria-label="Code" style="width:100%;box-sizing:border-box">
+        <div id="lieu-m" style="color:#c0392b;font-size:14px;min-height:18px;margin-top:6px"></div>
+        <div class="btns" style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button type="button" id="lieu-n">Annuler</button><button class="go" id="lieu-o">Ouvrir</button></div></form>`;
+      d.querySelector('#lieu-n').onclick = () => d.close();
+      d.querySelector('form').onsubmit = e => {
+        e.preventDefault();
+        if (d.querySelector('#lieu-c').value.trim() !== CODES[l]) { d.querySelector('#lieu-m').textContent = 'Ce n\'est pas le bon code.'; d.querySelector('#lieu-c').select(); return; }
+        const o = lit(); o[l] = 1; ecrit(o); d.close(); ok();
+      };
+      d.showModal(); setTimeout(() => d.querySelector('#lieu-c').focus(), 50);
+    }
+  };
+})();

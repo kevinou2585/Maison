@@ -73,6 +73,7 @@ dialog .suppr{margin-right:auto;color:#b3261e}
 .res li.on .bx{background:var(--accent);border-color:var(--accent)}
 .res li em{font-style:normal;color:var(--muted);font-size:13px;display:block}
 .mag.lieu{grid-column:1/-1}.mag.lieu b{font-size:22px}
+.verrou{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted,#777);font-size:14px;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -152,6 +153,7 @@ const garderVue = () => { try { sessionStorage.setItem('courses:vue', JSON.strin
 function rendre() {
   if (V.mag && !S.get(V.mag)) V.mag = null;
   if (V.mag) V.lieu = lieuDe(S.get(V.mag));
+  if (V.lieu && !Maison.lieu.ouvert(V.lieu)) { V.lieu = null; V.mag = null; }
   garderVue();
   $('retour').textContent = V.lieu && !V.mag ? '‹ Courses' : '‹ Happiness';
   $('retour').href = V.lieu && !V.mag ? '#' : '../';
@@ -163,7 +165,7 @@ function rendre() {
 function rendreLieux() {
   document.title = 'Courses';
   $('app').innerHTML = `<h1>🧺 Courses</h1><div class="mags">` + Object.entries(LIEUX).map(([k, [e, nom]]) => {
-    const ms = S.tous('mag').filter(m => lieuDe(m) === k).map(m => m.id), n = S.tous('art').filter(a => ms.includes(a.mag) && a.achat && !a.pris).length;
+    const ms = Maison.lieu.ouvert(k) ? S.tous('mag').filter(m => lieuDe(m) === k).map(m => m.id) : [], n = S.tous('art').filter(a => ms.includes(a.mag) && a.achat && !a.pris).length;
     return `<button class="mag lieu${n ? ' plein' : ''}" data-lieu="${k}"><b>${e} ${nom}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
   }).join('') + `</div>`;
 }
@@ -177,6 +179,7 @@ function rendreMags() {
     const n = S.tous('art').filter(a => a.mag === m.id && a.achat && !a.pris).length;
     return `<button class="mag${n ? ' plein' : ''}" data-mag="${m.id}"><b>${esc(m.nom)}</b>${n ? `<span class="n">${n} à acheter</span>` : '<span>Rien à acheter</span>'}</button>`;
   }).join('') + `<button class="mag ajout" data-a="nmag">＋ Nouveau magasin</button></div>
+  <button type="button" class="verrou" data-ferme="${V.lieu}">🔒 Verrouiller ${V.lieu === 'chalet' ? 'le chalet' : 'la maison'} sur ce téléphone</button>
   <p class="astuce">Recherche : tape (ou dicte avec 🎤) un mot, puis touche un résultat pour le mettre sur la liste ou l'enlever. Prépare ta liste à la maison, puis passe en mode « Au magasin » pour cocher ce qui est dans le caddie. Les listes sont partagées avec les autres téléphones reliés au Drive.</p>`;
 }
 
@@ -259,10 +262,11 @@ document.addEventListener('click', e => {
   if (o) { V.mag = o.dataset.ouvrir; V.mode = 'liste'; V.edit = false; rendre(); scrollTo(0, 0); return; }
   const g = e.target.closest('[data-tog]');
   if (g) { const a = S.get(g.dataset.tog); if (a) { a.achat = !a.achat; a.pris = false; S.put(a); } resultats(); document.querySelectorAll('.mag[data-mag]').length && rendreCompteurs(); return; }
-  const t = e.target.closest('[data-lieu],[data-mag],[data-mode],[data-art],[data-pris],[data-a]');
+  const t = e.target.closest('[data-ferme],[data-lieu],[data-mag],[data-mode],[data-art],[data-pris],[data-a]');
   if (!t || t.closest('dialog')) return;
   const m = V.mag && S.get(V.mag);
-  if (t.dataset.lieu) { V.lieu = t.dataset.lieu; V.mag = null; Q = ''; rendre(); scrollTo(0, 0); return; }
+  if (t.dataset.lieu) { const l = t.dataset.lieu, go = () => { V.lieu = l; V.mag = null; Q = ''; rendre(); scrollTo(0, 0); }; Maison.lieu.ouvert(l) ? go() : Maison.lieu.demander(l, LIEUX[l].join(' '), go); return; }
+  if (t.dataset.ferme) { Maison.lieu.fermer(t.dataset.ferme); V.lieu = null; V.mag = null; rendre(); scrollTo(0, 0); return; }
   if (t.dataset.mag) { V.mag = t.dataset.mag; V.mode = S.tous('art').some(a => a.mag === V.mag && a.achat && !a.pris) && V.mode === 'magasin' ? 'magasin' : 'liste'; V.edit = false; rendre(); scrollTo(0, 0); return; }
   if (t.dataset.mode) { V.mode = t.dataset.mode; V.edit = false; rendre(); return; }
   if (t.dataset.art) {

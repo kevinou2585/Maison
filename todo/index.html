@@ -70,6 +70,7 @@ dialog .deux{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 dialog .suppr{margin-right:auto;color:#b3261e}
 .plus{display:block;margin:10px auto 0}
+.verrou{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted,#777);font-size:14px;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -180,6 +181,8 @@ function rendre() {
   [LIEU, L] = h0.split('/'); L = L || '';
   if (!LIEUX[LIEU]) { LIEU = ''; L = ''; }
   if (L && L !== 'archives' && !LIEUX[LIEU].listes[L]) L = '';
+  if (LIEU && !Maison.lieu.ouvert(LIEU)) { const l = LIEU; location.replace('#'); Maison.lieu.demander(l, LIEUX[l].e + ' ' + LIEUX[l].nom, () => { location.hash = l + (L ? '/' + L : ''); }); return; }
+  const ouvert = t => Maison.lieu.ouvert(lieuDe(t.liste || 'commun'));
   const LL = LIEU ? LIEUX[LIEU].listes : {}, chez = t => lieuDe(t.liste || 'commun') === LIEU;
   $('accueil').hidden = !!L; $('vue').hidden = !L;
   $('retour').textContent = L ? '‹ ' + LIEUX[LIEU].nom : LIEU ? '‹ To do' : '‹ Happiness';
@@ -187,12 +190,12 @@ function rendre() {
   if (!LIEU) {
     $('titre').textContent = '📝 To do';
     $('choix').innerHTML = Object.entries(LIEUX).map(([k, x]) => {
-      const a = T.filter(t => !t.fait && lieuDe(t.liste || 'commun') === k), u = a.filter(t => niveau(t) === 'urgent').length;
+      const a = Maison.lieu.ouvert(k) ? T.filter(t => !t.fait && lieuDe(t.liste || 'commun') === k) : [], u = a.filter(t => niveau(t) === 'urgent').length;
       return `<button data-lieu="${k}"><i>${x.e}</i><span>${x.nom}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}</small></span>›</button>`;
     }).join('');
     const q = $('q0').value.trim();
     $('q0').placeholder = '🔎 Rechercher dans toutes les listes';
-    $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T, q, now) + '</div>' : '';
+    $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T.filter(ouvert), q, now) + '</div>' : '';
     return;
   }
   if (!L) {
@@ -201,7 +204,7 @@ function rendre() {
     $('choix').innerHTML = Object.keys(LL).map(k => {
       const a = T.filter(t => !t.fait && t.liste === k), u = a.filter(t => niveau(t) === 'urgent').length, dd = a.filter(t => echue(t, now)).length;
       return `<button data-l="${k}"><i>${LISTES[k][0]}</i><span>${LISTES[k][1]}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}${dd ? ` · ⏳ ${dd} à décider` : ''}</small></span>›</button>`;
-    }).join('') + `<button class="archives" data-l="archives"><i>🗄️</i><span>Archives<small>${T.filter(t => t.fait && chez(t)).length} chose(s) faite(s)</small></span>›</button>`;
+    }).join('') + `<button class="archives" data-l="archives"><i>🗄️</i><span>Archives<small>${T.filter(t => t.fait && chez(t)).length} chose(s) faite(s)</small></span>›</button><button type="button" class="lien verrou" data-ferme="${LIEU}">🔒 Verrouiller ${LIEU === 'chalet' ? 'le chalet' : 'la maison'} sur ce téléphone</button>`;
     const q = $('q0').value.trim();
     $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T.filter(chez), q, now) + '</div>' : '';
     return;
@@ -238,6 +241,7 @@ function ajouter(titre, niv) {
 $('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('niv').value); $('i').value = ''; $('i').focus(); };
 let ED = null;
 document.addEventListener('click', e => {
+  const f = e.target.closest('[data-ferme]'); if (f) { Maison.lieu.fermer(f.dataset.ferme); location.hash = ''; return; }
   const b = e.target.closest('[data-lieu],[data-l],[data-c],[data-d],[data-e],#plus');
   if (!b || b.closest('dialog')) return;
   if (b.id === 'plus') { montrerTout = true; rendre(); return; }
