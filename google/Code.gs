@@ -9,10 +9,18 @@
  *      Exécuter en tant que : Moi ; Qui a accès : Tout le monde. Autorise l'accès.
  * 5. Copie l'adresse qui finit par /exec et colle-la dans l'appli (☁️ Drive), avec le mot de passe.
  *
+ * Rappel du matin (facultatif) : choisis la fonction « activerRappel » en haut de l'éditeur, puis ▶ Exécuter,
+ * et autorise l'envoi d'e-mails. Chaque matin vers 9 h, tu reçois un e-mail avec ce qui est urgent dans la To do.
+ *
  * L'onglet caché « _donnees » sert à la synchronisation : ne le modifie pas.
  * Les autres onglets sont réécrits à chaque modification, pour être lus (ou téléchargés en Excel).
  */
 const CLE = 'change-moi';
+
+// Rappel du matin : à qui l'envoyer. Kevin vide = l'adresse du propriétaire de la feuille.
+// Pour Camille, mets son adresse entre les guillemets (ex. 'camille@gmail.com').
+const MAILS = {kevin: '', camille: ''};
+const APPLI = 'https://kevinou2585.github.io/Maison/todo/';
 
 const DONNEES = '_donnees';
 const MORCEAU = 40000; // une cellule Google Sheets accepte 50 000 caractères au maximum
@@ -193,4 +201,51 @@ function accueil(m, qui) {
   try { if (sh.getIndex() !== 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(1); } } catch (err) {}
   // L'onglet vide créé avec la feuille (« Feuille 1 ») ne sert à rien : on le retire.
   ['Feuille 1', 'Sheet1', 'Feuille1'].forEach(n => { const f = ss.getSheetByName(n); if (f && f.getLastRow() === 0 && ss.getSheets().length > 2) try { ss.deleteSheet(f); } catch (err) {} });
+}
+
+// ---------- Rappel du matin (To do) ----------
+
+/** À lancer une fois depuis l'éditeur : crée le rappel de 9 h et envoie tout de suite un essai. */
+function activerRappel() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'rappelDuMatin').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('rappelDuMatin').timeBased().everyDays(1).atHour(9).create();
+  rappelDuMatin(true);
+}
+
+/** Pour ne plus recevoir le rappel. */
+function arreterRappel() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'rappelDuMatin').forEach(t => ScriptApp.deleteTrigger(t));
+}
+
+function rappelDuMatin(essai) {
+  essai = essai === true;
+  const now = Date.now();
+  const lundi = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return +d; };
+  const debMois = t => { const d = new Date(t); return +new Date(d.getFullYear(), d.getMonth(), 1); };
+  const debAn = t => +new Date(new Date(t).getFullYear(), 0, 1);
+  const echue = t => { const n = t.niveau || 'semaine', d = t.place || t.cree || now;
+    return n === 'semaine' ? lundi(now) > lundi(d) : n === 'mois' ? debMois(now) > debMois(d) : n === 'annee' ? debAn(now) > debAn(d) : false; };
+  const T = lire().filter(x => x.m === 'todo' && x.rec.type === 'tache' && !x.rec.del && !x.rec.fait).map(x => x.rec);
+  const NOMS = {kevin: 'Kevin', camille: 'Camille', commun: 'Commun'};
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]));
+  Object.keys(MAILS).forEach(qui => {
+    const a = qui === 'kevin' ? (MAILS.kevin || Session.getEffectiveUser().getEmail()) : MAILS[qui];
+    if (!a) return;
+    let urg = 0, dec = 0, html = '';
+    [qui, 'commun'].forEach(l => {
+      const u = T.filter(t => (t.liste || 'commun') === l && (t.niveau || 'semaine') === 'urgent');
+      const d = T.filter(t => (t.liste || 'commun') === l && echue(t));
+      urg += u.length; dec += d.length;
+      if (!u.length && !d.length) return;
+      html += '<h3 style="margin:18px 0 6px;color:#2f5ea8">' + NOMS[l] + '</h3><ul style="margin:0;padding-left:20px">' +
+        u.map(t => '<li style="margin:4px 0"><b style="color:#b3261e">🔥 ' + esc(t.titre) + '</b>' + (t.note ? ' <span style="color:#666">· ' + esc(t.note) + '</span>' : '') + '</li>').join('') +
+        d.map(t => '<li style="margin:4px 0">⏳ ' + esc(t.titre) + ' <span style="color:#666">(à décider : pas faite à temps)</span></li>').join('') + '</ul>';
+    });
+    if (!urg && !dec && !essai) return;
+    const sujet = urg ? '🔥 To do : ' + urg + ' chose' + (urg > 1 ? 's' : '') + ' urgente' + (urg > 1 ? 's' : '') : dec ? '⏳ To do : ' + dec + ' à décider' : '✅ To do : rien d\'urgent (essai du rappel)';
+    MailApp.sendEmail({to: a, subject: sujet, name: 'Ma maison',
+      htmlBody: '<div style="font:15px/1.5 Arial,sans-serif;color:#161a22">Bonjour ' + NOMS[qui] + ',' +
+        (html || '<p>Rien d\'urgent aujourd\'hui. Le rappel arrivera chaque matin vers 9 h quand il y aura quelque chose.</p>') +
+        '<p style="margin-top:20px"><a href="' + APPLI + '#' + qui + '" style="background:#3567b8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:bold">Ouvrir ma To do</a></p></div>'});
+  });
 }
