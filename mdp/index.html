@@ -50,14 +50,29 @@ dialog input,dialog textarea{width:100%}
 dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 dialog .suppr{margin-right:auto;color:#c62828}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;z-index:60}
+.comptes{display:grid;gap:8px;width:100%}
+.comptes button{display:flex;align-items:center;gap:10px;justify-content:center;font-size:18px;padding:13px}
+#porte .petit{font-size:14px;color:var(--muted);font-weight:500}
+#porte .lien{border:0;background:none;color:var(--accent);padding:6px;width:auto}
+.case{display:flex;gap:8px;align-items:flex-start;font-weight:500!important;font-size:14px!important;margin-top:12px!important}
+.case input{width:auto!important;margin-top:3px}
+.pied{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+.pied button{font-size:14px;color:var(--muted)}
+.info{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;margin:8px 0}
 </style>
 </head>
 <body>
-<div id="porte"><form id="porte-f"><div class="ic">🔐</div><b>Mots de passe</b><input id="porte-i" type="password" autocomplete="off" placeholder="Code" aria-label="Code"><button class="go">Ouvrir</button><div class="err" id="porte-m"></div><a class="retour" href="../">‹ Happiness</a></form></div>
+<div id="porte"><form id="porte-f" autocomplete="off">
+  <div class="ic">🔐</div><b>Mots de passe</b>
+  <div id="p-choix"><div class="petit" style="margin-bottom:8px">Qui es-tu ?</div><div class="comptes" id="p-comptes"></div>
+    <button type="button" class="lien" id="p-creer">＋ Créer mon compte</button></div>
+  <div id="p-code" hidden><div class="petit" id="p-qui"></div><input id="porte-i" type="password" autocomplete="off" placeholder="Ton code" aria-label="Ton code" style="margin-top:8px"><button class="go" style="margin-top:12px">Ouvrir</button><button type="button" class="lien" id="p-autre">‹ Changer de compte</button></div>
+  <div class="err" id="porte-m"></div><a class="retour" href="../">‹ Happiness</a></form></div>
 <a class="retour" href="../">‹ Happiness</a>
-<h1>🔐 Mots de passe <button id="verr" type="button">🔒 Verrouiller</button></h1>
+<h1>🔐 <span id="titre">Mots de passe</span> <button id="verr" type="button">🔒 Verrouiller</button></h1>
 <div class="barre"><input id="q" type="search" placeholder="🔎 Rechercher un site, une appli, un identifiant" autocomplete="off"><button class="go" id="nouv" type="button">＋</button></div>
 <div id="liste"></div>
+<div class="pied"><button type="button" id="b-imp">📥 Importer une liste</button><button type="button" id="b-cpt">⚙️ Mon compte</button></div>
 <dialog id="dlg"><form id="dlg-f">
   <h3 id="d-t">Ajouter</h3>
   <label for="e-s">Site ou appli</label><input id="e-s" autocomplete="off" placeholder="ex. Gmail, Netflix, banque">
@@ -66,6 +81,7 @@ dialog .suppr{margin-right:auto;color:#c62828}
   <label for="e-n">Note (facultatif)</label><textarea id="e-n" rows="2"></textarea>
   <div class="btns"><button type="button" class="suppr" id="e-x">Supprimer</button><button type="button" id="e-a">Annuler</button><button class="go">OK</button></div>
 </form></dialog>
+<dialog id="dlg2"><form id="dlg2-f"><h3 id="d2-t"></h3><div id="d2-c"></div><div class="err" id="d2-m" style="color:#c62828;font-weight:600;margin-top:8px"></div><div class="btns" id="d2-b"></div></form></dialog>
 <script src="../sync.js"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -73,42 +89,179 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const fmtT = t => t ? new Date(t).toLocaleDateString('fr-BE') : '';
 
-// Le code n'est pas écrit ici en clair : seulement son empreinte.
-const EMPREINTE = '2eefad3cbba5f00348586a764e98a79e2df4fd7c1be69494190ec5f4d49ec534';
-const OUVERT = 'mdp:ouvert';
+// ---------- Chiffrement : chaque compte a son code ; la clé en est tirée (PBKDF2), les mots de passe sont chiffrés (AES-GCM).
+// Le code n'est jamais enregistré nulle part : sans lui, les mots de passe d'un compte sont illisibles, même dans la feuille.
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+const deb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function cle(code, sel) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name: 'PBKDF2', salt: deb64(sel), iterations: 210000, hash: 'SHA-256'}, base, {name: 'AES-GCM', length: 256}, true, ['encrypt', 'decrypt']);
+}
+async function chiffrer(k, obj) { const iv = crypto.getRandomValues(new Uint8Array(12)); return {iv: b64(iv), d: b64(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, k, new TextEncoder().encode(JSON.stringify(obj))))}; }
+async function dechiffrer(k, c) { return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: deb64(c.iv)}, k, deb64(c.d)))); }
+// L'ancienne appli (un seul code pour tous) : les mots de passe déjà enregistrés peuvent être repris avec ce code.
+const ANCIENNE = '2eefad3cbba5f00348586a764e98a79e2df4fd7c1be69494190ec5f4d49ec534';
 const empreinte = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))).map(b => b.toString(16).padStart(2, '0')).join('');
-let ouvert = false; try { ouvert = sessionStorage.getItem(OUVERT) === EMPREINTE; } catch (e) {}
-function verrouiller() { ouvert = false; try { sessionStorage.removeItem(OUVERT); } catch (e) {} $('porte').hidden = false; $('porte-i').value = ''; $('liste').innerHTML = ''; }
-$('porte').hidden = ouvert;
+
+const S = Maison.store('mdp', {
+  recu: () => { if (C) ouvrir(C, K); else porte(); },
+  tables: recs => {
+    const cpt = recs.filter(r => r.type === 'compte'), nom = id => (cpt.find(c => c.id === id) || {}).nom || 'Ancienne liste';
+    const clairs = recs.filter(r => r.type === 'mdp' && !r.c);
+    return {'Mots de passe': [['Compte', 'Site / appli', 'Identifiant', 'Mot de passe', 'Note', 'Modifié le'],
+      ...clairs.sort((a, b) => nom(a.compte).localeCompare(nom(b.compte), 'fr') || String(a.site).localeCompare(b.site, 'fr')).map(r => [nom(r.compte), r.site, r.ident || '', r.mdp || '', r.note || '', fmtT(r.t)]),
+      ...cpt.filter(c => recs.some(r => r.type === 'mdp' && r.c && r.compte === c.id)).map(c => [c.nom, '🔒 ' + recs.filter(r => r.type === 'mdp' && r.c && r.compte === c.id).length + ' mots de passe chiffrés', '', '', 'Lisibles seulement dans l\'appli, avec le code de ' + c.nom, ''])]};
+  }
+});
+
+// ---------- Ouverture d'un compte
+let C = null, K = null, L = [];              // compte ouvert, sa clé, ses mots de passe déchiffrés
+const SESS = 'mdp:session';
+const comptes = () => S.tous('compte').sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+const anciens = () => S.tous('mdp').filter(r => !r.compte);
+function porte(msg) {
+  C = K = null; L = []; $('liste').innerHTML = ''; $('porte').hidden = false;
+  const cs = comptes();
+  $('p-comptes').innerHTML = cs.map(c => `<button type="button" data-cpt="${c.id}">👤 ${esc(c.nom)}</button>`).join('') || '<div class="petit">Pas encore de compte : crée le tien.</div>';
+  $('p-choix').hidden = false; $('p-code').hidden = true; $('porte-m').textContent = msg || '';
+}
+let choisi = null;
+$('p-comptes').onclick = e => { const b = e.target.closest('[data-cpt]'); if (!b) return; choisi = S.get(b.dataset.cpt); $('p-qui').textContent = '👤 ' + choisi.nom; $('p-choix').hidden = true; $('p-code').hidden = false; $('porte-i').value = ''; $('porte-m').textContent = ''; $('porte-i').focus(); };
+$('p-autre').onclick = () => porte();
 $('porte-f').onsubmit = async e => {
-  e.preventDefault();
-  if (await empreinte($('porte-i').value.trim()) !== EMPREINTE) { $('porte-m').textContent = 'Code incorrect'; $('porte-i').value = ''; return; }
-  ouvert = true; try { sessionStorage.setItem(OUVERT, EMPREINTE); } catch (err) {}
-  $('porte').hidden = true; $('porte-m').textContent = ''; rendre();
+  e.preventDefault(); if (!choisi) return;
+  $('porte-m').textContent = '…';
+  try { const k = await cle($('porte-i').value, choisi.sel); await dechiffrer(k, choisi.verif); await ouvrir(choisi, k); garderSession(); }
+  catch (err) { $('porte-m').textContent = 'Code incorrect'; $('porte-i').value = ''; }
 };
+async function garderSession() { try { sessionStorage.setItem(SESS, JSON.stringify({id: C.id, k: b64(await crypto.subtle.exportKey('raw', K))})); } catch (e) {} }
+async function ouvrir(c, k) {
+  C = S.get(c.id) || c; K = k;
+  const R = S.tous('mdp').filter(r => r.compte === C.id), out = [];
+  for (const r of R) { try { out.push(Object.assign({id: r.id, t: r.t}, r.c ? await dechiffrer(K, r.c) : {site: r.site, ident: r.ident, mdp: r.mdp, note: r.note})); } catch (e) {} }
+  L = out; $('porte').hidden = true; $('porte-m').textContent = ''; $('titre').textContent = C.nom; rendre();
+}
+function verrouiller() { try { sessionStorage.removeItem(SESS); } catch (e) {} porte(); }
 $('verr').onclick = verrouiller;
 // Se reverrouille après 5 minutes passées dans une autre appli
 let cache = 0;
 document.addEventListener('visibilitychange', () => { if (document.hidden) cache = Date.now(); else if (cache && Date.now() - cache > 5 * 60000) verrouiller(); });
 
-const S = Maison.store('mdp', {
-  recu: () => ouvert && rendre(),
-  tables: recs => ({'Mots de passe': [['Site / appli', 'Identifiant', 'Mot de passe', 'Note', 'Modifié le'],
-    ...recs.filter(r => r.type === 'mdp').sort((a, b) => a.site.localeCompare(b.site, 'fr')).map(r => [r.site, r.ident || '', r.mdp || '', r.note || '', fmtT(r.t)])]})
-});
+// Enregistrer un mot de passe du compte ouvert : chiffré, ou lisible dans la feuille si le compte l'a choisi
+async function enregistrer(o, id) {
+  const r = {id: id || S.id(), type: 'mdp', compte: C.id};
+  if (C.lisible) Object.assign(r, {site: o.site, ident: o.ident, mdp: o.mdp, note: o.note}); else r.c = await chiffrer(K, o);
+  return r;
+}
 
+// ---------- Créer un compte
+function dialogue(t, html, boutons, ok) {
+  $('d2-t').textContent = t; $('d2-c').innerHTML = html; $('d2-m').textContent = ''; $('d2-b').innerHTML = boutons;
+  $('d2-b').querySelector('[data-annule]').onclick = () => $('dlg2').close();
+  $('dlg2-f').onsubmit = async e => { e.preventDefault(); await ok(); };
+  $('dlg2').showModal();
+}
+$('p-creer').onclick = () => {
+  const n = anciens().length;
+  dialogue('Créer mon compte', `<label for="c-n">Ton prénom</label><input id="c-n" autocomplete="off">
+    <label for="c-1">Choisis ton code</label><input id="c-1" type="password" autocomplete="new-password">
+    <label for="c-2">Le même code, encore une fois</label><input id="c-2" type="password" autocomplete="new-password">
+    <div class="info">⚠️ Retiens bien ce code : personne ne peut le retrouver. Sans lui, tes mots de passe sont perdus.</div>
+    <label class="case"><input type="checkbox" id="c-l"> Garder aussi une copie lisible de mes mots de passe dans la feuille Drive (sinon, ils y sont chiffrés).</label>
+    ${n ? `<label class="case"><input type="checkbox" id="c-r" checked> Reprendre les ${n} mots de passe déjà enregistrés dans l'appli</label><div id="c-rb"><label for="c-a">Code de l'ancienne appli Mots de passe</label><input id="c-a" type="password" autocomplete="off"></div>` : ''}`,
+    '<button type="button" data-annule>Annuler</button><button class="go">Créer</button>', async () => {
+      const nom = $('c-n').value.trim(), c1 = $('c-1').value, c2 = $('c-2').value, m = t => { $('d2-m').textContent = t; };
+      if (!nom) return m('Écris ton prénom.');
+      if (comptes().some(c => norm(c.nom) === norm(nom))) return m('Ce compte existe déjà.');
+      if (c1.length < 4) return m('Le code doit avoir au moins 4 caractères.');
+      if (c1 !== c2) return m('Les deux codes ne sont pas pareils.');
+      const reprise = $('c-r') && $('c-r').checked;
+      if (reprise && await empreinte($('c-a').value.trim()) !== ANCIENNE) return m("Le code de l'ancienne appli n'est pas bon.");
+      m('…');
+      const sel = b64(crypto.getRandomValues(new Uint8Array(16))), k = await cle(c1, sel);
+      const c = S.put({id: S.id(), type: 'compte', nom: nom[0].toUpperCase() + nom.slice(1), sel, verif: await chiffrer(k, 'ok'), lisible: $('c-l').checked, cree: Date.now()});
+      C = c; K = k;
+      if (reprise) { const R = []; for (const r of anciens()) R.push(await enregistrer({site: r.site, ident: r.ident || '', mdp: r.mdp || '', note: r.note || ''}, r.id)); S.putTous(R); }
+      $('dlg2').close(); await ouvrir(c, k); garderSession();
+    });
+  if ($('c-r')) $('c-r').onchange = () => { $('c-rb').hidden = !$('c-r').checked; };
+};
+
+// ---------- Mon compte : changer de code, copie lisible
+$('b-cpt').onclick = () => {
+  dialogue('⚙️ Compte de ' + C.nom, `<label class="case"><input type="checkbox" id="m-l" ${C.lisible ? 'checked' : ''}> Garder une copie lisible de mes mots de passe dans la feuille Drive</label>
+    <p class="petit" style="color:var(--muted);font-size:14px">Décoché, ils sont chiffrés avec ton code : personne d'autre ne peut les lire, même dans la feuille.</p>
+    <label for="m-1">Nouveau code (laisser vide pour garder le même)</label><input id="m-1" type="password" autocomplete="new-password">
+    <label for="m-2">Le nouveau code, encore une fois</label><input id="m-2" type="password" autocomplete="new-password">`,
+    '<button type="button" class="suppr" id="m-x">Supprimer mon compte</button><button type="button" data-annule>Annuler</button><button class="go">Enregistrer</button>', async () => {
+      const c1 = $('m-1').value, c2 = $('m-2').value, m = t => { $('d2-m').textContent = t; };
+      if (c1 && c1.length < 4) return m('Le code doit avoir au moins 4 caractères.');
+      if (c1 !== c2) return m('Les deux codes ne sont pas pareils.');
+      m('…');
+      if (c1) { C.sel = b64(crypto.getRandomValues(new Uint8Array(16))); K = await cle(c1, C.sel); C.verif = await chiffrer(K, 'ok'); }
+      C.lisible = $('m-l').checked; S.put(C);
+      const R = []; for (const o of L) R.push(await enregistrer({site: o.site, ident: o.ident, mdp: o.mdp, note: o.note}, o.id)); S.putTous(R);
+      $('dlg2').close(); await ouvrir(C, K); garderSession(); toast('Enregistré ✓');
+    });
+  $('m-x').onclick = () => {
+    if (!confirm('Supprimer le compte de ' + C.nom + ' et ses ' + L.length + ' mots de passe ? C\'est définitif.')) return;
+    L.forEach(o => S.del(o.id)); S.del(C.id); $('dlg2').close(); verrouiller();
+  };
+};
+
+// ---------- Importer une liste (fichier exporté de Chrome, de l'iPhone, de Firefox, d'un tableur, ou collée)
+function lireCSV(t) {
+  t = t.replace(/^﻿/, '');
+  const sep = [',', ';', '\t'].map(s => [s, (t.split('\n')[0].match(new RegExp(s === '\t' ? '\t' : s, 'g')) || []).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = [], row = [], push = () => { rows.push(row.splice(0)); };
+  let v = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (q) { if (ch === '"' && t[i + 1] === '"') { v += '"'; i++; } else if (ch === '"') q = false; else v += ch; }
+    else if (ch === '"') q = true; else if (ch === sep) { row.push(v); v = ''; } else if (ch === '\n' || ch === '\r') { if (ch === '\r' && t[i + 1] === '\n') i++; row.push(v); v = ''; push(); } else v += ch;
+  }
+  if (v || row.length) { row.push(v); push(); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+function versMdp(rows) {
+  const h = rows[0].map(norm), trouve = (...n) => h.findIndex(x => n.some(y => x === y || x.includes(y)));
+  let iS = trouve('name', 'title', 'titre', 'site', 'nom'), iU = trouve('url', 'adresse', 'website'), iI = trouve('username', 'login', 'identifiant', 'utilisateur', 'email', 'e-mail'), iP = trouve('password', 'mot de passe', 'mdp'), iN = trouve('note', 'notes', 'comment');
+  let data = rows, colle = false;
+  if (iP >= 0) data = rows.slice(1); else { iS = 0; iU = -1; iI = 1; iP = 2; iN = 3; colle = true; }  // pas d'en-tête : site ; identifiant ; mot de passe ; note
+  const hote = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u || ''; } };
+  return data.map(r => ({site: (iS >= 0 && r[iS] ? r[iS] : hote(iU >= 0 ? r[iU] : '')).trim(), ident: (r[iI] || '').trim(), mdp: colle ? (r[iP] || '').trim() : r[iP] || '', note: [(iN >= 0 ? r[iN] : '') || '', iU >= 0 && r[iU] && iS >= 0 && r[iS] ? r[iU] : ''].filter(Boolean).join('\n').trim()})).filter(o => o.site && o.mdp);
+}
+$('b-imp').onclick = () => {
+  dialogue('📥 Importer une liste', `<p style="margin:0;font-size:14px">Choisis le fichier exporté de ton gestionnaire de mots de passe (Chrome, iPhone, Firefox, Bitwarden…), ou colle ta liste : une ligne par compte, <b>site ; identifiant ; mot de passe ; note</b>.</p>
+    <label for="i-f">Fichier (.csv)</label><input id="i-f" type="file" accept=".csv,.txt,text/csv,text/plain">
+    <label for="i-t">Ou colle ta liste ici</label><textarea id="i-t" rows="6" placeholder="Gmail ; kevin@exemple.be ; MonMotDePasse&#10;Netflix ; kevin@exemple.be ; AutreMotDePasse"></textarea>
+    <div class="info">Après l'import, supprime le fichier exporté de ton téléphone ou de ton ordinateur : il contient tes mots de passe en clair.</div>`,
+    '<button type="button" data-annule>Annuler</button><button class="go">Importer</button>', async () => {
+      let t = $('i-t').value; const f = $('i-f').files[0];
+      if (f) t = await f.text();
+      if (!t.trim()) { $('d2-m').textContent = 'Choisis un fichier ou colle ta liste.'; return; }
+      const nv = versMdp(lireCSV(t)), cleF = o => norm(o.site) + '|' + norm(o.ident);
+      if (!nv.length) { $('d2-m').textContent = "Je n'ai trouvé aucun mot de passe dans ce texte."; return; }
+      const deja = new Map(L.map(o => [cleF(o), o])), R = []; let n = 0, m = 0;
+      for (const o of nv) { const v = deja.get(cleF(o)); if (v && v.mdp === o.mdp) continue; R.push(await enregistrer(o, v ? v.id : null)); deja.set(cleF(o), Object.assign({}, o, {id: R[R.length - 1].id})); v ? m++ : n++; }
+      S.putTous(R); $('dlg2').close(); await ouvrir(C, K);
+      toast(n + ' ajouté' + (n > 1 ? 's' : '') + (m ? ', ' + m + ' mis à jour' : '') + ' ✓');
+    });
+};
+
+// ---------- La liste
 const vus = new Set();
 function rendre() {
-  if (!ouvert) return;
+  if (!C) return;
   const q = norm($('q').value);
-  const l = S.tous('mdp').filter(r => !q || norm(r.site + ' ' + (r.ident || '') + ' ' + (r.note || '')).includes(q)).sort((a, b) => a.site.localeCompare(b.site, 'fr'));
+  const l = L.filter(r => !q || norm(r.site + ' ' + (r.ident || '') + ' ' + (r.note || '')).includes(q)).sort((a, b) => String(a.site).localeCompare(b.site, 'fr'));
   $('liste').innerHTML = l.length ? l.map(r => `<div class="carte"><div class="haut"><b data-e="${r.id}">${esc(r.site)}</b><button data-e="${r.id}" aria-label="Modifier">✎</button></div>
     ${r.ident ? `<div class="ligne"><span>Identifiant</span><code>${esc(r.ident)}</code><button data-cp="${r.id}" data-f="ident" aria-label="Copier l'identifiant">📋</button></div>` : ''}
     <div class="ligne"><span>Mot de passe</span><code>${vus.has(r.id) ? esc(r.mdp) : '••••••••'}</code><button data-voir="${r.id}" aria-label="Afficher">${vus.has(r.id) ? '🙈' : '👁'}</button><button data-cp="${r.id}" data-f="mdp" aria-label="Copier le mot de passe">📋</button></div>
     ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}</div>`).join('')
-    : `<div class="vide">${q ? 'Rien trouvé pour « ' + esc($('q').value) + ' ».' : 'Aucun mot de passe enregistré. Touche ＋ pour ajouter le premier.'}</div>`;
+    : `<div class="vide">${q ? 'Rien trouvé pour « ' + esc($('q').value) + ' ».' : 'Aucun mot de passe enregistré. Touche ＋ pour ajouter le premier, ou 📥 Importer une liste.'}</div>`;
 }
-function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); }
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
 
 let ED = null;
 function editer(r) {
@@ -120,29 +273,38 @@ function editer(r) {
 }
 $('nouv').onclick = () => { editer(null); if ($('q').value) $('e-s').value = $('q').value; };
 $('e-a').onclick = () => $('dlg').close();
-$('e-x').onclick = () => { if (ED && confirm('Supprimer « ' + ED.site + ' » ?')) { S.del(ED.id); $('dlg').close(); rendre(); } };
+$('e-x').onclick = () => { if (ED && confirm('Supprimer « ' + ED.site + ' » ?')) { S.del(ED.id); L = L.filter(o => o.id !== ED.id); $('dlg').close(); rendre(); } };
 $('gen').onclick = () => {
   const A = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!?#%+-', v = new Uint32Array(16);
   crypto.getRandomValues(v); $('e-p').value = Array.from(v, x => A[x % A.length]).join('');
 };
-$('dlg-f').onsubmit = e => {
+$('dlg-f').onsubmit = async e => {
   e.preventDefault();
   const site = $('e-s').value.trim(); if (!site) { $('e-s').focus(); return; }
-  const r = ED || {id: S.id(), type: 'mdp'};
-  Object.assign(r, {site, ident: $('e-i').value.trim(), mdp: $('e-p').value, note: $('e-n').value.trim()});
-  S.put(r); $('dlg').close(); rendre();
+  const o = {site, ident: $('e-i').value.trim(), mdp: $('e-p').value, note: $('e-n').value.trim()};
+  const r = S.put(await enregistrer(o, ED && ED.id));
+  L = L.filter(x => x.id !== r.id).concat([Object.assign({id: r.id, t: r.t}, o)]);
+  $('dlg').close(); rendre();
 };
 document.addEventListener('click', async e => {
-  const b = e.target.closest('[data-e],[data-voir],[data-cp]'); if (!b || b.closest('dialog') || !ouvert) return;
-  if (b.dataset.e) return editer(S.get(b.dataset.e));
+  const b = e.target.closest('[data-e],[data-voir],[data-cp]'); if (!b || b.closest('dialog') || !C) return;
+  const r = L.find(x => x.id === (b.dataset.e || b.dataset.voir || b.dataset.cp));
+  if (b.dataset.e) return editer(r);
   if (b.dataset.voir) { const id = b.dataset.voir; vus.has(id) ? vus.delete(id) : vus.add(id); return rendre(); }
-  const r = S.get(b.dataset.cp); if (!r) return;
+  if (!r) return;
   try { await navigator.clipboard.writeText(r[b.dataset.f] || ''); toast('Copié ✓'); } catch (err) { toast('Copie impossible ici'); }
 });
 $('q').oninput = rendre;
 Maison.dictee($('q'));
 Maison.pastille();
-rendre();
+// Rouvrir le compte de cette session (rechargement de la page)
+(async () => {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESS) || 'null'), c = s && S.get(s.id);
+    if (c) { const k = await crypto.subtle.importKey('raw', deb64(s.k), 'AES-GCM', true, ['encrypt', 'decrypt']); await dechiffrer(k, c.verif); return ouvrir(c, k); }
+  } catch (e) {}
+  porte();
+})();
 </script>
 </body>
 </html>

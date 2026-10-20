@@ -14,7 +14,8 @@ Appli de la maison, servie par GitHub Pages et installable sur téléphone et or
 - `terrain/` : gestion du terrain, le canevas d'entretien partagé (cette semaine, chaque semaine, chaque mois) avec l'historique.
 - `todo/` : To do en trois listes (Kevin, Camille, Commun) : urgent, cette semaine, ce mois-ci, cette année. Quand une période passe sans que ce soit fait, l'appli demande s'il faut passer au niveau suivant ou garder une période de plus ; ce qui est fait part aux archives.
 - `notes/` : notes (carnets, étiquettes, recherche), fichiers joints rangés dans un dossier du Drive, import des exports Evernote (.enex).
-- `mdp/` : mots de passe (site, identifiant, mot de passe), derrière un code dont seule l'empreinte est dans le code.
+- `mdp/` : mots de passe, un compte par personne avec son propre code. Chiffrés (PBKDF2 + AES-GCM) avec ce code, sauf si le compte
+  choisit une copie lisible dans la feuille. Import de listes (CSV de Chrome, iPhone, Firefox… ou collée).
 - `le-fist/` : les fléchettes, copiées de l'appli EPS ultime.
 
 Synchro : `sync.js` échange les données avec une feuille Google de ton Drive via le script `google/Code.gs`
