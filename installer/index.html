@@ -37,6 +37,18 @@ a.tuile.principale img{width:88px;height:88px}
 a.tuile.principale b{font-size:20px}
 a.tuile.principale span{font-size:14px}
 @media (min-width:640px){.tuiles{grid-template-columns:repeat(3,1fr)}}
+a.grand{display:flex;align-items:center;gap:16px;padding:20px 18px;border-radius:24px;background:linear-gradient(140deg,#2e7d32,#66bb6a 60%,#c5e1a5);color:#fff;text-decoration:none;box-shadow:0 8px 22px #2e7d3240}
+a.grand:active,.petites a:active,.sections a:active{transform:scale(.97)}
+a.grand img{width:96px;height:96px;border-radius:24px;box-shadow:0 3px 10px #0003;flex:none}
+a.grand b{display:block;font-size:24px;line-height:1.15}
+a.grand span{display:block;margin-top:4px;font-size:14px;opacity:.92}
+.sections{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 0}
+.sections a{padding:10px 6px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:inherit;text-decoration:none;text-align:center;font-weight:600;font-size:14px}
+.petites{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:22px}
+.petites a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px;border-radius:16px;color:inherit;text-decoration:none;text-align:center}
+.petites img{width:54px;height:54px;border-radius:15px;box-shadow:0 2px 6px #0002}
+.petites b{font-size:12px;font-weight:600;line-height:1.2}
+@media (min-width:640px){.sections{grid-template-columns:repeat(6,1fr)}.petites img{width:64px;height:64px}.petites b{font-size:14px}}
 h2{font-size:17px;margin:30px 0 8px}
 details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
 summary{font-weight:600;cursor:pointer}
@@ -75,14 +87,16 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
     <button id="installer2" class="go" type="button" hidden style="width:100%;margin-top:10px">Installer maintenant</button>
   </div>
 </div>
-<div class="tuiles">
-  <a class="tuile principale" href="jardin/"><img src="icones/jardin-192.png" alt=""><div><b>Gestion du verger et du potager</b><br><span>Le Jardin du Bonheur : calendrier, fiches, plan du terrain, suivi des arbres</span></div></a>
-  <a class="tuile" href="terrain/"><img src="icones/terrain-192.png" alt=""><b>Gestion du terrain</b><span>L'entretien à se partager, semaine par semaine</span></a>
-  <a class="tuile" href="courses/"><img src="icones/courses-192.png" alt=""><b>Courses</b><span>Une liste par magasin, à cocher sur place</span></a>
-  <a class="tuile" href="todo/"><img src="icones/todo-192.png" alt=""><b>To do</b><span>Kevin, Camille et commun, par urgence</span></a>
-  <a class="tuile" href="notes/"><img src="icones/notes-192.png" alt=""><b>Notes</b><span>Notes, fichiers joints, import Evernote</span></a>
-  <a class="tuile" href="mdp/"><img src="icones/mdp-192.png" alt=""><b>Mots de passe</b><span>Protégés par un code</span></a>
-  <a class="tuile" href="le-fist/"><img src="icones/le-fist-192.png" alt=""><b>Le Fist</b><span>Fléchettes 101, 301, 501, cricket, en équipes</span></a>
+<a class="grand" href="jdb/"><img src="icones/jardin-192.png" alt=""><div><b>Jardin du Bonheur</b><span>Verger, potager, ornement, terrain, projets et pensées</span></div></a>
+<div class="sections">
+  <a href="jdb/#verger/mois">🍎 Verger</a><a href="jdb/#potager/mois">🥕 Potager</a><a href="jdb/#ornement/mois">🌸 Ornement</a><a href="terrain/">🚜 Terrain</a><a href="jdb/#projets">🏗️ Projets</a><a href="jdb/#pensees">💬 Pensées</a>
+</div>
+<div class="petites">
+  <a href="todo/"><img src="icones/todo-192.png" alt=""><b>To do</b></a>
+  <a href="courses/"><img src="icones/courses-192.png" alt=""><b>Courses</b></a>
+  <a href="mdp/"><img src="icones/mdp-192.png" alt=""><b>Mots de passe</b></a>
+  <a href="le-fist/"><img src="icones/le-fist-192.png" alt=""><b>Le Fist</b></a>
+  <a href="notes/"><img src="icones/notes-192.png" alt=""><b>Notes</b></a>
 </div>
 
 <h2 id="drive-titre">☁️ Sauvegarde sur le Drive <span id="pill" class="pill">non reliée</span></h2>

@@ -8,16 +8,15 @@ const fmtJ = s => { const p = String(s || '').split('-'); return p.length === 3 
 const fmtT = t => new Date(t).toLocaleDateString('fr-BE', {day: 'numeric', month: 'short', year: 'numeric'});
 const ANNEE = new Date().getFullYear();
 let AN = ANNEE, MI = new Date().getMonth();
-// Pendant l'essai, le retour mène à la nouvelle page d'accueil ; au lancement, ce sera '../'.
-const ACCUEIL = '../essai.html';
+const ACCUEIL = '../';
 
 const PARTIES = {
   verger: {nom: 'Verger', e: '🍎', c: '#c0392b', c3: '#e3683c', sous: 'Tes fruitiers : quoi faire, quand, et leur suivi',
-    onglets: [['mois', 'Ce mois-ci'], ['arbres', 'Mes arbres'], ['fiches', 'Fiches'], ['calendrier', 'Calendrier'], ['soins', 'Soins naturels']]},
+    onglets: [['mois', 'Ce mois-ci'], ['arbres', 'Mes arbres'], ['plan', '🗺️ Plan', 'plan.html?k=f'], ['fiches', 'Fiches'], ['calendrier', 'Calendrier'], ['soins', 'Soins naturels']]},
   potager: {nom: 'Potager', e: '🥕', c: '#d9702a', c3: '#efa53a', sous: 'Semis, plantations, récoltes, sans bêcher',
     onglets: [['mois', 'Ce mois-ci'], ['legumes', 'Légumes'], ['calendrier', 'Calendrier'], ['conseils', 'Conseils'], ['compost', 'Compost']]},
   ornement: {nom: 'Ornement', e: '🌸', c: '#b8457f', c3: '#de7aa8', sous: 'Arbustes, fleurs, grimpantes et graminées',
-    onglets: [['mois', 'Ce mois-ci'], ['plantes', 'Mes plantes'], ['fiches', 'Fiches']]},
+    onglets: [['mois', 'Ce mois-ci'], ['plantes', 'Mes plantes'], ['plan', '🗺️ Plan', 'plan.html?k=o'], ['fiches', 'Fiches']]},
   terrain: {nom: 'Gestion du terrain', e: '🚜', c: '#5b7a1e', c3: '#8bb33a', sous: "L'entretien à se partager, semaine par semaine", lien: '../terrain/'},
   projets: {nom: 'Projets pour le terrain', e: '🏗️', c: '#2f6fb3', c3: '#4fa0d8', sous: 'Les idées et les chantiers, étape par étape'},
   pensees: {nom: 'Pensée permacole', e: '💬', c: '#6a55b8', c3: '#9a83e0', sous: 'Le carnet ouvert à tous pour échanger nos idées'}
@@ -37,7 +36,7 @@ const TS = Maison.store('terrain', {recu: () => { if (!$('dlg').open) rendre(); 
 Maison.pastille();
 
 // ---------- Petits morceaux d'affichage
-const onglets = (p, actif) => `<nav class="onglets">${PARTIES[p].onglets.map(([k, l]) => `<a href="#${p}/${k}" ${k === actif ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+const onglets = (p, actif) => `<nav class="onglets">${PARTIES[p].onglets.map(([k, l, u]) => `<a href="${u || '#' + p + '/' + k}" ${k === actif ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 const titre = (p, sous) => { const P = PARTIES[p]; return `<div class="titre"><div class="ic" style="background:linear-gradient(150deg,${P.c},${P.c3})">${P.e}</div><div><h1>${esc(P.nom)}</h1><p>${esc(sous || P.sous)}</p></div></div>`; };
 const choixMois = () => `<div class="mois"><button data-mois="-1" aria-label="Mois précédent">◀</button><b>${MOIS[MI].toLowerCase()} ${AN}</b><button data-mois="1" aria-label="Mois suivant">▶</button></div>`;
 const barre = (n, t) => t ? `<div class="barre"><i style="width:${Math.round(100 * n / t)}%"></i></div>` : '';
@@ -139,6 +138,7 @@ function vueArbre(k, id) {
     <div class="large"><label>Fiche liée (donne les dates de taille et de récolte)</label><select data-arbre="fid">${opts}</select></div>
     <div class="large"><label>Note (année de plantation, porte-greffe…)</label><input data-arbre="note" value="${esc(t.note || '')}"></div></div>
     ${f ? `<a class="btn plein" href="#${part}/fiche/${encodeURIComponent(f.id)}">📖 Ouvrir la fiche ${esc(f.a[1])}</a>` : ''}</div>`;
+  h += `<a class="btn plein" href="plan.html?k=${k}&id=${t.id}">🗺️ ${t.x != null ? 'Voir sur le plan' : 'Placer sur le plan'}</a><div style="height:12px"></div>`;
   h += `<div class="carte"><span class="lab" style="margin-top:0">📷 Photos</span>${blocPhotos('arbre-' + k + '-' + t.id)}</div>`;
   h += `<button class="btn danger plein" data-enlever="${k}:${t.id}">🗑 Enlever ${k === 'f' ? 'cet arbre' : 'cette plante'} de la liste</button>`;
   return h;
