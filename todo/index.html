@@ -52,6 +52,13 @@ ul.urgent li .txt b{font-weight:700}
 li.fait .txt b{color:var(--muted)}
 li .txt small{color:var(--muted);display:block}
 li .txt small.glisse{color:var(--late)}
+.decide{display:grid;gap:8px}
+.carte{background:var(--urg);border:1px solid var(--urg-l);border-radius:14px;padding:12px}
+.carte b{display:block;overflow-wrap:anywhere}
+.carte small{color:var(--late);font-weight:600}
+.choix2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.choix2 button{padding:8px 12px;font-size:14px}
+.choix2 .rond{width:34px;height:34px;padding:0;margin-left:auto;border-radius:50%}
 .tag{font-size:12px;font-weight:700;border-radius:99px;padding:2px 8px;white-space:nowrap;flex:none;background:var(--line);color:var(--muted)}
 .vide{color:var(--muted);text-align:center;padding:14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;font-size:14px}
 dialog{border:0;border-radius:16px;padding:18px;width:min(420px,calc(100vw - 32px));background:var(--surface);color:var(--fg)}
@@ -105,22 +112,24 @@ const fmtD = t => t ? jour(t).split('-').reverse().join('/') : '';
 const lundi = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return +d; };
 const debMois = t => { const d = new Date(t); return +new Date(d.getFullYear(), d.getMonth(), 1); };
 const debAn = t => +new Date(new Date(t).getFullYear(), 0, 1);
-// Ce qui n'est pas fait glisse : l'année passée → ce mois-ci, le mois passé → cette semaine, la semaine passée → urgent
-function niveau(t, now) {
-  let n = t.niveau || 'semaine', d = t.place || t.cree || now;
-  if (n === 'annee') { if (debAn(now) <= debAn(d)) return n; n = 'mois'; d = debAn(now) > debAn(d) ? +new Date(new Date(d).getFullYear() + 1, 0, 1) : d; }
-  if (n === 'mois') { if (debMois(now) <= debMois(d)) return n; n = 'semaine'; const x = new Date(d); d = +new Date(x.getFullYear(), x.getMonth() + 1, 1); }
-  if (n === 'semaine') { if (lundi(now) <= lundi(d)) return n; n = 'urgent'; }
-  return n;
+// Niveau choisi ; quand sa période est passée sans être faite, l'appli demande quoi en faire
+const niveau = t => t.niveau || 'semaine';
+const SUIV = {annee: 'mois', mois: 'semaine', semaine: 'urgent'};
+const ENCORE = {annee: 'Garder un an de plus', mois: 'Garder un mois de plus', semaine: 'Garder une semaine de plus'};
+const PASSE = {annee: "pas faite cette année", mois: 'pas faite ce mois-ci', semaine: 'pas faite cette semaine'};
+function echue(t, now) {
+  if (t.fait) return false;
+  const n = niveau(t), d = t.place || t.cree || now;
+  return n === 'semaine' ? lundi(now) > lundi(d) : n === 'mois' ? debMois(now) > debMois(d) : n === 'annee' ? debAn(now) > debAn(d) : false;
 }
 
 const S = Maison.store('todo', {
   recu: () => { migrer(); rendre(); },
   tables(recs) {
     const now = Date.now();
-    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || Object.keys(LISTES).indexOf(a.liste || 'commun') - Object.keys(LISTES).indexOf(b.liste || 'commun') || NIV.indexOf(niveau(a, now)) - NIV.indexOf(niveau(b, now)) || (b.faitLe || 0) - (a.faitLe || 0) || a.cree - b.cree);
+    const l = recs.filter(r => r.type === 'tache').sort((a, b) => (a.fait - b.fait) || Object.keys(LISTES).indexOf(a.liste || 'commun') - Object.keys(LISTES).indexOf(b.liste || 'commun') || NIV.indexOf(niveau(a)) - NIV.indexOf(niveau(b)) || (b.faitLe || 0) - (a.faitLe || 0) || a.cree - b.cree);
     return {'To-Do': [['Liste', 'Pour quand', 'Tâche', 'Statut', 'Ajoutée le', 'Faite le', 'Par', 'Note'],
-      ...l.map(r => [LISTES[r.liste || 'commun'][1], r.fait ? '' : NOM[niveau(r, now)], r.titre, r.fait ? 'Archivé (fait)' : 'À faire', fmtD(r.cree), r.fait ? fmtD(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
+      ...l.map(r => [LISTES[r.liste || 'commun'][1], r.fait ? '' : NOM[niveau(r)] + (echue(r, now) ? ' (à décider)' : ''), r.titre, r.fait ? 'Archivé (fait)' : 'À faire', fmtD(r.cree), r.fait ? fmtD(r.faitLe) : '', [...new Set([r.par, r.faitPar].filter(Boolean))].join(' → '), r.note || ''])]};
   }
 });
 // Anciennes tâches (avant les trois listes) : dans « Commun », cette semaine
@@ -137,14 +146,14 @@ $('e-l').innerHTML = Object.keys(LISTES).map(k => `<option value="${k}">${LISTES
 $('e-v').innerHTML = optNiv('semaine');
 
 function ligne(t, now, avecListe) {
-  const n = niveau(t, now), glisse = !t.fait && n !== (t.niveau || 'semaine');
+  const n = niveau(t), glisse = echue(t, now);
   const sous = t.fait ? 'fait ' + fmtH(t.faitLe) + (t.faitPar ? ' par ' + t.faitPar : '')
-    : [glisse ? 'était « ' + NOM[t.niveau].toLowerCase() + ' »' : '', t.note].filter(Boolean).join(' · ');
+    : [glisse ? '⏳ ' + PASSE[n] + ' : à décider' : '', t.note].filter(Boolean).join(' · ');
   const tag = avecListe ? `<span class="tag">${esc(LISTES[t.liste || 'commun'][1])}${t.fait ? '' : ' · ' + NOM[n]}</span>` : '';
   return `<li class="${t.fait ? 'fait' : ''}"><button class="rond" data-c="${t.id}" aria-label="${t.fait ? 'Remettre à faire' : 'Marquer comme fait'}">${t.fait ? '✓' : ''}</button><div class="txt" data-e="${t.id}"><b>${esc(t.titre)}</b>${sous ? `<small class="${glisse ? 'glisse' : ''}">${esc(sous)}</small>` : ''}</div>${tag}</li>`;
 }
 function cherche(T, q, now) {
-  const l = T.filter(t => norm(t.titre + ' ' + (t.note || '')).includes(norm(q))).sort((a, b) => (a.fait - b.fait) || NIV.indexOf(niveau(a, now)) - NIV.indexOf(niveau(b, now)) || (b.faitLe || 0) - (a.faitLe || 0));
+  const l = T.filter(t => norm(t.titre + ' ' + (t.note || '')).includes(norm(q))).sort((a, b) => (a.fait - b.fait) || NIV.indexOf(niveau(a)) - NIV.indexOf(niveau(b)) || (b.faitLe || 0) - (a.faitLe || 0));
   return l.length ? `<ul>${l.map(t => ligne(t, now, true)).join('')}</ul>` : `<div class="vide">Rien trouvé pour « ${esc(q)} ».</div>`;
 }
 function archives(fait, now, avecListe) {
@@ -167,8 +176,8 @@ function rendre() {
   if (!L) {
     $('titre').textContent = "📝 To do";
     $('choix').innerHTML = Object.keys(LISTES).map(k => {
-      const a = T.filter(t => !t.fait && t.liste === k), u = a.filter(t => niveau(t, now) === 'urgent').length;
-      return `<button data-l="${k}"><i>${LISTES[k][0]}</i><span>${LISTES[k][1]}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}</small></span>›</button>`;
+      const a = T.filter(t => !t.fait && t.liste === k), u = a.filter(t => niveau(t) === 'urgent').length, dd = a.filter(t => echue(t, now)).length;
+      return `<button data-l="${k}"><i>${LISTES[k][0]}</i><span>${LISTES[k][1]}<small>${a.length ? a.length + ' à faire' : 'Rien à faire'}${u ? ` · <b>${u} urgent${u > 1 ? 's' : ''}</b>` : ''}${dd ? ` · ⏳ ${dd} à décider` : ''}</small></span>›</button>`;
     }).join('') + `<button class="archives" data-l="archives"><i>🗄️</i><span>Archives<small>${T.filter(t => t.fait).length} chose(s) faite(s)</small></span>›</button>`;
     const q = $('q0').value.trim();
     $('res0').innerHTML = q ? '<div style="margin-top:12px">' + cherche(T, q, now) + '</div>' : '';
@@ -184,8 +193,10 @@ function rendre() {
   if (arch) { $('liste').innerHTML = archives(mes.sort((a, b) => b.faitLe - a.faitLe), now, true); return; }
   const afaire = mes.filter(t => !t.fait);
   let h = '';
+  const dec = afaire.filter(t => echue(t, now)).sort((a, b) => NIV.indexOf(niveau(a)) - NIV.indexOf(niveau(b)));
+  if (dec.length) h += `<h2 class="urgent">⏳ À décider<span>${dec.length}</span></h2><div class="decide">` + dec.map(t => `<div class="carte"><b>${esc(t.titre)}</b><small>${esc(NOM[niveau(t)])} : ${PASSE[niveau(t)]}</small><div class="choix2"><button class="go" data-d="${t.id}" data-v="passe">${SUIV[niveau(t)] === 'urgent' ? '🔥 Passer en urgent' : 'Passer en « ' + NOM[SUIV[niveau(t)]].toLowerCase() + ' »'}</button><button data-d="${t.id}" data-v="garde">${ENCORE[niveau(t)]}</button><button class="rond" data-c="${t.id}" aria-label="C'est fait" title="C'est fait"></button></div></div>`).join('') + '</div>';
   NIV.forEach(n => {
-    const l = afaire.filter(t => niveau(t, now) === n).sort((a, b) => (a.place || a.cree) - (b.place || b.cree));
+    const l = afaire.filter(t => niveau(t) === n && !echue(t, now)).sort((a, b) => (a.place || a.cree) - (b.place || b.cree));
     if (n === 'urgent' && !l.length) return;
     h += `<h2 class="${n === 'urgent' ? 'urgent' : ''}">${n === 'urgent' ? '🔥 ' : ''}${NOM[n]}<span>${l.length || ''}</span></h2>`;
     h += l.length ? `<ul class="${n === 'urgent' ? 'urgent' : ''}">${l.map(t => ligne(t, now)).join('')}</ul>` : `<div class="vide">Rien pour l'instant.</div>`;
@@ -204,27 +215,32 @@ function ajouter(titre, niv) {
 $('f').onsubmit = e => { e.preventDefault(); ajouter($('i').value, $('niv').value); $('i').value = ''; $('i').focus(); };
 let ED = null;
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-l],[data-c],[data-e],#plus');
+  const b = e.target.closest('[data-l],[data-c],[data-d],[data-e],#plus');
   if (!b || b.closest('dialog')) return;
   if (b.id === 'plus') { montrerTout = true; rendre(); return; }
   if (b.dataset.l) { location.hash = b.dataset.l; return; }
+  if (b.dataset.d) {
+    const t = S.get(b.dataset.d); if (!t) return;
+    if (b.dataset.v === 'passe') t.niveau = SUIV[niveau(t)];
+    t.place = Date.now(); S.put(t); rendre(); return;
+  }
   if (b.dataset.c) {
     const t = S.get(b.dataset.c); if (!t) return;
     t.fait = !t.fait; t.faitLe = t.fait ? Date.now() : null; t.faitPar = t.fait ? (Maison.cfg().qui || '') : '';
-    // Remise à faire : elle reprend sa place telle qu'elle était au moment où elle a été faite
-    if (!t.fait) { t.niveau = niveau(t, Date.now()); t.place = Date.now(); }
+    // Remise à faire : elle repart pour une période dans son niveau
+    if (!t.fait) t.place = Date.now();
     S.put(t); rendre(); return;
   }
   if (b.dataset.e) {
     ED = S.get(b.dataset.e); if (!ED) return;
-    $('e-t').value = ED.titre; $('e-l').value = ED.liste || 'commun'; $('e-v').value = niveau(ED, Date.now()); $('e-n').value = ED.note || '';
+    $('e-t').value = ED.titre; $('e-l').value = ED.liste || 'commun'; $('e-v').value = niveau(ED); $('e-n').value = ED.note || '';
     $('dlg').showModal();
   }
 });
 $('dlg-f').onsubmit = e => {
   e.preventDefault(); if (!ED || !$('e-t').value.trim()) return;
   const v = $('e-v').value;
-  if (v !== niveau(ED, Date.now())) { ED.niveau = v; ED.place = Date.now(); }
+  if (v !== niveau(ED)) { ED.niveau = v; ED.place = Date.now(); }
   Object.assign(ED, {titre: $('e-t').value.trim(), liste: $('e-l').value, note: $('e-n').value.trim()});
   S.put(ED); $('dlg').close(); rendre();
 };
