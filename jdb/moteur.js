@@ -129,7 +129,7 @@ const J = (() => {
   function exporter() {
     const ph = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('ph:')) ph[k.slice(3)] = localStorage.getItem(k); }
     const co = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('jdb:coche:')) co[k] = localStorage.getItem(k); }
-    const o = {plan: arbres('f'), plan2: arbres('o'), edits: U(), suivi: lit(SVK, {}), photos: ph, coches: co, date: new Date().toISOString()};
+    const o = {version: 4, plan: arbres('f'), plan2: arbres('o'), fond: lit('jdb:fond:v1', null), edits: U(), suivi: lit(SVK, {}), photos: ph, coches: co, date: new Date().toISOString()};
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(o)], {type: 'application/json'}));
     a.download = 'jardin-du-bonheur-' + auj() + '.json'; a.click();
   }
@@ -137,6 +137,7 @@ const J = (() => {
     const o = JSON.parse(texte), pl = Array.isArray(o) ? o : o.plan;
     if (!Array.isArray(pl)) throw new Error('fichier non reconnu');
     garderArbres('f', pl); if (Array.isArray(o.plan2)) garderArbres('o', o.plan2);
+    if (o.fond) ecrit('jdb:fond:v1', o.fond); // le dessin du plan (forme du terrain, éléments, stylo)
     if (o.edits && o.edits.add) ecrit(UK, o.edits);
     if (o.suivi) ecrit(SVK, o.suivi);
     if (o.photos) Object.entries(o.photos).forEach(([k, v]) => { try { localStorage.setItem('ph:' + k, v); } catch (e) {} });
