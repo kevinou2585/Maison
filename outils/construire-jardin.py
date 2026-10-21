@@ -184,5 +184,11 @@ s = remplacer(s, 'function drawMap(){if(!BG)return;', 'function drawMap(){if(!BG
 s = remplacer(s, '}).join("")+hSvg()+ptsSvg();{const rg0=$("rg");if(rg0&&rg0.parentNode===svg&&svg.__bg===BGS&&rg0.children.length>=2){while(rg0.children.length>2)rg0.lastElementChild.remove();rg0.setAttribute("transform",RT);rg0.children[1].innerHTML=TRS}else{svg.innerHTML=`<g ${I("rg")} transform="${RT}"><g>${BGS}</g><g>${TRS}</g></g>`;svg.__bg=BGS}}',
  '}),HDS=hSvg()+ptsSvg();{const rg0=$("rg");if(rg0&&rg0.parentNode===svg&&svg.__bg===BGS&&rg0.children.length>=3){while(rg0.children.length>3)rg0.lastElementChild.remove();rg0.setAttribute("transform",RT);const gT=rg0.children[1],old=svg.__tr||[];if(svg.__rt===RT&&old.length===TRS.length&&gT.children.length===TRS.length){for(let i=0;i<TRS.length;i++)if(old[i]!==TRS[i]){const tmp=document.createElementNS("http://www.w3.org/2000/svg","g");tmp.innerHTML=TRS[i];if(tmp.firstElementChild)gT.replaceChild(tmp.firstElementChild,gT.children[i])}}else gT.innerHTML=TRS.join("");if(svg.__hd!==HDS)rg0.children[2].innerHTML=HDS}else{svg.innerHTML=`<g ${I("rg")} transform="${RT}"><g>${BGS}</g><g>${TRS.join("")}</g><g>${HDS}</g></g>`;svg.__bg=BGS}svg.__tr=TRS;svg.__hd=HDS;svg.__rt=RT}')
 
+# Plan du verger : plus de section « À placer sur le plan » ; seuls les arbres posés sur le plan sont listés (demande de Kevin).
+# Les arbres non placés ne sont pas effacés : ils restent dans les données, simplement cachés.
+s = remplacer(s, '$("pc").innerHTML=OV+`<p><b>${T.length-cn.u}</b> sur le plan · <b>${cn.u}</b> pas encore placés<br>', '$("pc").innerHTML=OV+`<p><b>${T.length-cn.u}</b> sur le plan${P.fk==="f"?"":` · <b>${cn.u}</b> pas encore placés`}<br>')
+s = remplacer(s, 'B=L.filter(t=>t.x==null&&t.name),C=L.filter(t=>!t.name);', 'B=L.filter(t=>t.x==null&&t.name),C=L.filter(t=>!t.name&&(P.fk!=="f"||t.x!=null));')
+s = remplacer(s, '+sec("b","📦 À placer sur le plan",B)+sec("c","❓ Arbres pas encore identifiés",C,`<button class=nu type=button data-nu=1>＋ Nouvel arbre non identifié</button>`)}', '+(P.fk==="f"?"":sec("b","📦 À placer sur le plan",B))+sec("c","❓ Arbres pas encore identifiés",C,P.fk==="f"?"":`<button class=nu type=button data-nu=1>＋ Nouvel arbre non identifié</button>`)}')
+
 out.write_text(s, encoding="utf-8")
 print(out, len(s))

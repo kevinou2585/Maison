@@ -62,7 +62,7 @@ function svgLegume(x) { const k = x.id.startsWith('lg:') ? x.id.slice(3) : ''; r
 
 // ---------- Les arbres et leur calendrier
 function suivis(k) {
-  return J.arbres(k).filter(t => t.name || J.ficheDe(k, t)).map(t => ({k, t, key: k + ':' + t.id, s: J.calendrier(k, t)}))
+  return J.surPlan(k).filter(t => t.name || J.ficheDe(k, t)).map(t => ({k, t, key: k + ':' + t.id, s: J.calendrier(k, t)}))
     .sort((a, b) => (+a.t.n || 9999) - (+b.t.n || 9999) || String(a.t.name).localeCompare(String(b.t.name), 'fr'));
 }
 const etiquette = x => (x.t.n ? 'n° ' + x.t.n + ' · ' : '') + (x.t.name || 'À identifier');
@@ -87,7 +87,7 @@ function vueMoisArbres(k) {
   if (k === 'o') h += `<h2>🌼 En fleur</h2>` + (fl.length ? `<ul class="l">${fl.map(x => `<li>${avatar(k, x.t)}<a class="tx" href="#ornement/plante/${x.t.id}"><b>${esc(etiquette(x))}</b><small>${esc(x.s.fc.a[2])}</small></a></li>`).join('')}</ul>` : vide('Rien de prévu en fleur ce mois-ci.'));
   if (k === 'f') h += blocGestes('c', MI, gestes, mc);
   if (retard.length) h += `<details class="acc" style="margin-top:16px"><summary>⏰ Période passée, pas encore cochés (${retard.length})</summary><div class="in"><ul class="l">${retard.map(([x, f]) => ligneSuivi(x, f, (f === 't' ? '✂️ taille : ' + x.s.tt : '🧺 récolte : ' + x.s.rt))).join('')}</ul></div></details>`;
-  const sans = J.arbres(k).filter(t => t.name && !J.ficheDe(k, t)).length;
+  const sans = J.surPlan(k).filter(t => t.name && !J.ficheDe(k, t)).length;
   if (sans) h += `<p class="mut">${sans} ${k === 'f' ? 'arbre' : 'plante'}${sans > 1 ? 's' : ''} sans fiche liée (donc sans dates) : ouvre-${sans > 1 ? 'les' : 'le'} dans « ${k === 'f' ? 'Mes arbres' : 'Mes plantes'} » pour choisir sa fiche.</p>`;
   return h;
 }
@@ -113,12 +113,12 @@ function ligneGeste(g, mc) {
 let Q = '', FST = '';
 const basculeBilan = (k, b) => { const base = k === 'f' ? 'verger/arbres' : 'ornement/plantes'; return `<div class="seg" style="margin-bottom:12px"><a class="segl" href="#${base}" aria-pressed="${!b}">${k === 'f' ? '🌳 Mes arbres' : '🌸 Mes plantes'}</a><a class="segl" href="#${base}/bilan" aria-pressed="${b}">📊 Bilan de l'année</a></div>`; };
 function vueArbres(k) {
-  const T = J.arbres(k).slice().sort((a, b) => (+a.n || 9999) - (+b.n || 9999) || String(a.name).localeCompare(String(b.name), 'fr'));
+  const T = J.surPlan(k).slice().sort((a, b) => (+a.n || 9999) - (+b.n || 9999) || String(a.name).localeCompare(String(b.name), 'fr'));
   const q = J.norm(Q), base = k === 'f' ? 'verger/arbre' : 'ornement/plante';
   const l = T.filter(t => (!FST || t.st === FST) && (!q || J.norm((t.name || '') + ' ' + (t.note || '') + ' ' + (t.n || '')).includes(q)));
   let h = basculeBilan(k, false) + `<div class="chercher"><input id="q" type="search" placeholder="🔎 Chercher ${k === 'f' ? 'un arbre' : 'une plante'}" value="${esc(Q)}" autocomplete="off"></div>`;
   h += `<div class="puces">${[['', 'Tous (' + T.length + ')'], ...Object.entries(ST[k]).map(([s, v]) => [s, v[0] + ' (' + T.filter(t => t.st === s).length + ')'])].map(([v, t]) => `<button data-fst="${v}" aria-pressed="${v === FST}">${esc(t)}</button>`).join('')}</div>`;
-  h += `<button class="btn go plein" data-nouvel="${k}">＋ Ajouter ${k === 'f' ? 'un arbre' : 'une plante'}</button><div style="height:10px"></div>`;
+  h += k === 'f' ? `<a class="btn go plein" href="plan.html?k=f">＋ Ajouter un arbre sur le plan</a>` : `<button class="btn go plein" data-nouvel="${k}">＋ Ajouter une plante</button><div style="height:10px"></div>`;
   h += l.length ? `<ul class="l">${l.map(t => {
     const f = J.ficheDe(k, t), r = J.suivi(ANNEE, k + ':' + t.id), st = ST[k][t.st];
     const sous = [f ? f.a[1] : 'Pas de fiche liée', J.FORME[t.sz]].filter(Boolean).join(' · ');

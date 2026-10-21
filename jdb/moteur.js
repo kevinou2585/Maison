@@ -44,6 +44,8 @@ const J = (() => {
     : O.map((o, i) => ({id: i + 1, n: 0, name: o[1], sz: '', st: 'c', x: null, y: null, note: '', ic: '', isz: ''}));
   const arbres = k => { const t = lit(PK[k], null); return Array.isArray(t) ? t : graine(k); };
   const garderArbres = (k, T) => ecrit(PK[k], T);
+  // Verger : on ne montre que les arbres posés sur le plan (les autres restent gardés, juste cachés)
+  const surPlan = k => k === 'f' ? arbres(k).filter(t => t.x != null) : arbres(k);
   function majArbre(k, id, o) { const T = arbres(k), t = T.find(x => x.id === id); if (t) { Object.assign(t, o); garderArbres(k, T); } return t; }
   function nouvelArbre(k, o) { const T = arbres(k), id = Math.max(0, ...T.map(t => +t.id || 0)) + 1; let n = 1; while (T.some(t => t.n == n)) n++; const t = Object.assign({id, n, name: '', sz: '', st: k === 'f' ? 'e' : 'c', x: null, y: null, note: '', ic: '', isz: ''}, o); T.push(t); garderArbres(k, T); return t; }
   function enleverArbre(k, id) { garderArbres(k, arbres(k).filter(t => t.id !== id)); }
@@ -67,7 +69,7 @@ const J = (() => {
     return egal ? null : best;
   };
   const ficheDe = (k, t) => { const L = fiches(k); return (t.fid && L.find(x => x.id === t.fid)) || (t.name && (L.find(x => norm(x.a[1]) === norm(t.name)) || proche(L, t.name))) || null; };
-  const arbresDe = (k, fid) => arbres(k).filter(t => { const c = ficheDe(k, t); return c && c.id === fid; });
+  const arbresDe = (k, fid) => surPlan(k).filter(t => { const c = ficheDe(k, t); return c && c.id === fid; });
 
   // ---- Lire les mois dans les textes des fiches (repris de l'ancienne appli)
   const MRE = /\b(janv(?:ier)?|fev(?:r(?:ier)?)?|mars|avr(?:il)?|mai|juin|juil(?:let)?|aout|sept(?:embre)?|oct(?:obre)?|nov(?:embre)?|dec(?:embre)?)\b/g;
@@ -181,7 +183,7 @@ const J = (() => {
     };
   }
 
-  return {lit, ecrit, norm, auj, liste, modifier, ajouter, supprimer, retablir, modifie, arbres, majArbre, nouvelArbre, enleverArbre,
+  return {lit, ecrit, norm, auj, liste, modifier, ajouter, supprimer, retablir, modifie, arbres, surPlan, majArbre, nouvelArbre, enleverArbre,
     fiches, ficheDe, arbresDe, mois, calendrier, suivi, noter, carnet, moisCle, coche, cocher, photos, garderPhotos, ajouterPhoto, clePhoto,
     exporter, importer, tables, FORME};
 })();
