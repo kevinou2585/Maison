@@ -70,7 +70,9 @@
           p.recs.forEach(rec => {
             const loc = a.get(rec.id);
             const t = loc ? +loc.t || 0 : -1;
-            if ((+rec.t || 0) > t || (!meta.init && t <= 0)) {
+            // Premier contact d'un appareil avec le Drive : la version du Drive l'emporte toujours, pour qu'un
+            // téléphone pas encore relié n'écrase pas les données de l'ordinateur avec sa vieille copie.
+            if ((+rec.t || 0) > t || !meta.init) {
               if (a.put(rec) !== false) recus.push(rec.id);
               delete meta.sale[rec.id];
             }
