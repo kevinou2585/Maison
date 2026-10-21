@@ -186,9 +186,20 @@ s = remplacer(s, '}).join("")+hSvg()+ptsSvg();{const rg0=$("rg");if(rg0&&rg0.par
 
 # Plan du verger : plus de section « À placer sur le plan » ; seuls les arbres posés sur le plan sont listés (demande de Kevin).
 # Les arbres non placés ne sont pas effacés : ils restent dans les données, simplement cachés.
+s = remplacer(s, 'const L=T.filter(t=>!f||(f=="u"?t.x==null:t.st==f))', 'let L=T.filter(t=>!f||(f=="u"?t.x==null:t.st==f))')
+s = remplacer(s, 'x:null,y:null,note:"",ic:"",isz:""};T.push(t);SEL=t.id;SELO=null;OPN.c=true;sv();redraw();return}', 'x:null,y:null,note:"",ic:"",isz:"",nv:1};T.push(t);SEL=t.id;SELO=null;OPN.c=true;sv();redraw();return}')
 s = remplacer(s, '$("pc").innerHTML=OV+`<p><b>${T.length-cn.u}</b> sur le plan · <b>${cn.u}</b> pas encore placés<br>', '$("pc").innerHTML=OV+`<p><b>${T.length-cn.u}</b> sur le plan${P.fk==="f"?"":` · <b>${cn.u}</b> pas encore placés`}<br>')
-s = remplacer(s, 'B=L.filter(t=>t.x==null&&t.name),C=L.filter(t=>!t.name);', 'B=L.filter(t=>t.x==null&&t.name),C=L.filter(t=>!t.name&&(P.fk!=="f"||t.x!=null));')
-s = remplacer(s, '+sec("b","📦 À placer sur le plan",B)+sec("c","❓ Arbres pas encore identifiés",C,`<button class=nu type=button data-nu=1>＋ Nouvel arbre non identifié</button>`)}', '+(P.fk==="f"?"":sec("b","📦 À placer sur le plan",B))+sec("c","❓ Arbres pas encore identifiés",C,P.fk==="f"?"":`<button class=nu type=button data-nu=1>＋ Nouvel arbre non identifié</button>`)}')
+s = remplacer(s, 'B=L.filter(t=>t.x==null&&t.name),C=L.filter(t=>!t.name);', 'B=L.filter(t=>t.x==null&&t.name),C=L.filter(t=>!t.name&&(P.fk!=="f"||t.x!=null||t.nv));if(P.fk==="f")B=B.filter(t=>t.nv);')
+s = remplacer(s, '+sec("b","📦 À placer sur le plan",B)+sec("c","❓ Arbres pas encore identifiés",C,`<button class=nu type=button data-nu=1>＋ Nouvel arbre non identifié</button>`)}', '+(P.fk==="f"?(B.length?sec("b","🆕 Nouveaux arbres à placer",B):""):sec("b","📦 À placer sur le plan",B))+sec("c","❓ Arbres pas encore identifiés",C,`<button class=nu type=button data-nu=1>＋ Nouvel arbre non identifié</button>`)}')
+
+# Verger : numéros automatiques 1, 2, 3… sur les arbres posés, regroupés par espèce dans l'ordre choisi par Kevin
+# (au départ, le groupe = l'ancien numéro qu'il avait donné à toute l'espèce ; un nouvel arbre rejoint son espèce).
+s = remplacer(s, 'const sv=()=>{try{localStorage.setItem(P.key,JSON.stringify(T))}catch(e){}};', r"""const sv=()=>{renum();try{localStorage.setItem(P.key,JSON.stringify(T))}catch(e){}};
+function renum(){if(P.fk!=="f")return false;const pl=T.filter(t=>t.x!=null);if(!pl.length)return false;const gk=t=>{const fc=ficheOf(P.fk,t);return fc?fc.a[0]:norm(String(t.name||"").split(" ")[0])||"?"};
+if(!pl.some(t=>t.gf))pl.forEach(t=>{t.g=+t.n||999;t.gf=1});const R={};pl.forEach(t=>{if(t.gf){const k=gk(t);R[k]=Math.min(R[k]==null?1e9:R[k],t.g)}});let mx=Math.max(0,...pl.filter(t=>t.gf).map(t=>t.g));
+pl.forEach(t=>{if(!t.gf){const k=gk(t);t.g=R[k]!=null?R[k]:(R[k]=++mx)}});let ch=false;pl.slice().sort((a,b)=>a.g-b.g||String(a.name||"~").localeCompare(String(b.name||"~"),"fr")||a.id-b.id).forEach((t,i)=>{if(t.n!==i+1){t.n=i+1;ch=true}});if(ch){const e=$("f3"),t0=T.find(x=>x.id===SEL);if(e&&t0)e.value=t0.x==null?"":t0.n}return ch}""")
+s = remplacer(s, 'function drawList(){', 'function drawList(){if(renum())try{localStorage.setItem(P.key,JSON.stringify(T))}catch(e){}')
+s = remplacer(s, '<label>N°<input ${I("f3")} type=number min=0 value=${t.n}></label>', '${P.fk==="f"?`<label>N° (automatique)<input ${I("f3")} value="${t.x==null?"":t.n}" readonly></label>`:`<label>N°<input ${I("f3")} type=number min=0 value=${t.n}></label>`}')
 
 out.write_text(s, encoding="utf-8")
 print(out, len(s))

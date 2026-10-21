@@ -118,7 +118,7 @@ function vueArbres(k) {
   const l = T.filter(t => (!FST || t.st === FST) && (!q || J.norm((t.name || '') + ' ' + (t.note || '') + ' ' + (t.n || '')).includes(q)));
   let h = basculeBilan(k, false) + `<div class="chercher"><input id="q" type="search" placeholder="🔎 Chercher ${k === 'f' ? 'un arbre' : 'une plante'}" value="${esc(Q)}" autocomplete="off"></div>`;
   h += `<div class="puces">${[['', 'Tous (' + T.length + ')'], ...Object.entries(ST[k]).map(([s, v]) => [s, v[0] + ' (' + T.filter(t => t.st === s).length + ')'])].map(([v, t]) => `<button data-fst="${v}" aria-pressed="${v === FST}">${esc(t)}</button>`).join('')}</div>`;
-  h += k === 'f' ? `<a class="btn go plein" href="plan.html?k=f">＋ Ajouter un arbre sur le plan</a>` : `<button class="btn go plein" data-nouvel="${k}">＋ Ajouter une plante</button><div style="height:10px"></div>`;
+  h += `<button class="btn go plein" data-nouvel="${k}">＋ Ajouter ${k === 'f' ? 'un arbre' : 'une plante'}</button><div style="height:10px"></div>`;
   h += l.length ? `<ul class="l">${l.map(t => {
     const f = J.ficheDe(k, t), r = J.suivi(ANNEE, k + ':' + t.id), st = ST[k][t.st];
     const sous = [f ? f.a[1] : 'Pas de fiche liée', J.FORME[t.sz]].filter(Boolean).join(' · ');
@@ -477,7 +477,7 @@ document.addEventListener('click', async e => {
   if (d.suppr) { const x = trouver(d.suppr); if (x && confirm('Supprimer « ' + (x.a[x.k === 'c' || x.k === 'p' ? 2 : (x.k === 'f' || x.k === 'o') ? 1 : 0]) + ' » ?')) { J.supprimer(x.id); if (x.k === 'f' || x.k === 'o' || x.k === 'lg') history.back(); else rendre(); } return; }
   if (d.retablir) { J.retablir(d.retablir); rendre(); return; }
   if (d.ajout) { formulaire(d.ajout, null, d.m != null ? +d.m : MI, d.g); return; }
-  if (d.nouvel) { const t = J.nouvelArbre(d.nouvel, {}); location.hash = (d.nouvel === 'f' ? 'verger/arbre/' : 'ornement/plante/') + t.id; return; }
+  if (d.nouvel) { const t = J.nouvelArbre(d.nouvel, d.nouvel === 'f' ? {nv: 1} : {}); location.hash = (d.nouvel === 'f' ? 'verger/arbre/' : 'ornement/plante/') + t.id; return; }
   if (d.enlever) { const [k, id] = d.enlever.split(':'), t = J.arbres(k).find(x => x.id === +id); if (t && confirm('Enlever « ' + (t.name || 'cet élément') + ' » de la liste ?')) { J.enleverArbre(k, +id); location.hash = k === 'f' ? 'verger/arbres' : 'ornement/plantes'; } return; }
   if (b.matches('[data-zoom]')) { const z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = `<img src="${b.src}" alt="">`; z.onclick = () => z.remove(); document.body.appendChild(z); return; }
   if (d.phsup != null) { const k = b.closest('[data-ph]').dataset.ph, a = J.photos(k); if (confirm('Enlever cette photo ?')) { a.splice(+d.phsup, 1); J.garderPhotos(k, a); rendre(); } return; }

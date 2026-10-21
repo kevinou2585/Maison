@@ -44,8 +44,8 @@ const J = (() => {
     : O.map((o, i) => ({id: i + 1, n: 0, name: o[1], sz: '', st: 'c', x: null, y: null, note: '', ic: '', isz: ''}));
   const arbres = k => { const t = lit(PK[k], null); return Array.isArray(t) ? t : graine(k); };
   const garderArbres = (k, T) => ecrit(PK[k], T);
-  // Verger : on ne montre que les arbres posés sur le plan (les autres restent gardés, juste cachés)
-  const surPlan = k => k === 'f' ? arbres(k).filter(t => t.x != null) : arbres(k);
+  // Verger : on ne montre que les arbres posés sur le plan et les nouveaux arbres (les anciens non placés restent gardés, juste cachés)
+  const surPlan = k => k === 'f' ? arbres(k).filter(t => t.x != null || t.nv) : arbres(k);
   function majArbre(k, id, o) { const T = arbres(k), t = T.find(x => x.id === id); if (t) { Object.assign(t, o); garderArbres(k, T); } return t; }
   function nouvelArbre(k, o) { const T = arbres(k), id = Math.max(0, ...T.map(t => +t.id || 0)) + 1; let n = 1; while (T.some(t => t.n == n)) n++; const t = Object.assign({id, n, name: '', sz: '', st: k === 'f' ? 'e' : 'c', x: null, y: null, note: '', ic: '', isz: ''}, o); T.push(t); garderArbres(k, T); return t; }
   function enleverArbre(k, id) { garderArbres(k, arbres(k).filter(t => t.id !== id)); }
