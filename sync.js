@@ -65,7 +65,10 @@
         meta.u = c.url;
         try {
           // 1. Recevoir ce que les autres ont changé
-          const p = await appel(c, null, {m, r: meta.init ? meta.r : 0});
+          let p = await appel(c, null, {m, r: meta.init ? meta.r : 0});
+          // Le Drive est revenu en arrière (une ancienne version de la feuille a été restaurée) :
+          // on reprend tout depuis le Drive, sa version l'emporte, comme au premier contact.
+          if (meta.init && (+p.r || 0) < (+meta.r || 0)) { meta.init = false; meta.sale = {}; svMeta(); p = await appel(c, null, {m, r: 0}); }
           const recus = [];
           p.recs.forEach(rec => {
             const loc = a.get(rec.id);

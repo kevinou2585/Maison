@@ -198,7 +198,7 @@ s = remplacer(s, 'const sv=()=>{try{localStorage.setItem(P.key,JSON.stringify(T)
 function renum(){if(P.fk!=="f")return false;const pl=T.filter(t=>t.x!=null);if(!pl.length)return false;const gk=t=>{const fc=ficheOf(P.fk,t);return fc?fc.a[0]:norm(String(t.name||"").split(" ")[0])||"?"};
 if(!pl.some(t=>t.gf))pl.forEach(t=>{t.g=+t.n||999;t.gf=1});const R={};pl.forEach(t=>{if(t.gf){const k=gk(t);R[k]=Math.min(R[k]==null?1e9:R[k],t.g)}});let mx=Math.max(0,...pl.filter(t=>t.gf).map(t=>t.g));
 pl.forEach(t=>{if(!t.gf){const k=gk(t);t.g=R[k]!=null?R[k]:(R[k]=++mx)}});let ch=false;pl.slice().sort((a,b)=>a.g-b.g||String(a.name||"~").localeCompare(String(b.name||"~"),"fr")||a.id-b.id).forEach((t,i)=>{if(t.n!==i+1){t.n=i+1;ch=true}});if(ch){const e=$("f3"),t0=T.find(x=>x.id===SEL);if(e&&t0)e.value=t0.x==null?"":t0.n}return ch}""")
-s = remplacer(s, 'function drawList(){', 'function drawList(){if(renum())try{localStorage.setItem(P.key,JSON.stringify(T))}catch(e){}')
+s = remplacer(s, 'function drawList(){', 'function drawList(){renum();')
 s = remplacer(s, '<label>N°<input ${I("f3")} type=number min=0 value=${t.n}></label>', '${P.fk==="f"?`<label>N° (automatique)<input ${I("f3")} value="${t.x==null?"":t.n}" readonly></label>`:`<label>N°<input ${I("f3")} type=number min=0 value=${t.n}></label>`}')
 
 out.write_text(s, encoding="utf-8")
