@@ -41,6 +41,7 @@ const SYNC_J = Maison.jardin({
   cles: /^(plan:v2|plan:orn:v2|verger:edit:v1|suivi:v1|jdb:fond:v1|jdb:coche:.*|jdb:(textes|caches|blocs):v1|ph:.*)$/,
   plein: () => alert("Mémoire du téléphone pleine : certaines photos du Drive n'ont pas pu être copiées ici."),
   recu: () => { if (!$('dlg').open) rendre(); },
+  annule: () => { if ($('dlg').open) $('dlg').close(); rendre(); },
   tables: () => J.tables()
 });
 const TS = Maison.store('terrain', {recu: () => { if (!$('dlg').open) rendre(); }, tables: recs => ECHANGES.tables(recs)});

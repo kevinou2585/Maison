@@ -106,6 +106,53 @@
     return e;
   }
 
+  // ---------- Annuler / refaire (↶ ↷ en haut à droite) ----------
+  // On note l'état d'avant et d'après de chaque élément changé par une action de l'utilisateur.
+  // Les changements faits dans la même seconde forment une seule action. La pile est gardée pour
+  // la page en cours (sessionStorage) : elle survit au rechargement des pages du plan.
+  const PK = 'maison:annuler:' + location.pathname;
+  const ANN = (() => { try { return JSON.parse(sessionStorage.getItem(PK)) || {p: [], r: []}; } catch (e) { return {p: [], r: []}; } })();
+  const remet = {};          // module → fonction (id, valeur) qui remet un élément dans un état
+  let rejoue = false;
+  const majAnn = new Set();
+  function garderAnn() {
+    for (;;) {
+      try { sessionStorage.setItem(PK, JSON.stringify(ANN)); break; }
+      catch (e) { if (ANN.p.length > 1) ANN.p.shift(); else if (ANN.r.length) ANN.r.shift(); else { ANN.p = []; break; } }
+    }
+    majAnn.forEach(f => f());
+  }
+  function noter(m, id, avant, apres) {
+    if (rejoue || !touche || avant === apres) return;
+    const now = Date.now(), k = m + '\u0001' + id;
+    let g = ANN.p[ANN.p.length - 1];
+    if (!g || now - g.q > 1000) { g = {q: now, ch: {}}; ANN.p.push(g); if (ANN.p.length > 40) ANN.p.shift(); }
+    g.q = now;
+    if (g.ch[k]) g.ch[k].ap = apres; else g.ch[k] = {m, id, av: avant, ap: apres};
+    ANN.r = [];
+    garderAnn();
+  }
+  function rejouer(de, vers, cle) {
+    const g = ANN[de].pop(); if (!g) return false;
+    const parM = {};
+    rejoue = true;
+    try { Object.values(g.ch).forEach(c => { if (remet[c.m]) { remet[c.m].mettre(c.id, c[cle]); (parM[c.m] = parM[c.m] || []).push(c.id); } }); }
+    finally { rejoue = false; }
+    ANN[vers].push(g); garderAnn();
+    Object.keys(parM).forEach(m => remet[m].apres(parM[m]));
+    return true;
+  }
+  const annuler = () => rejouer('p', 'r', 'av'), refaire = () => rejouer('r', 'p', 'ap');
+  // Ctrl+Z / Ctrl+Y (ou Maj+Ctrl+Z), sauf dans un champ de texte où le navigateur gère déjà
+  addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || !Object.keys(remet).length) return;
+    const t = e.target, champ = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    if (champ) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); annuler(); }
+    else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); refaire(); }
+  });
+
   // Applis Courses et To-Do : une liste d'éléments {id, type, ..., t, del}
   function store(m, opt) {
     const K = 'maison:' + m;
@@ -113,21 +160,29 @@
     const sv = () => lsSet(K, JSON.stringify(D));
     const plein = () => { (opt.plein || (() => alert("La mémoire de l'appli est pleine sur cet appareil : cette modification n'a pas pu être gardée.")))(); };
     (opt.graines || []).forEach(g => { if (!D[g.id]) D[g.id] = Object.assign({t: 1}, g); });
+    // Copie de chaque élément tel qu'enregistré (les applis modifient souvent l'objet avant de l'enregistrer)
+    const SN = {}, snap = id => { const r = D[id]; return r && !r.del ? JSON.stringify(r) : null; };
+    Object.keys(D).forEach(id => { SN[id] = snap(id); });
+    const vu = id => { const av = SN[id] === undefined ? null : SN[id], ap = snap(id); SN[id] = ap; noter(m, id, av, ap); };
     const e = moteur(m, {
       ids: () => Object.keys(D),
       get: id => D[id] || null,
-      put: rec => { D[rec.id] = rec; sv(); },
+      put: rec => { D[rec.id] = rec; sv(); SN[rec.id] = snap(rec.id); },
       tables: () => opt.tables ? opt.tables(Object.values(D).filter(r => !r.del)) : null,
       recu: () => { opt.recu && opt.recu(); }
     });
     sv();
+    remet[m] = {
+      mettre(id, v) { const t = Date.now(); D[id] = v == null ? {id, type: D[id] && D[id].type, del: 1, t} : Object.assign(JSON.parse(v), {t}); SN[id] = snap(id); e.sale(id); },
+      apres() { sv(); e.bientot(); opt.recu ? opt.recu() : location.reload(); }
+    };
     return {
       tous: type => Object.values(D).filter(r => !r.del && (!type || r.type === type)),
       get: id => (D[id] && !D[id].del) ? D[id] : null,
-      put(rec) { rec.t = Date.now(); D[rec.id] = rec; if (!sv()) plein(); e.sale(rec.id); return rec; },
+      put(rec) { rec.t = Date.now(); D[rec.id] = rec; if (!sv()) plein(); vu(rec.id); e.sale(rec.id); return rec; },
       // Plusieurs éléments d'un coup (import) : un seul enregistrement
-      putTous(recs) { const t = Date.now(); recs.forEach(r => { r.t = t; D[r.id] = r; }); if (!sv()) plein(); recs.forEach(r => { e.meta.sale[r.id] = 1; }); e.sale(recs.length ? recs[0].id : ''); },
-      del(id) { if (!D[id]) return; D[id] = {id, type: D[id].type, del: 1, t: Date.now()}; sv(); e.sale(id); },
+      putTous(recs) { const t = Date.now(); recs.forEach(r => { r.t = t; D[r.id] = r; }); if (!sv()) plein(); recs.forEach(r => vu(r.id)); recs.forEach(r => { e.meta.sale[r.id] = 1; }); e.sale(recs.length ? recs[0].id : ''); },
+      del(id) { if (!D[id]) return; D[id] = {id, type: D[id].type, del: 1, t: Date.now()}; sv(); vu(id); e.sale(id); },
       id: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
       synchro: () => e.cycle()
     };
@@ -143,12 +198,12 @@
     Storage.prototype.setItem = function (k, v) {
       const avant = this === localStorage && garde(k) ? lsGet(k) : undefined;
       SET.call(this, k, v);
-      if (avant !== undefined && avant !== String(v)) { T[k] = e.poids(); svT(); e.sale(k); }
+      if (avant !== undefined && avant !== String(v)) { T[k] = e.poids(); svT(); e.sale(k); noter('jardin', k, avant, String(v)); }
     };
     Storage.prototype.removeItem = function (k) {
-      const avait = this === localStorage && garde(k) && lsGet(k) != null;
+      const avait = this === localStorage && garde(k) ? lsGet(k) : null;
       DEL.call(this, k);
-      if (avait) { T[k] = e.poids(); svT(); e.sale(k); }
+      if (avait != null) { T[k] = e.poids(); svT(); e.sale(k); noter('jardin', k, avait, null); }
     };
     e = moteur('jardin', {
       ids: () => { const o = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (garde(k)) o.push(k); } } catch (err) {} return o; },
@@ -161,6 +216,11 @@
       tables: opt.tables,
       recu: opt.recu
     });
+    remet.jardin = {
+      mettre(k, v) { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); },
+      // Pages du plan : l'ancien jardin garde tout en mémoire, on recharge ; ailleurs on redessine
+      apres(ids) { if (opt.annule) opt.annule(ids); else location.reload(); }
+    };
     // Clés déjà présentes sur cet appareil (sauvegarde importée avant la synchro) : à envoyer.
     try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (garde(k) && T[k] == null) { T[k] = 0; e.meta.sale[k] = 1; } } svT(); } catch (err) {}
     return {synchro: () => e.cycle()};
@@ -182,8 +242,18 @@
     const txt = {off: ['☁️ Drive non relié', 'off'], sync: ['☁️ …', ''], ok: ['☁️ ✓', ''], horsligne: ['☁️ hors ligne', 'off'], erreur: ['☁️ erreur', 'err'], cle: ['☁️ mot de passe ?', 'err']};
     const maj = s => { const [t, c] = txt[s] || txt.off; b.textContent = t; b.className = c; b.title = 'Sauvegarde Drive : ' + t; };
     ecoute.add(maj); maj(relie() ? etat : 'off');
-    (document.body ? Promise.resolve() : new Promise(ok => document.addEventListener('DOMContentLoaded', ok))).then(() => document.body.appendChild(b));
+    // ↶ ↷ : annuler / refaire la dernière action de cette page
+    const z = document.createElement('div'); z.id = 'maison-haut';
+    const bt = (t, l, f) => { const x = document.createElement('button'); x.type = 'button'; x.className = 'mh-z'; x.textContent = t; x.title = l; x.setAttribute('aria-label', l); x.onclick = f; return x; };
+    const bA = bt('↶', 'Annuler la dernière action (Ctrl+Z)', () => { if (annuler()) bulle('↶ Annulé'); }), bR = bt('↷', 'Refaire (Ctrl+Y)', () => { if (refaire()) bulle('↷ Refait'); });
+    st.textContent += '#maison-haut{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:9999;display:flex;gap:5px;align-items:center}#maison-haut #maison-nuage{position:static}.mh-z{font:700 16px/1 system-ui,-apple-system,sans-serif;width:30px;height:28px;padding:0;border-radius:99px;background:rgba(255,255,255,.92);color:#2e4a35;border:1px solid #c9d6cb;box-shadow:0 1px 4px #0002;cursor:pointer}.mh-z:disabled{opacity:.35;cursor:default}.mh-bulle{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#2b2b2b;color:#fff;padding:9px 16px;border-radius:12px;z-index:10000;font:600 14px system-ui,-apple-system,sans-serif}';
+    const etatZ = () => { const actif = Object.keys(remet).length > 0; bA.hidden = bR.hidden = !actif; bA.disabled = !ANN.p.length; bR.disabled = !ANN.r.length; };
+    majAnn.add(etatZ);
+    z.append(bA, bR, b);
+    (document.body ? Promise.resolve() : new Promise(ok => document.addEventListener('DOMContentLoaded', ok))).then(() => { document.body.appendChild(z); etatZ(); });
   }
+
+  function bulle(t) { const d = document.createElement('div'); d.className = 'mh-bulle'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1400); }
 
   // Bouton 🎤 à côté d'un champ, quand le navigateur sait faire la dictée (Chrome, Safari récents)
   function dictee(input, apres) {
@@ -218,7 +288,7 @@
 
   window.Maison = {
     dictee, envoyerFichier, lireFichier,
-    cfg, relie, store, jardin, pastille, toutSynchro,
+    cfg, relie, store, jardin, pastille, toutSynchro, annuler, refaire,
     regler(c) { lsSet(CFG, JSON.stringify(c)); toutSynchro(); },
     surStatut(f) { ecoute.add(f); f(relie() ? etat : 'off'); },
     tester: async c => appel(c, null, {m: 'todo', r: 1e15})

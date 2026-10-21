@@ -26,3 +26,7 @@ Synchro : `sync.js` échange les données avec une feuille Google de ton Drive v
 ## Sauvegarde complète
 
 `sauvegarde.js` : dans ⚙️ Paramètres de l'accueil, « 💾 Sauvegarde complète » télécharge un seul `.zip` avec l'appli (`appli/`, liste des fichiers lue sur GitHub, sinon dans `sw.js`), toutes les données (`donnees/happiness-donnees.json`, prises sur le Drive et complétées par l'appareil) et les fichiers joints des notes. « Restaurer une sauvegarde » remet ces données sur l'appareil et les renvoie au Drive (la plus récente gagne). Mode d'emploi dans `LISEZ-MOI.txt`, à l'intérieur du zip.
+
+## Annuler / refaire
+
+`sync.js` : boutons ↶ ↷ à côté de la pastille ☁️ (et Ctrl+Z / Ctrl+Y hors des champs de texte) sur chaque appli qui enregistre des données. Chaque action de l'utilisateur est notée (état d'avant et d'après de chaque élément, les changements d'une même seconde forment une action), 40 actions par page, gardées le temps de la session. Annuler réenregistre l'ancien état comme une nouvelle modification, qui part donc aussi au Drive.
