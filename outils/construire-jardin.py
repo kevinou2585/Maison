@@ -175,5 +175,14 @@ s = remplacer(s, 'let SHP=null;function placeSheet(){', 'let UTM=0;let SHP=null;
 
 s = remplacer(s, 'function treeArt(ic,R,seed,key,nm){', 'const TAC=new Map();function treeArt(ic,R,seed,key,nm){const ck=PID+"|"+ic.join()+"|"+R+"|"+seed+"|"+key+"|"+nm,hit=TAC.get(ck);if(hit)return hit;const out=treeArt1(ic,R,seed,key,nm);if(TAC.size>3000)TAC.clear();TAC.set(ck,out);return out}\nfunction treeArt1(ic,R,seed,key,nm){')
 
+# Identifiants de filtres stables (avant, chaque redessin en créait de nouveaux : le fond changeait toujours et tout était reconstruit)
+s = remplacer(s, 'id="grs"+(++PID),cid="cl"+PID', 'id="grs"+PID,cid="cl"+PID')
+s = remplacer(s, 'S=46/Math.max(d[4],d[5],.1);PID++;return`<svg viewBox="-28 -28 56 56" width=56 height=56 aria-hidden=true><defs>${wcDefs(PID,S)}</defs>${objArt({id:"tv"+k,t:k,x:0,y:0,w:d[4],h:d[5],r:0},d,S,PID,false)}</svg>`', 'S=46/Math.max(d[4],d[5],.1),TP="t"+k;return`<svg viewBox="-28 -28 56 56" width=56 height=56 aria-hidden=true><defs>${wcDefs(TP,S)}</defs>${objArt({id:"tv"+k,t:k,x:0,y:0,w:d[4],h:d[5],r:0},d,S,TP,false)}</svg>`')
+s = remplacer(s, 'function drawMap(){if(!BG)return;', 'function drawMap(){if(!BG)return;PID=P.fk==="o"?2:1;')
+
+# Seul l'arbre modifié est redessiné (comparaison arbre par arbre), les poignées à part
+s = remplacer(s, '}).join("")+hSvg()+ptsSvg();{const rg0=$("rg");if(rg0&&rg0.parentNode===svg&&svg.__bg===BGS&&rg0.children.length>=2){while(rg0.children.length>2)rg0.lastElementChild.remove();rg0.setAttribute("transform",RT);rg0.children[1].innerHTML=TRS}else{svg.innerHTML=`<g ${I("rg")} transform="${RT}"><g>${BGS}</g><g>${TRS}</g></g>`;svg.__bg=BGS}}',
+ '}),HDS=hSvg()+ptsSvg();{const rg0=$("rg");if(rg0&&rg0.parentNode===svg&&svg.__bg===BGS&&rg0.children.length>=3){while(rg0.children.length>3)rg0.lastElementChild.remove();rg0.setAttribute("transform",RT);const gT=rg0.children[1],old=svg.__tr||[];if(svg.__rt===RT&&old.length===TRS.length&&gT.children.length===TRS.length){for(let i=0;i<TRS.length;i++)if(old[i]!==TRS[i]){const tmp=document.createElementNS("http://www.w3.org/2000/svg","g");tmp.innerHTML=TRS[i];if(tmp.firstElementChild)gT.replaceChild(tmp.firstElementChild,gT.children[i])}}else gT.innerHTML=TRS.join("");if(svg.__hd!==HDS)rg0.children[2].innerHTML=HDS}else{svg.innerHTML=`<g ${I("rg")} transform="${RT}"><g>${BGS}</g><g>${TRS.join("")}</g><g>${HDS}</g></g>`;svg.__bg=BGS}svg.__tr=TRS;svg.__hd=HDS;svg.__rt=RT}')
+
 out.write_text(s, encoding="utf-8")
 print(out, len(s))
