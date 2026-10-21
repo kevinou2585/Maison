@@ -72,6 +72,18 @@ function ligneSuivi(x, champ, quand) {
   return `<li class="${v ? 'ok' : ''}"><button class="rond" data-sv="${x.key}" data-f="${champ}" aria-label="${v ? 'Décocher' : 'Cocher'}">${v ? '✓' : ''}</button>${avatar(x.k, x.t)}<a class="tx" href="#${x.k === 'f' ? 'verger/arbre' : 'ornement/plante'}/${x.t.id}"><b>${esc(etiquette(x))}</b><small class="${v ? 'v' : ''}">${v ? '✓ fait le ' + fmtJ(v) : esc(quand)}</small></a></li>`;
 }
 
+// Même geste sur plusieurs arbres de la même variété : une seule ligne, avec une case par numéro (demande de Kevin)
+function lignesGroupees(L, champ, quand) {
+  const G = new Map();
+  L.forEach(x => { const q = quand(x), c = x.s.fc, k = (c ? c.id : x.t.name) + '|' + q; if (!G.has(k)) G.set(k, {q, L: []}); G.get(k).L.push(x); });
+  return [...G.values()].map(g => {
+    if (g.L.length === 1) return ligneSuivi(g.L[0], champ, g.q);
+    const x0 = g.L[0], nom = x0.s.fc ? x0.s.fc.a[1] : (x0.t.name || 'À identifier'), faits = g.L.filter(x => J.suivi(AN, x.key)[champ]).length;
+    const cases = g.L.map(x => { const v = J.suivi(AN, x.key)[champ]; return `<button class="num${v ? ' fait' : ''}" data-sv="${x.key}" data-f="${champ}" aria-pressed="${!!v}" aria-label="${v ? 'Décocher' : 'Cocher'} le n° ${esc(x.t.n || '?')}">${v ? '✓ ' : ''}${esc(x.t.n ? 'n° ' + x.t.n : '?')}</button>`; }).join('');
+    return `<li class="${faits === g.L.length ? 'ok' : ''}">${avatar(x0.k, x0.t)}<div class="tx"><b>${esc(nom)} · ${g.L.length} arbres</b><small>${esc(g.q)}</small><div class="nums">${cases}</div></div><span class="tag">${faits} / ${g.L.length}</span></li>`;
+  }).join('');
+}
+
 // ---------- VERGER / ORNEMENT : ce mois-ci
 function vueMoisArbres(k) {
   const L = suivis(k), d = (x, f) => J.suivi(AN, x.key)[f];
@@ -82,11 +94,11 @@ function vueMoisArbres(k) {
   const retard = cur < 0 || MI !== cur ? [] : [...L.filter(x => x.s.T.size && !d(x, 't') && !x.s.T.has(cur) && [...x.s.T].every(m => m < cur)).map(x => [x, 't']),
     ...(k === 'f' ? L.filter(x => x.s.R.size && !d(x, 'r') && !x.s.R.has(cur) && [...x.s.R].every(m => m < cur)).map(x => [x, 'r']) : [])];
   let h = choixMois() + `<h2>En ${MOIS[MI].toLowerCase()}<span>${fait} / ${total} fait${fait > 1 ? 's' : ''}</span></h2>` + barre(fait, total);
-  h += `<h2>✂️ À tailler</h2>` + (tT.length ? `<ul class="l">${tT.map(x => ligneSuivi(x, 't', x.s.tt)).join('')}</ul>` : vide('Rien à tailler ce mois-ci.'));
-  if (k === 'f') h += `<h2>🧺 À récolter</h2>` + (tR.length ? `<ul class="l">${tR.map(x => ligneSuivi(x, 'r', x.s.rt)).join('')}</ul>` : vide('Rien à récolter ce mois-ci.'));
+  h += `<h2>✂️ À tailler</h2>` + (tT.length ? `<ul class="l">${lignesGroupees(tT, 't', x => x.s.tt)}</ul>` : vide('Rien à tailler ce mois-ci.'));
+  if (k === 'f') h += `<h2>🧺 À récolter</h2>` + (tR.length ? `<ul class="l">${lignesGroupees(tR, 'r', x => x.s.rt)}</ul>` : vide('Rien à récolter ce mois-ci.'));
   if (k === 'o') h += `<h2>🌼 En fleur</h2>` + (fl.length ? `<ul class="l">${fl.map(x => `<li>${avatar(k, x.t)}<a class="tx" href="#ornement/plante/${x.t.id}"><b>${esc(etiquette(x))}</b><small>${esc(x.s.fc.a[2])}</small></a></li>`).join('')}</ul>` : vide('Rien de prévu en fleur ce mois-ci.'));
   if (k === 'f') h += blocGestes('c', MI, gestes, mc);
-  if (retard.length) h += `<details class="acc" style="margin-top:16px"><summary>⏰ Période passée, pas encore cochés (${retard.length})</summary><div class="in"><ul class="l">${retard.map(([x, f]) => ligneSuivi(x, f, (f === 't' ? '✂️ taille : ' + x.s.tt : '🧺 récolte : ' + x.s.rt))).join('')}</ul></div></details>`;
+  if (retard.length) h += `<details class="acc" style="margin-top:16px"><summary>⏰ Période passée, pas encore cochés (${retard.length})</summary><div class="in"><ul class="l">${lignesGroupees(retard.filter(([, f]) => f === 't').map(([x]) => x), 't', x => '✂️ taille : ' + x.s.tt)}${lignesGroupees(retard.filter(([, f]) => f === 'r').map(([x]) => x), 'r', x => '🧺 récolte : ' + x.s.rt)}</ul></div></details>`;
   const sans = J.surPlan(k).filter(t => t.name && !J.ficheDe(k, t)).length;
   if (sans) h += `<p class="mut">${sans} ${k === 'f' ? 'arbre' : 'plante'}${sans > 1 ? 's' : ''} sans fiche liée (donc sans dates) : ouvre-${sans > 1 ? 'les' : 'le'} dans « ${k === 'f' ? 'Mes arbres' : 'Mes plantes'} » pour choisir sa fiche.</p>`;
   return h;
