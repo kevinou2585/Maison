@@ -125,5 +125,19 @@ s = remplacer(s, 'if(e.key==="Escape"&&(SEL!=null', 'if(PTS&&(e.key==="Enter"||e
 for a in ['$("bP").onclick=()=>{', '$("bX").onclick=()=>{', '$("sx").onclick=()=>{']:
     s = remplacer(s, a, a + 'if(PTS)finPts();')
 
+# Chemins qui se touchent : rendus ensemble (un seul tracé continu par type) et bouts accrochés au chemin touché (demande de Kevin)
+s = remplacer(s, 'function pathArt(c,S,p,on,wc){', r"""const CHK=["gra","dal","pel","ter","bet"];
+function cheminsArt(cs,S,p,selC,wc){let out="";const G={};cs.forEach(c=>{if(CHK.includes(c.k)&&c.pts&&c.pts.length>1)(G[c.k]=G[c.k]||[]).push(c);else out+=pathArt(c,S,p,c.id===selC,wc)});
+for(const kk in G){const k=CT[kk],L=G[kk].map(c=>({c,d:smooth(c.pts.map(([x,y])=>[x*S,y*S])),w:(+c.w||k[3])*S})),st=(col,f=1,x="")=>L.map(o=>`<path d="${o.d}" fill=none stroke="${col}" stroke-width=${f1(o.w*f)} stroke-linecap=round stroke-linejoin=round ${x}/>`).join("");
+const fill=wc&&{dal:`url(#st${p})`,bet:`url(#pv${p})`,gra:`url(#gv${p})`}[kk];
+out+=wc?`<g pointer-events=none><g filter="url(#wb${p})">${st(k[1])}${fill?st(fill):""}${kk==="pel"?`<g opacity=.6>${st("#d9efb0",.35)}</g>`:""}${kk==="ter"?`<g opacity=.45>${st("#8a6036",.8,`stroke-dasharray="1 ${f1(S*.2)}"`)}</g>`:""}</g></g>`:`<g pointer-events=none>${st(k[1])}</g>`;
+out+=L.map(o=>`<g class=cp data-c="${o.c.id}" style="cursor:pointer"><path d="${o.d}" fill=none stroke="transparent" stroke-width=${f1(Math.max(o.w,24))} stroke-linecap=round stroke-linejoin=round />${o.c.id===selC?`<path d="${o.d}" fill=none stroke="#ffeb3b" stroke-width=4 stroke-dasharray="10 6" pointer-events=none />`:""}</g>`).join("")}
+return out}
+function accroche(pts,k,w){if(!CHK.includes(k)||!pts||pts.length<2)return pts;const r=(+w||CT[k][3])/2;[0,pts.length-1].forEach(i=>{const q=pts[i];let best=null,bd=1e9;(BG.c||[]).forEach(c=>{if(!CHK.includes(c.k)||!c.pts)return;const lim=(+c.w||CT[c.k][3])/2+r+.5;for(let j=1;j<c.pts.length;j++){const a=c.pts[j-1],b=c.pts[j],dx=b[0]-a[0],dy=b[1]-a[1],l2=dx*dx+dy*dy,t=l2?Math.max(0,Math.min(1,((q[0]-a[0])*dx+(q[1]-a[1])*dy)/l2)):0,x=a[0]+dx*t,y=a[1]+dy*t,d=Math.hypot(q[0]-x,q[1]-y);if(d<lim&&d<bd){bd=d;best=[r1(x),r1(y)]}}});if(best)pts[i]=best});return pts}
+function pathArt(c,S,p,on,wc){""")
+s = remplacer(s, 's+=(BG.c||[]).map(c=>pathArt(c,S,PID,c.id===selC,wc)).join("");', 's+=cheminsArt(BG.c||[],S,PID,selC,wc);')
+s = remplacer(s, 'k:PEN.k,w:PEN.w||"",pts:PTS}', 'k:PEN.k,w:PEN.w||"",pts:accroche(PTS,PEN.k,PEN.w)}')
+s = remplacer(s, 'k:PEN.k,w:PEN.w||"",pts:d.pen}', 'k:PEN.k,w:PEN.w||"",pts:accroche(d.pen,PEN.k,PEN.w)}')
+
 out.write_text(s, encoding="utf-8")
 print(out, len(s))
