@@ -166,5 +166,14 @@ s = remplacer(s, 'style="cursor:grab">${WC?treeArt(P.IC[key],sc*23,t.id,key,t.na
 s = remplacer(s, '<button ${I("g6")} aria-label="Arbre plus grand">＋</button></span></div>`}', '<button ${I("g6")} aria-label="Arbre plus grand">＋</button></span></div><label style="margin-top:8px">Orientation de l\'icône : <b>${+t.ro||0}°</b><input type=range ${I("g9")} min=-180 max=180 step=5 value=${+t.ro||0} style="width:100%"></label><div class=tb><button ${I("g7")}>⟲ 15°</button><button ${I("g8")}>⟳ 15°</button><button ${I("g10")}>Droit</button></div>`}')
 s = remplacer(s, 'if($("g5"))$("g5").onclick=()=>tTaille(1/1.15);', 'const tRot=v=>{v=((Math.round(v)+180)%360+360)%360-180;t.ro=v;const l=$("g9");if(l){l.value=v;l.previousElementSibling.textContent=v+"°"}drawMap()};if($("g9")){$("g9").oninput=()=>tRot(+$("g9").value);$("g9").onchange=()=>sv();$("g7").onclick=()=>{tRot((+t.ro||0)-15);sv()};$("g8").onclick=()=>{tRot((+t.ro||0)+15);sv()};$("g10").onclick=()=>{tRot(0);sv()}}if($("g5"))$("g5").onclick=()=>tTaille(1/1.15);')
 
+# Plan plus fluide avec beaucoup d'arbres (signalé par Kevin) : le fond (terrain, éléments, chemins) n'est reconstruit
+# que s'il a changé, sinon seuls les arbres sont redessinés ; et la saisie au clavier ne redessine qu'à la pause.
+s = remplacer(s, 'svg.innerHTML=`<g ${I("rg")} transform="rotate(${VB[4]} ${(W/2).toFixed(1)} ${(Hh/2).toFixed(1)})">`+bgSvg(SELO,SELC,EDS&&EDS.k==="ter",nm)+VT.map(', 'const RT=`rotate(${VB[4]} ${(W/2).toFixed(1)} ${(Hh/2).toFixed(1)})`,BGS=bgSvg(SELO,SELC,EDS&&EDS.k==="ter",nm),TRS=VT.map(')
+s = remplacer(s, '+hSvg()+ptsSvg()+"</g>";updOr(ter);', '+hSvg()+ptsSvg();{const rg0=$("rg");if(rg0&&rg0.parentNode===svg&&svg.__bg===BGS&&rg0.children.length>=2){while(rg0.children.length>2)rg0.lastElementChild.remove();rg0.setAttribute("transform",RT);rg0.children[1].innerHTML=TRS}else{svg.innerHTML=`<g ${I("rg")} transform="${RT}"><g>${BGS}</g><g>${TRS}</g></g>`;svg.__bg=BGS}}updOr(ter);')
+s = remplacer(s, 'const u=(id,fn,full)=>$(id).oninput=$(id).onchange=()=>{fn($(id).value);sv();drawMap();drawList();if(full)drawForm()};', 'const u=(id,fn,full)=>{const go=()=>{clearTimeout(UTM);fn($(id).value);sv();drawMap();drawList();if(full)drawForm()};$(id).onchange=go;$(id).oninput=$(id).tagName==="INPUT"&&$(id).type!=="checkbox"?()=>{fn($(id).value);clearTimeout(UTM);UTM=setTimeout(go,300)}:go};')
+s = remplacer(s, 'let SHP=null;function placeSheet(){', 'let UTM=0;let SHP=null;function placeSheet(){')
+
+s = remplacer(s, 'function treeArt(ic,R,seed,key,nm){', 'const TAC=new Map();function treeArt(ic,R,seed,key,nm){const ck=PID+"|"+ic.join()+"|"+R+"|"+seed+"|"+key+"|"+nm,hit=TAC.get(ck);if(hit)return hit;const out=treeArt1(ic,R,seed,key,nm);if(TAC.size>3000)TAC.clear();TAC.set(ck,out);return out}\nfunction treeArt1(ic,R,seed,key,nm){')
+
 out.write_text(s, encoding="utf-8")
 print(out, len(s))
