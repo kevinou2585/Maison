@@ -7,6 +7,7 @@ Ajouts : icône et installation de l'appli, lien « Happiness », synchro Drive 
 réglages pour petit écran, et les onglets lisibles envoyés à la feuille Google.
 """
 import pathlib
+import re
 import sys
 
 src = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
@@ -150,6 +151,15 @@ s = remplacer(s, '<button ${I("g3")}>Supprimer</button></div></div>`;', '<button
 s = remplacer(s, 'pick(d.t.id);return}', 'pick(d.t.id);if(!d.m&&FCL){const a=$("pf").querySelector(".ficheA")||$("g4");if(a)a.click()}return}')
 s = remplacer(s, '<b>🔢 Numéros des arbres</b>', '<label class=ck style="display:block;margin:0 0 8px"><input type=checkbox ${I("fcl")}> 📖 Un clic sur un arbre ouvre sa fiche</label><b>🔢 Numéros des arbres</b>')
 s = remplacer(s, 'const NUMK="jdb:numeros:"+P.fk;', 'const FCLK="jdb:clicfiche:"+P.fk;let FCL=false;try{FCL=localStorage.getItem(FCLK)==="1"}catch(e){}$("fcl").checked=FCL;$("fcl").onchange=()=>{FCL=$("fcl").checked;try{localStorage.setItem(FCLK,FCL?"1":"")}catch(e){}};\nconst NUMK="jdb:numeros:"+P.fk;')
+
+# Vue 3D retirée complètement (bouton, code three.js et styles) : jugée inutile par Kevin
+_i = s.find('// ---------- Vue 3D'); _k = s.find('\nconst msg=t=>', _i)
+if _i < 0 or _k < 0: sys.exit("bloc Vue 3D introuvable")
+s = s[:_i] + s[_k+1:]
+s = remplacer(s, '<button ${I("b3")} class=b3>🧊 Vue 3D</button>', '')
+s = remplacer(s, '$("b3").onclick=()=>v3open(P,T);', '')
+s = re.sub(r'#v3ov\{.*?\.v3m\{[^}]*\}', '', s, count=1, flags=re.S)
+s = remplacer(s, '.acard .b3{font-weight:600}', '')
 
 out.write_text(s, encoding="utf-8")
 print(out, len(s))
