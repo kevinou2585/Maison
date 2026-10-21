@@ -161,5 +161,10 @@ s = remplacer(s, '$("b3").onclick=()=>v3open(P,T);', '')
 s = re.sub(r'#v3ov\{.*?\.v3m\{[^}]*\}', '', s, count=1, flags=re.S)
 s = remplacer(s, '.acard .b3{font-weight:600}', '')
 
+# Arbre : orientation de l'icône (utile pour une vigne, un kiwi, une grimpante), demande de Kevin
+s = remplacer(s, 'style="cursor:grab">${WC?treeArt(P.IC[key],sc*23,t.id,key,t.name):`<g transform="scale(${sc.toFixed(3)})">${iconSvg(P.IC[key])}</g>`}', 'style="cursor:grab"><g transform="rotate(${+t.ro||0})">${WC?treeArt(P.IC[key],sc*23,t.id,key,t.name):`<g transform="scale(${sc.toFixed(3)})">${iconSvg(P.IC[key])}</g>`}</g>')
+s = remplacer(s, '<button ${I("g6")} aria-label="Arbre plus grand">＋</button></span></div>`}', '<button ${I("g6")} aria-label="Arbre plus grand">＋</button></span></div><label style="margin-top:8px">Orientation de l\'icône : <b>${+t.ro||0}°</b><input type=range ${I("g9")} min=-180 max=180 step=5 value=${+t.ro||0} style="width:100%"></label><div class=tb><button ${I("g7")}>⟲ 15°</button><button ${I("g8")}>⟳ 15°</button><button ${I("g10")}>Droit</button></div>`}')
+s = remplacer(s, 'if($("g5"))$("g5").onclick=()=>tTaille(1/1.15);', 'const tRot=v=>{v=((Math.round(v)+180)%360+360)%360-180;t.ro=v;const l=$("g9");if(l){l.value=v;l.previousElementSibling.textContent=v+"°"}drawMap()};if($("g9")){$("g9").oninput=()=>tRot(+$("g9").value);$("g9").onchange=()=>sv();$("g7").onclick=()=>{tRot((+t.ro||0)-15);sv()};$("g8").onclick=()=>{tRot((+t.ro||0)+15);sv()};$("g10").onclick=()=>{tRot(0);sv()}}if($("g5"))$("g5").onclick=()=>tTaille(1/1.15);')
+
 out.write_text(s, encoding="utf-8")
 print(out, len(s))
