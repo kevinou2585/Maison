@@ -116,9 +116,22 @@ header.hero,nav.tabs,#bk,#bk+div,main>p.mut,#v1,#v2,#v3,#v6,#v7,#v8,#v9,#v10{dis
 .plan-haut a[aria-current]{background:#2e6b3f;color:#fff;border-color:#2e6b3f}
 .plan-haut .ret{border:0;background:none;padding:8px 0;opacity:.75}
 a.ficheA{display:inline-block;text-decoration:none}
+/* Verrou du plan du verger : sans le code, on regarde mais on ne change rien */
+.plan-haut button.verrou{font:600 15px system-ui,-apple-system,sans-serif;padding:8px 12px;border:1px solid #0002;border-radius:12px;background:#fff8;color:inherit;margin-left:auto}
+.plan-haut button.verrou.ouvert{background:#fde9b8}
+.plan-verrou #bA,.plan-verrou #oA,.plan-verrou #bS,.plan-verrou #bP,.plan-verrou #bX,.plan-verrou #bU,.plan-verrou #bV,.plan-verrou #bF,.plan-verrou #bR,.plan-verrou label:has(>#bI){display:none!important}
+.plan-verrou #sh input,.plan-verrou #sh select,.plan-verrou #sh textarea,.plan-verrou #sh button:not(.x){pointer-events:none;opacity:.5}
+/* Zoom et déplacement au doigt : boutons sur le côté du plan */
+.nav-plan{position:fixed;right:calc(8px + env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);z-index:40;display:grid;grid-template-columns:repeat(3,40px);grid-auto-rows:40px;gap:4px}
+.nav-plan button{width:40px;height:40px;padding:0;border-radius:12px;border:1px solid #0003;background:#fffe;box-shadow:0 2px 6px #0003;font:700 20px system-ui,sans-serif;color:#234;touch-action:manipulation}
+.nav-plan button:active{background:#d8efdc}
+.nav-plan .zp{grid-column:3}.nav-plan .ha{grid-column:2}.nav-plan .ga{grid-column:1}.nav-plan .dr{grid-column:3}.nav-plan .ba{grid-column:2}
+.nav-plan .aj{grid-column:1/-1;width:auto;font-size:13px}
+@media (min-width:900px) and (pointer:fine){.nav-plan{display:none}}
 </style></head><body><main>
 </style></head><body><main>
-<div class="plan-haut"><a class="ret" id="plan-ret" href="./#verger/arbres">‹ Jardin du Bonheur</a><a id="plan-f" href="plan.html?k=f">🍎 Plan du verger</a><a id="plan-o" href="plan.html?k=o">🌸 Plan de l'ornement</a></div><header class="hero"><h1>Jardin du Bonheur</h1><p>Tailles, soins préventifs naturels et récoltes pour tous tes fruitiers (pommiers, poiriers, nashis, pruniers, cerisier, pêchers, abricotier, figuier, vignes, kiwi, kaki, pawpaw, petits fruits…). Aucun produit qui s'accumule dans le sol (ni cuivre, ni soufre). Calendrier adapté au climat de la région d'Ath : décale de 2 à 3 semaines selon la météo de l'année. Légende : ✂️ taille · 🛡️ soin préventif · 🧺 récolte · 🌱 sol et plantation.</p></header>
+<div class="plan-haut"><a class="ret" id="plan-ret" href="./#verger/arbres">‹ Jardin du Bonheur</a><a id="plan-f" href="plan.html?k=f">🍎 Plan du verger</a><a id="plan-o" href="plan.html?k=o">🌸 Plan de l'ornement</a><button type="button" class="verrou" id="plan-verrou" hidden></button></div>
+<div class="nav-plan" id="nav-plan"><button class="zm" type="button" data-z="-1" aria-label="Dézoomer">−</button><button class="ha" type="button" data-p="0,-1" aria-label="Monter">↑</button><button class="zp" type="button" data-z="1" aria-label="Zoomer">＋</button><button class="ga" type="button" data-p="-1,0" aria-label="Aller à gauche">←</button><button class="dr" type="button" data-p="1,0" aria-label="Aller à droite">→</button><button class="ba" type="button" data-p="0,1" aria-label="Descendre">↓</button><button class="aj" type="button" data-aj="1">Ajuster</button></div><header class="hero"><h1>Jardin du Bonheur</h1><p>Tailles, soins préventifs naturels et récoltes pour tous tes fruitiers (pommiers, poiriers, nashis, pruniers, cerisier, pêchers, abricotier, figuier, vignes, kiwi, kaki, pawpaw, petits fruits…). Aucun produit qui s'accumule dans le sol (ni cuivre, ni soufre). Calendrier adapté au climat de la région d'Ath : décale de 2 à 3 semaines selon la météo de l'année. Légende : ✂️ taille · 🛡️ soin préventif · 🧺 récolte · 🌱 sol et plantation.</p></header>
 
 <nav class="tabs" aria-label="Sections"><div class="dd"><button id="m1" aria-pressed="true" aria-haspopup="menu" aria-expanded="false">📅 Calendrier et suivi ▾</button><div class="mnu" id="d1" role="menu" hidden><button role="menuitem" data-v="v1">Fruitiers</button><button role="menuitem" data-v="v10">Plantes d'ornement</button></div></div><div class="dd"><button id="m2" aria-pressed="false" aria-haspopup="menu" aria-expanded="false">🌳 Fiches ▾</button><div class="mnu" id="d2" role="menu" hidden><button role="menuitem" data-v="v2">Fruitiers</button><button role="menuitem" data-v="v3">Plantes d'ornement</button></div></div><div class="dd"><button id="m3" aria-pressed="false" aria-haspopup="menu" aria-expanded="false">🗺️ Plan du terrain ▾</button><div class="mnu" id="d3" role="menu" hidden><button role="menuitem" data-v="v4">Fruitiers</button><button role="menuitem" data-v="v5">Plantes d'ornement</button></div></div><button id="m4" aria-pressed="false">🧪 Traitements naturels</button><div class="dd"><button id="m5" aria-pressed="false" aria-haspopup="menu" aria-expanded="false">🥕 Potager ▾</button><div class="mnu" id="d5" role="menu" hidden><button role="menuitem" data-v="v7">Mois par mois</button><button role="menuitem" data-v="v9">Fiches légumes</button></div></div><button id="m6" aria-pressed="false">♻️ Compostage</button></nav>
 <div class="tb" id="bk"><button id="bE2">💾 Exporter ma sauvegarde</button><label class="bt">📂 Importer une sauvegarde<input type="file" id="bI2" accept=".json" hidden></label><button id="bEd" aria-pressed="false">✏️ Mode modification</button><button id="bRs">↺ Restaurer les éléments supprimés</button><span id="bm" class="mut" role="status"></span></div>
@@ -928,6 +941,41 @@ renderAll();
     d0 = d;
   }, {passive: false});
   mw.addEventListener('touchend', e => { if (e.touches.length < 2) d0 = null; });
+  // Boutons ＋ / − et flèches : zoom au centre de la partie visible du plan, déplacement d'un tiers d'écran
+  const centre = () => { const r = mw.getBoundingClientRect(), x0 = Math.max(r.left, 0), x1 = Math.min(r.right, innerWidth), y0 = Math.max(r.top, 0), y1 = Math.min(r.bottom, innerHeight);
+    return [(x0 + x1) / 2, (y0 + y1) / 2]; };
+  document.getElementById('nav-plan').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.aj) { document.getElementById((k === 'o' ? 'o' : '') + 'zf').click(); return; }
+    if (b.dataset.z) { const [cx, cy] = centre(); mw.dispatchEvent(new WheelEvent('wheel', {deltaY: -b.dataset.z * 220, clientX: cx, clientY: cy, bubbles: true, cancelable: true})); return; }
+    const [dx, dy] = b.dataset.p.split(',').map(Number), r = mw.getBoundingClientRect();
+    const sx = dx * Math.min(r.width, innerWidth) / 3, sy = dy * Math.min(r.height, innerHeight) / 3;
+    const l = mw.scrollLeft, t = mw.scrollTop; mw.scrollBy({left: sx, top: sy, behavior: 'smooth'});
+    setTimeout(() => { if (sy && mw.scrollTop === t) scrollBy({top: sy, behavior: 'smooth'}); if (sx && mw.scrollLeft === l) scrollBy({left: sx, behavior: 'smooth'}); }, 350);
+  };
+  // Verrou du plan du verger : un code (123 par défaut) pour ajouter, enlever ou déplacer un arbre.
+  // Ouvert pour la session du navigateur seulement ; le code se change une fois le plan ouvert.
+  if (k === 'f') {
+    const host = document.getElementById('v4'), bv = document.getElementById('plan-verrou');
+    const code = () => { try { return localStorage.getItem('jdb:plan-code') || '123'; } catch (e) { return '123'; } };
+    let ouvert = false; try { ouvert = sessionStorage.getItem('jdb:plan-ouvert') === '1'; } catch (e) {}
+    const maj = () => { host.classList.toggle('plan-verrou', !ouvert); bv.hidden = false; bv.classList.toggle('ouvert', ouvert);
+      bv.textContent = ouvert ? '🔓 Modification ouverte · Verrouiller' : '🔒 Modifier le plan'; };
+    bv.onclick = () => {
+      if (ouvert) {
+        const n = prompt('Le plan va être verrouillé.\nPour changer le code, écris le nouveau code ici (sinon laisse vide) :', '');
+        if (n && n.trim()) { try { localStorage.setItem('jdb:plan-code', n.trim()); } catch (e) {} alert('Nouveau code enregistré sur cet appareil.'); }
+        ouvert = false; try { sessionStorage.removeItem('jdb:plan-ouvert'); } catch (e) {} maj(); return;
+      }
+      const c = prompt('Code pour modifier le plan du verger :', ''); if (c == null) return;
+      if (c.trim() !== code()) { alert('Code incorrect : le plan reste verrouillé.'); return; }
+      ouvert = true; try { sessionStorage.setItem('jdb:plan-ouvert', '1'); } catch (e) {} maj();
+    };
+    // verrouillé : on peut toucher un arbre pour voir sa fiche, mais pas le faire glisser ni l'effacer
+    mw.addEventListener('pointermove', e => { if (!ouvert) e.stopPropagation(); }, true);
+    addEventListener('keydown', e => { if (!ouvert && (e.key === 'Delete' || e.key === 'Backspace') && !e.target.closest('input,textarea,select')) { e.stopPropagation(); e.preventDefault(); } }, true);
+    maj();
+  }
 })();
 </script>
 </main></body></html>
