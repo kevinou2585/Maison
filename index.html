@@ -50,6 +50,10 @@ a.grand span{display:block;margin-top:4px;font-size:14px;opacity:.92}
 .pied{text-align:center;margin:34px 0 0}
 .pied button{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:8px 12px}
 #param{margin-top:8px}
+.choix{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:6px 0;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-weight:600}
+.choix input{width:20px;height:20px;accent-color:var(--accent)}
+.choix img{width:30px;height:30px;border-radius:8px}
+.cache-appli{display:none!important}
 #installe-bloc{margin-top:8px!important}
 h2{font-size:17px;margin:30px 0 8px}
 details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
@@ -105,6 +109,9 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
     <button id="installer2" class="go" type="button" hidden style="width:100%;margin-top:10px">Installer maintenant</button>
   </div>
 </div>
+<h2>👀 Applis visibles à l'accueil</h2>
+<p class="note" style="margin:0 0 6px">Décoche celles dont tu ne te sers pas sur cet appareil : elles disparaissent de l'accueil (rien n'est effacé).</p>
+<div id="choix-applis"></div>
 <h2 id="drive-titre">☁️ Sauvegarde sur le Drive <span id="pill" class="pill">non reliée</span></h2>
 <div id="relie-ok" class="relie" hidden><b>✅ Cet appareil est relié à ta feuille Google.</b><span id="relie-d"></span><br>Tout ce que tu fais est enregistré automatiquement sur le Drive, il n'y a rien d'autre à faire.<br><button type="button" class="lien" id="relie-modif">Modifier ou délier cet appareil</button></div>
 <details id="drive">
@@ -195,6 +202,16 @@ function pill() {
 let modifDrive = false;
 $('relie-modif').onclick = () => { modifDrive = true; pill(); $('drive').open = true; };
 pill();
+// Paramètres : applis visibles à l'accueil (localStorage 'maison-cachees' = adresses cachées, propre à cet appareil)
+(() => {
+  const tuiles = [...document.querySelectorAll('a.grand, .petites a')], h = t => t.getAttribute('href');
+  let cachees = []; try { cachees = JSON.parse(localStorage.getItem('maison-cachees') || '[]'); } catch (e) {}
+  const appliquer = () => { tuiles.forEach(t => t.classList.toggle('cache-appli', cachees.includes(h(t)))); document.querySelector('.sections').classList.toggle('cache-appli', cachees.includes('jdb/')); };
+  $('choix-applis').innerHTML = tuiles.map(t => `<label class="choix"><input type="checkbox" data-h="${h(t)}" ${cachees.includes(h(t)) ? '' : 'checked'}><img src="${t.querySelector('img').getAttribute('src')}" alt="">${t.querySelector('b').textContent}</label>`).join('');
+  $('choix-applis').onchange = e => { const k = e.target.dataset.h; if (!k) return; cachees = cachees.filter(x => x !== k); if (!e.target.checked) cachees.push(k);
+    try { localStorage.setItem('maison-cachees', JSON.stringify(cachees)); } catch (err) {} appliquer(); };
+  appliquer();
+})();
 // Paramètres en bas de page : Drive, installation
 const ouvrirParam = oui => { $('param').hidden = !oui; $('b-param').setAttribute('aria-expanded', String(oui)); };
 $('b-param').onclick = () => { ouvrirParam($('param').hidden); if (!$('param').hidden) $('param').scrollIntoView({behavior: 'smooth', block: 'start'}); };
