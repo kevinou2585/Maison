@@ -137,7 +137,9 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
 </details>
 
 <h2>💾 Sauvegarde complète</h2>
-<p class="note">Un seul fichier .zip avec l'appli et toutes tes données (jardin, courses, to do, terrain, mots de passe, notes et leurs fichiers), à garder sur ton ordinateur. Si un jour tout est effacé, il suffit de le restaurer ici.</p>
+<p class="note">Un seul fichier .zip avec l'appli et toutes tes données (jardin, courses, to do, terrain, mots de passe, notes et leurs fichiers), à garder sur ton ordinateur. Si un jour tout est effacé, il suffit de le restaurer ici. Il faut le code de sauvegarde pour télécharger ou restaurer.</p>
+<label for="s-code" style="display:block;font-size:14px;font-weight:600;margin:10px 0 4px">Code de sauvegarde</label>
+<input id="s-code" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Code" style="width:100%;max-width:260px;border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit;background:var(--bg);color:var(--fg)">
 <div class="btns"><button class="go" id="s-sauv" type="button">Télécharger la sauvegarde</button><button id="s-rest" type="button">Restaurer une sauvegarde</button><input type="file" id="s-fich" accept=".zip,application/zip" hidden></div>
 <p id="s-etat" class="note"></p>
 
@@ -156,13 +158,23 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
   const $ = id => document.getElementById(id), dire = t => { $('s-etat').textContent = t; };
   const occupe = o => { $('s-sauv').disabled = $('s-rest').disabled = o; };
   const mo = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' Mo' : Math.ceil(n / 1024) + ' Ko';
+  // Sauvegarde et restauration protégées par le code de sauvegarde (seule son empreinte SHA-256 est ici)
+  const CODE = '5a4f1fc2e2f9ff186e08f14e49ccffaaa21387df54239b78a012140aad67489e';
+  const verifier = async () => {
+    const v = $('s-code').value.trim().toLowerCase();
+    if (!v) { dire('⚠️ Tape d\'abord le code de sauvegarde.'); $('s-code').focus(); return false; }
+    const h = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)))].map(b => b.toString(16).padStart(2, '0')).join('');
+    if (h !== CODE) { dire('⚠️ Code de sauvegarde incorrect.'); $('s-code').select(); return false; }
+    return true;
+  };
   $('s-sauv').onclick = async () => {
     occupe(true);
+    if (!(await verifier())) { occupe(false); return; }
     try { const r = await Sauvegarde.sauvegarder(dire); dire(`✓ Sauvegarde téléchargée (${r.n} éléments, ${mo(r.taille)})${r.drive ? ', avec tout ce qui est sur le Drive' : ". Attention : cet appareil n'est pas relié au Drive, seules ses propres données y sont"}. Range-la dans un dossier de ton ordinateur ; elle contient tes mots de passe.`); }
     catch (e) { dire('⚠️ ' + e.message); }
     occupe(false);
   };
-  $('s-rest').onclick = () => $('s-fich').click();
+  $('s-rest').onclick = async () => { if (await verifier()) $('s-fich').click(); };
   $('s-fich').onchange = async () => {
     const f = $('s-fich').files[0]; $('s-fich').value = ''; if (!f) return;
     if (!confirm('Remettre les données de « ' + f.name + ' » ? Ce qui est plus récent dans l\'appli est gardé.')) return;
