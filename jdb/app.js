@@ -73,10 +73,11 @@ function ligneSuivi(x, champ, quand) {
 }
 
 // Même geste sur plusieurs arbres de la même variété : une seule ligne, avec une case par numéro (demande de Kevin)
-function lignesGroupees(L, champ, quand) {
+// quoi : 'reste' = lignes pas entièrement faites, 'fait' = lignes entièrement faites, rien = tout
+function lignesGroupees(L, champ, quand, quoi) {
   const G = new Map();
   L.forEach(x => { const q = quand(x), c = x.s.fc, k = (c ? c.id : x.t.name) + '|' + q; if (!G.has(k)) G.set(k, {q, L: []}); G.get(k).L.push(x); });
-  return [...G.values()].map(g => {
+  return [...G.values()].filter(g => !quoi || (quoi === 'fait') === g.L.every(x => J.suivi(AN, x.key)[champ])).map(g => {
     if (g.L.length === 1) return ligneSuivi(g.L[0], champ, g.q);
     const x0 = g.L[0], nom = x0.s.fc ? x0.s.fc.a[1] : (x0.t.name || 'À identifier'), faits = g.L.filter(x => J.suivi(AN, x.key)[champ]).length;
     const cases = g.L.map(x => { const v = J.suivi(AN, x.key)[champ]; return `<button class="num${v ? ' fait' : ''}" data-sv="${x.key}" data-f="${champ}" aria-pressed="${!!v}" aria-label="${v ? 'Décocher' : 'Cocher'} le n° ${esc(x.t.n || '?')}">${v ? '✓ ' : ''}${esc(x.t.n ? 'n° ' + x.t.n : '?')}</button>`; }).join('');
@@ -94,18 +95,25 @@ function vueMoisArbres(k) {
   const retard = cur < 0 || MI !== cur ? [] : [...L.filter(x => x.s.T.size && !d(x, 't') && !x.s.T.has(cur) && [...x.s.T].every(m => m < cur)).map(x => [x, 't']),
     ...(k === 'f' ? L.filter(x => x.s.R.size && !d(x, 'r') && !x.s.R.has(cur) && [...x.s.R].every(m => m < cur)).map(x => [x, 'r']) : [])];
   let h = choixMois() + `<h2>En ${MOIS[MI].toLowerCase()}<span>${fait} / ${total} fait${fait > 1 ? 's' : ''}</span></h2>` + barre(fait, total);
-  h += `<h2>✂️ À tailler</h2>` + (tT.length ? `<ul class="l">${lignesGroupees(tT, 't', x => x.s.tt)}</ul>` : vide('Rien à tailler ce mois-ci.'));
-  if (k === 'f') h += `<h2>🧺 À récolter</h2>` + (tR.length ? `<ul class="l">${lignesGroupees(tR, 'r', x => x.s.rt)}</ul>` : vide('Rien à récolter ce mois-ci.'));
+  // Ce qui est coché quitte la liste et va dans « Déjà fait » en bas, d'où on peut le décocher (demande de Kevin)
+  const reste = (L2, f, q, rien, tout) => { const r = lignesGroupees(L2, f, q, 'reste'); return !L2.length ? vide(rien) : r ? `<ul class="l">${r}</ul>` : vide(tout); };
+  h += `<h2>✂️ À tailler</h2>` + reste(tT, 't', x => x.s.tt, 'Rien à tailler ce mois-ci.', '✓ Tout est taillé pour ce mois-ci.');
+  if (k === 'f') h += `<h2>🧺 À récolter</h2>` + reste(tR, 'r', x => x.s.rt, 'Rien à récolter ce mois-ci.', '✓ Tout est récolté pour ce mois-ci.');
   if (k === 'o') h += `<h2>🌼 En fleur</h2>` + (fl.length ? `<ul class="l">${fl.map(x => `<li>${avatar(k, x.t)}<a class="tx" href="#ornement/plante/${x.t.id}"><b>${esc(etiquette(x))}</b><small>${esc(x.s.fc.a[2])}</small></a></li>`).join('')}</ul>` : vide('Rien de prévu en fleur ce mois-ci.'));
-  if (k === 'f') h += blocGestes('c', MI, gestes, mc);
+  if (k === 'f') h += blocGestes('c', MI, gestes, mc, true);
   if (retard.length) h += `<details class="acc" style="margin-top:16px"><summary>⏰ Période passée, pas encore cochés (${retard.length})</summary><div class="in"><ul class="l">${lignesGroupees(retard.filter(([, f]) => f === 't').map(([x]) => x), 't', x => '✂️ taille : ' + x.s.tt)}${lignesGroupees(retard.filter(([, f]) => f === 'r').map(([x]) => x), 'r', x => '🧺 récolte : ' + x.s.rt)}</ul></div></details>`;
+  const gF = gestes.filter(g => J.coche(mc, g.id)), faits = lignesGroupees(tT, 't', x => '✂️ taille : ' + x.s.tt, 'fait') + lignesGroupees(tR, 'r', x => '🧺 récolte : ' + x.s.rt, 'fait') + gF.map(g => ligneGeste(g, mc)).join('');
+  const nF = (faits.match(/<li/g) || []).length;
+  if (faits) h += `<details class="acc" data-fait ${FAIT_OUVERT ? 'open' : ''} style="margin-top:16px"><summary>✅ Déjà fait ce mois-ci (${nF})</summary><div class="in"><p class="mut" style="margin-top:0">Touche ✓ pour décocher et remettre dans les choses à faire.</p><ul class="l">${faits}</ul></div></details>`;
   const sans = J.surPlan(k).filter(t => t.name && !J.ficheDe(k, t)).length;
   if (sans) h += `<p class="mut">${sans} ${k === 'f' ? 'arbre' : 'plante'}${sans > 1 ? 's' : ''} sans fiche liée (donc sans dates) : ouvre-${sans > 1 ? 'les' : 'le'} dans « ${k === 'f' ? 'Mes arbres' : 'Mes plantes'} » pour choisir sa fiche.</p>`;
   return h;
 }
-let FILTRE_C = '', FILTRE_P = '';
+let FILTRE_C = '', FILTRE_P = '', FAIT_OUVERT = false;
+document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details[data-fait]')) FAIT_OUVERT = e.target.open; }, true);
 const sousMois = (kind, mi) => RG.texte('mois:' + kind + ':' + mi, kind === 'c' ? M[mi][1] : PM[mi][0]);
-function blocGestes(kind, mi, gestes, mc) {
+// rangerFaits : les gestes cochés ne s'affichent plus ici (ils sont dans « Déjà fait » en bas)
+function blocGestes(kind, mi, gestes, mc, rangerFaits) {
   const f = kind === 'c' ? FILTRE_C : FILTRE_P;
   const chips = kind === 'c'
     ? [['', 'Tous'], ...Object.entries(N).filter(([c]) => gestes.some(g => g.a[1] !== 'all' && g.a[1].split(' ').includes(c)))]
@@ -113,7 +121,7 @@ function blocGestes(kind, mi, gestes, mc) {
   const l = gestes.filter(g => !f || (kind === 'c' ? g.a[1] === 'all' || g.a[1].split(' ').includes(f) : g.a[0] === f));
   const n = l.filter(g => J.coche(mc, g.id)).length;
   return `<h2>📋 Les gestes du mois<span>${n} / ${l.length}</span></h2><p class="mut" style="margin:-4px 0 0">${esc(sousMois(kind, mi))}${crayon('mois:' + kind + ':' + mi, kind === 'c' ? M[mi][1] : PM[mi][0], 'Titre du mois')}</p><div class="puces">${chips.map(([v, t]) => `<button data-filtre="${kind}" data-v="${esc(v)}" aria-pressed="${v === f}">${esc(t)}</button>`).join('')}</div>` +
-    (l.length ? `<ul class="l" style="margin-top:10px">${l.map(g => ligneGeste(g, mc)).join('')}</ul>` : vide('Rien pour ce filtre.')) + plusEd(kind, 'Ajouter un geste en ' + MOIS[mi].toLowerCase(), mi);
+    (!l.length ? vide('Rien pour ce filtre.') : rangerFaits && n === l.length ? vide('✓ Tous les gestes sont faits.') : `<ul class="l" style="margin-top:10px">${l.filter(g => !rangerFaits || !J.coche(mc, g.id)).map(g => ligneGeste(g, mc)).join('')}</ul>`) + plusEd(kind, 'Ajouter un geste en ' + MOIS[mi].toLowerCase(), mi);
 }
 function ligneGeste(g, mc) {
   const c = mc && J.coche(mc, g.id), a = g.a;
