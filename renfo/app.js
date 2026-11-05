@@ -5,6 +5,8 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const CFG = 'maison:drive-renfo';
+// Adresse du script de la feuille « Renforcement » de Kevin (pré-remplie : il ne reste qu'à taper le mot de passe).
+const SCRIPT = 'https://script.google.com/macros/s/AKfycbzSS-fcohaOUAaGv89dz1XiJUYZQNjz5d-iaeoeuvHFswddjw0fZW8vhZqRwAVyIAcP0g/exec';
 
 // ---------- Dates (format AAAA-MM-JJ, heure locale) ----------
 const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -820,7 +822,7 @@ function vReglages() {
   let h = `<h2>☁️ Ma feuille Google « Renforcement »</h2><div class="carte">
     ${ok ? '<p style="margin-top:0"><b>✅ Cet appareil est relié à ta feuille Renforcement.</b><br><span class="note">Tout est enregistré automatiquement, à part de Happiness.</span></p>' : '<p class="note" style="margin-top:0">Tes données de santé vont dans une feuille Google à part, rien que pour toi (pas dans celle de Happiness).</p>'}
     <details ${ok ? '' : 'open'}><summary>${ok ? 'Modifier ou délier' : 'Relier cet appareil'}</summary>
-    <label class="l">Adresse du script</label><input id="r-url" value="${esc(c.url || '')}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
+    <label class="l">Adresse du script</label><input id="r-url" value="${esc(c.url || SCRIPT)}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
     <label class="l">Mot de passe</label><input id="r-cle" value="${esc(c.cle || '')}" autocapitalize="off" spellcheck="false" autocomplete="off">
     <div class="btns"><button type="button" class="go" id="r-ok">Relier</button>${ok ? '<button type="button" id="r-non">Délier cet appareil</button>' : ''}</div><p id="r-etat" class="note"></p>
     <details><summary>Première fois : créer la feuille</summary><ol class="note">
