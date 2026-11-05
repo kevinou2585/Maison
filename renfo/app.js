@@ -20,20 +20,42 @@ const joli = (s, o) => dt(s).toLocaleDateString('fr-BE', o || {weekday: 'long', 
 const court = s => dt(s).toLocaleDateString('fr-BE', {day: 'numeric', month: 'short'});
 
 // ---------- Données ----------
+// Onglets lisibles de la feuille Google (les plus récents en haut, dates au format belge)
 const tables = recs => {
-  const by = t => recs.filter(r => r.type === t).sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
+  const by = t => recs.filter(r => r.type === t).sort((a, b) => (b.date + (b.heure || '')).localeCompare(a.date + (a.heure || '')));
   const D = ['Aucune', 'Légère gêne', 'Douleur', 'Forte douleur'], dl = v => v == null ? '' : D[v];
+  const fd = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4) : '';
+  const nj = s => JOURS[jourSem(s)];
+  const nomS = k => (SEANCES[k] || {}).nom || k;
+  const dates = [...new Set(recs.filter(r => ['jour', 'seance', 'padel', 'selle'].includes(r.type) && r.date).map(r => r.date))].sort().reverse();
+  const J = {}; recs.filter(r => r.type === 'jour').forEach(j => { J[j.date] = j; });
   const o = {};
-  o['Journal'] = [['Date', 'Aine / adducteur', 'Genou gauche', 'Épaule gauche', 'Épaule droite', 'Test du ballon /10', '« Cloc » la nuit', 'Plancher pelvien', 'Note']]
-    .concat(by('jour').map(j => [j.date, dl(j.d && j.d.aine), dl(j.d && j.d.genou), dl(j.d && j.d.epG), dl(j.d && j.d.epD), j.test == null ? '' : j.test, j.cloc || '', j.pp ? 'fait' : '', j.note || '']));
-  o['Séances'] = [['Date', 'Séance', 'Niveau', 'Durée (min)', 'Exercices faits', 'Ressenti après']]
-    .concat(by('seance').map(s => [s.date, (SEANCES[s.cle] || {}).nom || s.cle, (NIVEAUX[s.niveau] || {}).nom || '', s.duree || '', s.faits + ' / ' + s.total, s.ressenti || '']));
-  o['Padel'] = [['Date', 'Durée (min)', 'Type', 'Smashs main gauche', 'Manchons', 'Note']]
-    .concat(by('padel').map(p => [p.date, p.duree || '', p.genre || '', p.smashs == null ? '' : p.smashs, p.manchons ? 'oui' : 'non', p.note || '']));
-  o['Selles'] = [['Date', 'Heure', 'Aide', 'Selles', 'Passage', 'Note']]
-    .concat(by('selle').map(s => [s.date, s.heure || '', s.aide || '', s.consist || '', s.passage || '', s.note || '']));
-  o['Semaines'] = [['Semaine du', 'Cours le lundi', 'Padel', 'Programme']]
-    .concat(by('semaine').map(s => [s.date, s.cours ? 'oui' : 'non', s.padel || '', planSemaine(s.date).map((j, i) => JOURS[i].slice(0, 3) + ' : ' + j.map(nomElement).join(' + ')).join(' · ')]));
+  o['Journal'] = [['Date', 'Jour', 'Aine / adducteur', 'Genou gauche', 'Épaule gauche', 'Épaule droite', 'Test du ballon /10', 'Activité', 'Selles', '« Cloc » la nuit', 'Plancher pelvien', 'Note']]
+    .concat(dates.map(s => {
+      const j = J[s] || {}, d = j.d || {};
+      const act = recs.filter(r => r.date === s && r.type === 'padel').map(p => '🎾 Padel' + (p.duree ? ' ' + p.duree + ' min' : ''))
+        .concat(recs.filter(r => r.date === s && r.type === 'seance' && !['pp', 'echauf'].includes(r.cle)).map(x => nomS(x.cle) + ' (' + ((NIVEAUX[x.niveau] || {}).nom || '').toLowerCase() + ')'));
+      const sl = recs.filter(r => r.date === s && r.type === 'selle');
+      return [fd(s), nj(s), dl(d.aine), dl(d.genou), dl(d.epG), dl(d.epD), j.test == null ? '' : j.test, act.join(' · '),
+        sl.length ? sl.map(x => [x.aide, x.consist ? x.consist.toLowerCase() : ''].filter(Boolean).join(', ')).join(' / ') : (j.sansSelle ? 'Pas de selle' : ''),
+        j.cloc || '', j.pp ? 'fait' : '', j.note || ''];
+    }));
+  o['Séances'] = [['Date', 'Jour', 'Séance', 'Niveau', 'Durée (min)', 'Exercices faits', 'Ressenti après']]
+    .concat(by('seance').map(x => [fd(x.date), nj(x.date), nomS(x.cle), (NIVEAUX[x.niveau] || {}).nom || '', x.duree || '', x.faits + ' / ' + x.total, x.ressenti || '']));
+  o['Padel'] = [['Date', 'Jour', 'Durée (min)', 'Type', 'Smashs main gauche', 'Manchons', 'Douleur aine le lendemain', 'Test du ballon le lendemain', 'Note']]
+    .concat(by('padel').map(p => { const l = J[plus(p.date, 1)] || {}; return [fd(p.date), nj(p.date), p.duree || '', p.genre || '', p.smashs == null ? '' : p.smashs, p.manchons ? 'oui' : 'non', dl((l.d || {}).aine), l.test == null ? '' : l.test, p.note || '']; }));
+  o['Selles'] = [['Date', 'Jour', 'Heure', 'Aide', 'Selles', 'Passage', 'Note']]
+    .concat(by('selle').map(x => [fd(x.date), nj(x.date), x.heure || '', x.aide || '', x.consist || '', x.passage || '', x.note || '']));
+  o['Semaines'] = [['Semaine du', 'Cours le lundi', 'Padel', ...JOURS]]
+    .concat(by('semaine').map(x => [fd(x.date), x.cours ? 'oui' : 'non', ({ven: 'Vendredi', sam: 'Samedi', aucun: 'Pas de padel'})[x.padel] || '', ...planSemaine(x.date).map(j => j.map(nomElement).join(' + '))]));
+  // Le programme complet, dose par niveau
+  const prog = [['Séance', 'N°', 'Exercice', 'Intensité', 'Douce', 'Normale', 'À fond', 'Comment', 'Conseil / à éviter']];
+  ['pub', 'epaule', 'soupleTout', 'pp', 'echauf'].forEach(k => SEANCES[k].liste.forEach((id, i) => {
+    const e = EX[id], dose = n => e.copenhague ? (e.niv[n] ? 'selon l\'étape (1 à 4)' : 'remplacé par l\'élastique') : e.lancers ? (e.niv[n] ? 'selon la semaine' : '—') : (e.niv[n] ? e.niv[n].d : '—');
+    prog.push([SEANCES[k].nom, String(i + 1), e.nom, COULEURS[e.coul][1], dose('douce'), dose('normale'), dose('forte'), (e.comment || []).join(' '), [e.conseil, e.eviter ? 'À éviter : ' + e.eviter : ''].filter(Boolean).join(' ')]);
+  }));
+  o['Mon programme'] = prog;
+  o['Mes règles'] = [['N°', 'Règle']].concat(REGLES.map((t, i) => [String(i + 1), t])).concat([['', ''], ['Si ça revient', '']]).concat(RECHUTE.map(t => ['•', t]));
   return o;
 };
 const R = Maison.store('renfo', {cfg: CFG, tables, recu: () => rendre()});
@@ -820,15 +842,15 @@ function survol(el, txt, n, X, W, bw) {
 function vReglages() {
   const r = reg(), c = (() => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } })(), ok = !!(c.url && c.cle);
   let h = `<h2>☁️ Ma feuille Google « Renforcement »</h2><div class="carte">
-    ${ok ? '<p style="margin-top:0"><b>✅ Cet appareil est relié à ta feuille Renforcement.</b><br><span class="note">Tout est enregistré automatiquement, à part de Happiness.</span></p>' : '<p class="note" style="margin-top:0">Tes données de santé vont dans une feuille Google à part, rien que pour toi (pas dans celle de Happiness).</p>'}
+    ${ok ? '<p style="margin-top:0"><b>✅ Cet appareil est relié à ta feuille Renforcement.</b><br><span class="note">Tout est enregistré automatiquement, à part de Happiness. Si la pastille ☁️ en haut dit « mot de passe ? », la ligne CLE du script n\'est pas 2585.</span></p>' : '<p class="note" style="margin-top:0">Tes données de santé vont dans une feuille Google à part, rien que pour toi (pas dans celle de Happiness).</p>'}
     <details ${ok ? '' : 'open'}><summary>${ok ? 'Modifier ou délier' : 'Relier cet appareil'}</summary>
     <label class="l">Adresse du script</label><input id="r-url" value="${esc(c.url || SCRIPT)}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
-    <label class="l">Mot de passe</label><input id="r-cle" value="${esc(c.cle || '')}" autocapitalize="off" spellcheck="false" autocomplete="off">
+    <label class="l">Mot de passe (le même que ton code d'entrée)</label><input id="r-cle" value="${esc(c.cle || '2585')}" autocapitalize="off" spellcheck="false" autocomplete="off">
     <div class="btns"><button type="button" class="go" id="r-ok">Relier</button>${ok ? '<button type="button" id="r-non">Délier cet appareil</button>' : ''}</div><p id="r-etat" class="note"></p>
     <details><summary>Première fois : créer la feuille</summary><ol class="note">
       <li>Sur ton ordinateur, ouvre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> et nomme la feuille « Renforcement ».</li>
       <li>Menu <b>Extensions › Apps Script</b>. Efface tout et colle <a href="google/" target="_blank">ce script</a> (bouton « Copier »).</li>
-      <li>Ligne <code>const CLE = 'change-moi';</code> : mets ton mot de passe à la place de <code>change-moi</code>, puis 💾 Enregistrer.</li>
+      <li>Ligne <code>const CLE</code> : laisse <code>2585</code> (ton code d'entrée), puis 💾 Enregistrer.</li>
       <li><b>Déployer › Nouveau déploiement</b>, roue dentée › <b>Application Web</b>. Exécuter en tant que : <b>Moi</b>. Qui a accès : <b>Tout le monde</b>. Déployer, puis autorise l'accès.</li>
       <li>Copie l'adresse qui finit par <code>/exec</code> et colle-la ici avec ton mot de passe. Pareil sur chaque appareil.</li></ol></details></details></div>`;
   h += `<h2>Ma semaine habituelle</h2><div class="carte"><label class="l">Padel de la fin de semaine</label>${segHtml('padelDefaut', [['ven', 'Vendredi'], ['sam', 'Samedi'], ['aucun', 'Pas de padel']], r.padelDefaut)}
@@ -877,9 +899,17 @@ $('f-verrou').onsubmit = async e => {
   const h = await empreinte($('v-code').value);
   if (h !== codeAttendu()) { $('v-err').textContent = 'Ce n\'est pas le bon code.'; $('v-code').select(); return; }
   try { localStorage.setItem(OUVERT, h); } catch (err) {}
+  relierAuto($('v-code').value);
   $('verrou').hidden = true; rendre();
 };
+// Le code d'entrée sert aussi de mot de passe pour la feuille Google (ligne CLE du script) :
+// l'appareil se relie tout seul, sans rien taper de plus.
+function relierAuto(code) {
+  try { const c = JSON.parse(localStorage.getItem(CFG) || '{}'); if (c.url && c.cle) return;
+    localStorage.setItem(CFG, JSON.stringify({url: SCRIPT, cle: String(code || '2585').trim()})); Maison.toutSynchro(); } catch (e) {}
+}
 let ouvert = null; try { ouvert = localStorage.getItem(OUVERT); } catch (e) {}
+if (ouvert === codeAttendu()) relierAuto(reg().code ? '' : '2585');
 if (ouvert !== codeAttendu()) verrou();
 rendre();
 })();
