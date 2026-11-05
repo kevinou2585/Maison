@@ -7,8 +7,8 @@
   const lsJson = (k, d) => { try { return JSON.parse(lsGet(k)) || d; } catch (e) { return d; } };
   const SET = Storage.prototype.setItem, DEL = Storage.prototype.removeItem;
   const lsSet = (k, v) => { try { SET.call(localStorage, k, v); return true; } catch (e) { return false; } };
-  const cfg = () => lsJson(CFG, {});
-  const relie = () => { const c = cfg(); return !!(c.url && c.cle); };
+  const cfgMaison = () => lsJson(CFG, {}), cfg = cfgMaison;
+  const relie = () => { const c = cfg(); return !!(c.url && c.cle); }, relieMaison = relie;
 
   // Avant la toute première synchro d'un appareil, ce qu'il écrit tout seul au démarrage ne doit pas
   // écraser le Drive : ces écritures ont l'heure 0 tant que personne n'a touché l'écran.
@@ -32,7 +32,10 @@
   const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0; return String(h); };
 
   // m : nom du module ; a : {get(id), put(rec), dirty(), tables(), recu(ids, premier)}
-  function moteur(m, a) {
+  // ck : clé d'une autre feuille Google que celle de Happiness (ex. Renforcement, qui a sa propre feuille)
+  function moteur(m, a, ck) {
+    const cfg = ck ? () => lsJson(ck, {}) : cfgMaison;
+    const relie = () => { const c = cfg(); return !!(c.url && c.cle); };
     const MK = 'maison:sync:' + m;
     const meta = lsJson(MK, {r: 0, sale: {}, h: '', init: false});
     const svMeta = () => lsSet(MK, JSON.stringify(meta));
@@ -175,7 +178,7 @@
       put: rec => { D[rec.id] = rec; sv(); SN[rec.id] = snap(rec.id); },
       tables: () => opt.tables ? opt.tables(Object.values(D).filter(r => !r.del)) : null,
       recu: () => { opt.recu && opt.recu(); }
-    });
+    }, opt.cfg);
     sv();
     remet[m] = {
       mettre(id, v) { const t = Date.now(); D[id] = v == null ? {id, type: D[id] && D[id].type, del: 1, t} : Object.assign(JSON.parse(v), {t}); SN[id] = snap(id); e.sale(id); },
@@ -238,7 +241,8 @@
   addEventListener('pagehide', () => moteurs.forEach(e => e.partir()));
 
   // Petite pastille d'état, en haut à droite de chaque appli
-  function pastille(lien) {
+  function pastille(lien, ck) {
+    const relie = ck ? () => { const c = lsJson(ck, {}); return !!(c.url && c.cle); } : relieMaison;
     const b = document.createElement('a');
     b.id = 'maison-nuage'; b.href = lien || '../#drive';
     const st = document.createElement('style');
@@ -296,7 +300,7 @@
     cfg, relie, store, jardin, pastille, toutSynchro, annuler, refaire,
     regler(c) { lsSet(CFG, JSON.stringify(c)); toutSynchro(); },
     surStatut(f) { ecoute.add(f); f(relie() ? etat : 'off'); },
-    tester: async c => appel(c, null, {m: 'todo', r: 1e15})
+    tester: async (c, m) => appel(c, null, {m: m || 'todo', r: 1e15})
   };
 })();
 
