@@ -88,6 +88,24 @@ nav.onglets a.on{color:var(--accent);background:var(--accent-pale)}
 .dose{font-size:20px;font-weight:700;margin:8px 0}
 ol.etapes{padding-left:22px;margin:8px 0}
 ol.etapes li{margin:5px 0}
+.sch{margin:6px 0 4px}
+.sch-planche+.sch-planche{margin-top:14px}
+.sch-titre{font-weight:700;font-size:14px;color:var(--muted);margin:0 0 4px}
+.sch-grand{position:relative;border-radius:16px;overflow:hidden;background:#eef3f9;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sch-grand svg{display:block;width:100%;height:auto;max-height:46vh}
+.sch-pause{position:absolute;top:8px;right:8px;width:36px;height:36px;padding:0;border-radius:50%;background:rgba(255,255,255,.85);border:1px solid #d5dde8;color:#33415a;font-size:15px}
+.sch-leg{background:#fff;color:#1f2a3a;padding:9px 12px;font-size:15px;font-weight:600;border-top:1px solid #e1e8f0;min-height:40px}
+.sch-leg b,.sch-vignettes b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#ff6b2c;color:#fff;font-size:12px;margin-right:6px;vertical-align:1px}
+.sch-vignettes{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,104px));gap:6px;margin-top:6px}
+.sch-vignettes figure{margin:0;cursor:pointer;border-radius:10px;overflow:hidden;border:2px solid transparent;background:#eef3f9}
+.sch-vignettes figure.on{border-color:#ff6b2c}
+.sch-vignettes svg{display:block;width:100%;height:auto}
+.sch-vignettes figcaption{display:none}
+.cles{list-style:none;padding:0;margin:10px 0}
+.cles li{position:relative;padding:8px 12px 8px 36px;margin:5px 0;border-radius:12px;background:var(--accent-pale);font-weight:600;font-size:16px}
+.cles li::before{content:"✓";position:absolute;left:12px;top:8px;color:var(--accent);font-weight:900}
+details.plus{margin:8px 0}
+details.plus summary{cursor:pointer;color:var(--accent);font-weight:600;padding:6px 0}
 .conseil{background:var(--accent-pale);border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
 .eviter{background:#fdf0e3;color:#6b3a0b;border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .eviter{background:#3a2a16;color:#f6d3a8}}
@@ -161,6 +179,8 @@ dialog::backdrop{background:#0006}
 
 <script src="../sync.js"></script>
 <script src="programme.js"></script>
+<script src="schemas.js"></script>
+<script src="schemas-ex.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
