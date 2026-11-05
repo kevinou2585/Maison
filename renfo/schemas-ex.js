@@ -365,3 +365,62 @@ window.RENFO_CLES = {
   s16: ['Tout doucement, l\'épaule reste basse'],
   s17: ['Laisse peser le corps', 'Respire lentement']
 };
+
+// ---------- DÉTENTE DU PLANCHER PELVIEN ----------
+(function () {
+const S = window.RENFO_SCHEMAS, D = window.RENFO_DESSIN, O = D.O, fl = D.fleche, ondes = D.ondes, surDos = D.surDos, face = D.face, ik = D.ik, C = window.RENFO_CLES;
+const dec = (p, dx, dy) => [p[0] + dx, p[1] + dy], mil = (a, b, k = .5) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+const avec = (id, o) => Object.assign({}, S[id], o);
+const canape = J => O.tapis(-80, 70) + O.canape(J.genou1[0] - 4, J.genou1[0] + 70, -J.genou1[1] - 5.5);
+const allonge = (o) => surDos(Object.assign({b1: [80, 178, 112], ls: {ab1: .78}, j1: [166, 90, 180], j2: [164, 88, 178]}, o));
+S.d1 = {poses: [allonge({ve: 4}), allonge({ve: -.5})], duree: 2.2, tenue: 1.4, fond: canape,
+  avant: (J, i) => i === 0 ? ondes(dec(J.bassin, -24, -26), 7) : '',
+  legendes: ['Inspire 4 s par le nez : le ventre gonfle', 'Expire 6 s par la bouche : le corps se pose dans le sol']};
+S.d2 = {poses: [allonge({ve: 4}), allonge({ve: -.5})], duree: 2.2, tenue: 1.4, fond: canape,
+  avant: (J, i) => O.zone(dec(J.bassin, 6, 6), i === 0 ? 15 : 9) + (i === 0 ? fl(dec(J.bassin, 10, -6), dec(J.bassin, 10, 6), 0, '#38a3d1') : ''),
+  legendes: ['Inspire : le ventre gonfle, le fond du bassin descend et s\'ouvre (sans pousser)', 'Expire lèvres pincées : il remonte tout seul, sans serrer']};
+const bascule = v => surDos({v, b1: [84, 88, 88]});
+S.d3 = {poses: [bascule(-2.5), bascule(2)], duree: 2.4, tenue: .6, fond: () => O.tapis(-80, 80),
+  avant: (J, i, Js) => D.rotation(dec(Js[0].bassin, -2, -4), 14, 200, 330, '#ff6b2c', .6),
+  legendes: ['Inspire : petit creux sous le bas du dos', 'Expire : le bas du dos s\'enfonce doucement dans le sol']};
+const genou = () => { let P = surDos({j2: [91, 90, 178], j1: [-158, 12, 90], cuisseDevant: true}); const J = D.squelette(D.prepare(P, 'cote'), 'cote');
+  P = ik(P, 'cote', 'b1', dec(J.genou1, 4, 4), 1); return ik(P, 'cote', 'b2', dec(J.genou1, 2, 6), 1); };
+S.dK = {poses: [genou()], fond: () => O.tapis(-80, 100), avant: J => ondes(dec(J.bassin, -26, -22), 6), legendes: ['Une jambe allongée, ramène doucement l\'autre genou vers la poitrine']};
+S.d4 = avec('s12', {});
+// papillon couché, vu de dessus, coussins sous les genoux
+const papillon = () => face({x: 0, y: 0, sol: false, t: 180, h: 180, b1: [-14, -8, -8], b2: [14, 8, 8], j1: [-52, 58, 30], j2: [52, -58, -30], ls: {cu1: .9, cu2: .9, ja1: .9, ja2: .9}});
+S.d5 = {dessus: true, vue: 'face', poses: [papillon()],
+  fond: (J) => '<rect x="-60" y="-110" width="120" height="200" rx="8" fill="#bfe3d6" opacity=".7"/>' + O.coussin(dec(J.genou1, -6, 0), 22, 14) + O.coussin(dec(J.genou2, 6, 0), 22, 14),
+  legendes: ['Plantes des pieds collées, genoux posés sur des coussins, bras relâchés']};
+S.d6 = avec('s8', {});
+// essuie-glace : vu de dessus, genoux pliés vers le plafond qui basculent
+const essuie = k => face({x: 0, y: 0, sol: false, t: 180, h: 180, b1: [-92, -92, -92], b2: [92, 92, 92], j1: [-80 * k, 40 * k, 30 * k], j2: [-64 * k, 54 * k, 40 * k], ls: k ? {cu1: .9, cu2: .9, ja1: .85, ja2: .85} : {cu1: .32, cu2: .32, ja1: .25, ja2: .25}, cache: k ? [] : ['pied1', 'pied2'], ordre: k > 0 ? ['milieu', 'jambe2', 'jambe1', 'short', 'tronc', 'tete', 'bras1', 'bras2'] : undefined});
+S.dW = {dessus: true, vue: 'face', poses: [essuie(1), essuie(0), essuie(-1)], seq: [0, 1, 2, 1], duree: 1.2, tenue: .4,
+  fond: () => '<rect x="-95" y="-110" width="190" height="180" rx="8" fill="#bfe3d6" opacity=".7"/>',
+  avant: (J, i, Js) => i === 0 ? fl(dec(Js[0].genou1, -4, 14), dec(Js[1].genou2, 4, 14), .35, undefined, true) : '',
+  legendes: ['Les genoux tombent doucement d\'un côté…', 'Genoux pliés vers le plafond, bras en croix', '…puis de l\'autre. Les épaules restent posées']};
+S.d7 = avec('s4', {});
+// accroupi sur un petit tabouret
+const tabouret = () => { let P = {x: 0, y: -36, sol: false, t: 158, h: 166, j1: [112, 0, 90], j2: [110, -2, 90], b1: [20, 80], b2: [16, 78]};
+  P = ik(P, 'cote', 'j1', [38, -8], 1, 92); P = ik(P, 'cote', 'j2', [36, -8], 1, 92); const J = D.squelette(P, 'cote');
+  P = ik(P, 'cote', 'b1', dec(J.genou1, -2, -6), -1, 60); return ik(P, 'cote', 'b2', dec(J.genou1, -4, -6), -1, 60); };
+S.d8 = {poses: [tabouret()], fond: () => O.marche(-16, 16, 24), avant: J => ondes(dec(J.bassin, 26, -26), 6) + O.zone(dec(J.bassin, 4, 6), 11),
+  legendes: ['Assis sur un tabouret bas, genoux plus hauts que les hanches, avant-bras sur les cuisses. Respire']};
+S.d9 = avec('s2', {});
+S.d10 = {poses: [allonge({b1: [84, 88, 88], ve: 2})], fond: canape, avant: J => ondes(dec(J.bassin, -24, -24), 7),
+  legendes: ['À chaque expiration, relâche une zone : mâchoire, épaules, ventre, fesses, puis le fond du bassin']};
+Object.assign(C, {
+  d1: ['Mollets sur le canapé, main sur le ventre', 'Inspire 4 s, expire 6 s'],
+  d2: ['Inspire : le fond du bassin s\'ouvre, sans pousser', 'Expire : il remonte tout seul, sans serrer', 'Jamais de Kegel'],
+  d3: ['Tout petit mouvement, au rythme du souffle', 'Les fesses restent posées'],
+  dK: ['Doux, sans tirer', 'Si l\'aine pince, genou un peu vers l\'extérieur'],
+  d4: ['Le bas du dos reste posé', 'Si l\'aine tire : mains derrière les genoux'],
+  d5: ['Les coussins portent les genoux', 'On n\'étire pas, on se pose'],
+  d6: ['Si ça gêne dans l\'aine, ramène moins'],
+  dW: ['Lentement, épaules posées', 'Amplitude sans douleur'],
+  d7: ['Genoux moins écartés si l\'aine tire', 'Respire dans le bas du dos'],
+  d8: ['Le tabouret porte ton poids', 'On relâche, on ne pousse pas'],
+  d9: ['Le plus lentement possible'],
+  d10: ['Commence par la mâchoire', 'Finis par le fond du bassin']
+});
+})();
