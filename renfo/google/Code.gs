@@ -56,7 +56,7 @@ function doPost(e) {
       });
       if (change) ecrire(tout);
       if (o.tables) Object.keys(o.tables).forEach(nom => tableau(nom, o.tables[nom], o.m));
-      if (change || o.tables) accueil(o.m, o.qui);
+      if (change || o.tables) try { tableauDeBord(); } catch (err) {}
       return {ok: true, r: rev};
     } finally {
       verrou.releaseLock();
@@ -108,7 +108,13 @@ function ecrire(tout) {
   try { if (!sh.isSheetHidden()) sh.hideSheet(); } catch (err) {}
 }
 
-const COULEURS = {renfo: ['#2f5fd0', '#eef2fc', '#4a7fe0']};
+const COULEURS = {renfo: ['#2f5fd0', '#f3f6fd', '#4a7fe0']};
+// Cases colorées selon leur valeur (vert = bien, jaune, orange, rouge = mal)
+const VERT = '#d6f0dc', JAUNE = '#fcefc0', ORANGE = '#fbd3ae', ROUGE = '#f6b8b3';
+const VALEURS = [['Aucune', VERT], ['Légère gêne', JAUNE], ['Douleur', ORANGE], ['Forte douleur', ROUGE],
+  ['Sans aide', VERT], ['Poire', JAUNE], ['Lavement', ORANGE], ['Dures', ROUGE], ['Liquides', ORANGE], ['Facile', VERT], ['Difficile', ORANGE], ['Douloureux', ROUGE],
+  ['Très bien', VERT], ['Ça va', VERT], ['Un peu mal', JAUNE], ['Mal', ORANGE], ['Douce', VERT], ['Normale', JAUNE], ['À fond', ORANGE]];
+const ORDRE = ['Tableau de bord', 'Journal', 'Séances', 'Padel', 'Selles', 'Semaines', 'Mon programme', 'Mes règles'];
 
 /** Onglet lisible : lignes[0] = titres de colonnes. */
 function tableau(nom, lignes, m) {
@@ -140,6 +146,12 @@ function tableau(nom, lignes, m) {
   }
   plage.setBorder(true, true, true, true, null, null, fonce, SpreadsheetApp.BorderStyle.SOLID);
   plage.createFilter();
+  // Couleurs selon la valeur : douleurs, selles
+  if (haut > 1) {
+    const zone = sh.getRange(2, 1, haut - 1, larg), regles = [];
+    VALEURS.forEach(([t, c]) => regles.push(SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(t).setBackground(c).setRanges([zone]).build()));
+    sh.setConditionalFormatRules(regles);
+  }
   sh.setFrozenRows(1);
   sh.setHiddenGridlines(true);
   sh.setTabColor(onglet);
@@ -151,25 +163,111 @@ function tableau(nom, lignes, m) {
   }
 }
 
-function accueil(m, qui) {
-  const sh = feuille('Accueil'), props = PropertiesService.getScriptProperties();
-  const quand = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Brussels', 'dd/MM/yyyy à HH:mm');
-  props.setProperty('maj-' + m, quand + (qui ? ' par ' + qui : ''));
-  const l = [['💪 Renforcement', ''], ['Sauvegarde de l\'appli Renforcement : chaque onglet se met à jour tout seul.', ''], ['', ''], ['Partie', 'Dernière modification']];
-  Object.keys(MODULES).forEach(k => l.push([MODULES[k], props.getProperty('maj-' + k) || '—']));
-  sh.clear();
+// ---------- Tableau de bord : premier onglet, recalculé à chaque changement ----------
+function tableauDeBord() {
+  const recs = lire().filter(x => x.m === 'renfo' && !x.rec.del).map(x => x.rec);
+  const ss = SpreadsheetApp.getActiveSpreadsheet(), sh = feuille('Tableau de bord');
+  const tz = Session.getScriptTimeZone() || 'Europe/Brussels';
+  const auj = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const moins = (s, n) => { const d = new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)); d.setDate(d.getDate() - n); return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  const moy = a => { const v = a.filter(x => x !== null && x !== undefined && x !== ''); return v.length ? Math.round(v.reduce((p, x) => p + +x, 0) / v.length * 10) / 10 : ''; };
+  const pct = (n, d) => d ? Math.round(n / d * 100) + ' %' : '';
+  const jours = recs.filter(r => r.type === 'jour'), padel = recs.filter(r => r.type === 'padel'), selles = recs.filter(r => r.type === 'selle');
+  const seances = recs.filter(r => r.type === 'seance' && r.cle !== 'pp' && r.cle !== 'echauf');
+  const Z = ['aine', 'genou', 'epG', 'epD'];
+  const bilan = filtre => {
+    const J = jours.filter(j => filtre(j.date)), notes = J.filter(j => j.d && Z.some(z => j.d[z] !== null && j.d[z] !== undefined));
+    const S = selles.filter(x => filtre(x.date));
+    return {aine: moy(J.map(j => j.d && j.d.aine)), genou: moy(J.map(j => j.d && j.d.genou)), epG: moy(J.map(j => j.d && j.d.epG)), epD: moy(J.map(j => j.d && j.d.epD)),
+      sans: pct(notes.filter(j => Z.every(z => !j.d[z])).length, notes.length), test: moy(J.map(j => j.test)),
+      padels: padel.filter(x => filtre(x.date)).length, seances: seances.filter(x => filtre(x.date)).length, pp: J.filter(j => j.pp).length,
+      selles: S.length, sansAide: pct(S.filter(x => x.aide === 'Sans aide').length, S.length), dures: pct(S.filter(x => x.consist === 'Dures').length, S.length)};
+  };
+  const d30 = moins(auj, 29), d60 = moins(auj, 59);
+  const a = bilan(d => d >= d30 && d <= auj), b = bilan(d => d >= d60 && d < d30);
+  const tests = jours.filter(j => j.test !== null && j.test !== undefined).sort((x, y) => x.date < y.date ? 1 : -1);
+  const fd = s => s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4);
+  const reg = recs.find(r => r.type === 'reglages') || {};
+
+  // Les mois, du plus ancien au plus récent (12 derniers)
+  const mois = [...new Set(recs.filter(r => r.date).map(r => r.date.slice(0, 7)))].sort().slice(-12);
+  const NOMS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  const tabMois = [['Mois', 'Aine', 'Genou gauche', 'Épaule gauche', 'Épaule droite', 'Jours sans douleur', 'Test du ballon', 'Padels', 'Séances', 'Selles sans poire', 'Selles dures']]
+    .concat(mois.map(m => { const x = bilan(d => d.slice(0, 7) === m); return [NOMS[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4), x.aine, x.genou, x.epG, x.epD, x.sans, x.test, x.padels, x.seances, x.sansAide, x.dures]; }));
+
+  sh.getCharts().forEach(c => sh.removeChart(c));
+  sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart();
+  sh.clear(); sh.clearConditionalFormatRules();
   sh.setHiddenGridlines(true);
-  sh.getRange(1, 1, l.length, 2).setValues(l).setFontFamily('Calibri').setFontSize(11).setVerticalAlignment('middle');
-  sh.getRange(1, 1).setFontSize(22).setFontWeight('bold').setFontColor('#2f5fd0');
-  sh.getRange(2, 1).setFontColor('#5d6a60').setFontStyle('italic');
-  sh.getRange(4, 1, 1, 2).setFontWeight('bold').setFontColor('#ffffff').setBackground('#2e6b3f');
-  Object.keys(MODULES).forEach((k, i) => sh.getRange(5 + i, 1, 1, 2).setBackground(COULEURS[k][1]));
-  sh.getRange(4, 1, l.length - 3, 2).setBorder(true, true, true, true, null, true, '#c9d3cb', SpreadsheetApp.BorderStyle.SOLID);
-  sh.setRowHeight(1, 40); sh.setRowHeights(4, l.length - 3, 28);
-  sh.setColumnWidth(1, 240); sh.setColumnWidth(2, 260);
-  sh.setTabColor('#2e6b3f');
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  try { if (sh.getIndex() !== 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(1); } } catch (err) {}
-  // L'onglet vide créé avec la feuille (« Feuille 1 ») ne sert à rien : on le retire.
-  ['Feuille 1', 'Sheet1', 'Feuille1'].forEach(n => { const f = ss.getSheetByName(n); if (f && f.getLastRow() === 0 && ss.getSheets().length > 2) try { ss.deleteSheet(f); } catch (err) {} });
+  const L = 11;
+  if (sh.getMaxColumns() < L) sh.insertColumnsAfter(sh.getMaxColumns(), L - sh.getMaxColumns());
+  if (sh.getMaxRows() < 200) sh.insertRowsAfter(sh.getMaxRows(), 200 - sh.getMaxRows());
+  sh.getRange(1, 1, 200, L).setFontFamily('Calibri').setFontSize(11).setVerticalAlignment('middle');
+  sh.getRange(1, 1).setValue('💪 Renforcement : mon suivi').setFontSize(24).setFontWeight('bold').setFontColor('#2f5fd0');
+  sh.getRange(2, 1).setValue('Mis à jour le ' + Utilities.formatDate(new Date(), tz, "dd/MM/yyyy 'à' HH:mm") + '. Douleurs notées de 0 à 3 : 0 = aucune, 1 = légère gêne, 2 = douleur, 3 = forte douleur.').setFontColor('#5b6476').setFontStyle('italic');
+  sh.setRowHeight(1, 44);
+
+  // Bloc « 30 derniers jours »
+  const titre = (r, t) => sh.getRange(r, 1, 1, L).merge().setValue(t).setFontSize(14).setFontWeight('bold').setFontColor('#ffffff').setBackground('#2f5fd0');
+  titre(4, 'Les 30 derniers jours (et les 30 jours d\'avant)');
+  const fleche = (x, y, inverse) => { if (x === '' || y === '') return ''; const d = (parseFloat(x) - parseFloat(y)); if (Math.abs(d) < 0.05) return '= pareil'; return ((inverse ? d > 0 : d < 0) ? '✅ mieux' : '⚠️ moins bien'); };
+  const blocs = [
+    ['Douleur aine', a.aine, b.aine, fleche(a.aine, b.aine)], ['Douleur genou gauche', a.genou, b.genou, fleche(a.genou, b.genou)],
+    ['Douleur épaule gauche', a.epG, b.epG, fleche(a.epG, b.epG)], ['Douleur épaule droite', a.epD, b.epD, fleche(a.epD, b.epD)],
+    ['Jours sans aucune douleur', a.sans, b.sans, fleche(a.sans, b.sans, true)], ['Test du ballon moyen (/10)', a.test, b.test, fleche(a.test, b.test)],
+    ['Padels', a.padels, b.padels, ''], ['Séances', a.seances, b.seances, ''], ['Plancher pelvien (jours)', a.pp, b.pp, ''],
+    ['Passages aux toilettes', a.selles, b.selles, ''], ['Selles sans poire', a.sansAide, b.sansAide, fleche(a.sansAide, b.sansAide, true)], ['Selles dures', a.dures, b.dures, fleche(a.dures, b.dures)]];
+  const t5 = [['', '30 derniers jours', '30 jours d\'avant', 'Évolution']].concat(blocs);
+  sh.getRange(5, 1, t5.length, 4).setValues(t5.map(l => l.map(v => v === '' || v === null || v === undefined ? '' : v)));
+  sh.getRange(5, 1, 1, 4).setFontWeight('bold').setBackground('#e6edfc');
+  sh.getRange(6, 1, blocs.length, 1).setFontWeight('bold');
+  sh.getRange(6, 2, blocs.length, 1).setFontSize(13).setFontWeight('bold').setHorizontalAlignment('center');
+  sh.getRange(6, 3, blocs.length, 2).setHorizontalAlignment('center').setFontColor('#5b6476');
+  sh.getRange(5, 1, t5.length, 4).setBorder(true, true, true, true, true, true, '#d6dcea', SpreadsheetApp.BorderStyle.SOLID);
+
+  // Où j'en suis (à droite)
+  const ou = [['Où j\'en suis', ''], ['Dernier test du ballon', tests.length ? tests[0].test + '/10 le ' + fd(tests[0].date) : '—'],
+    ['Copenhague', 'étape ' + (reg.cop || 1) + ' sur 4'], ['Descente de marche', (reg.marche || 10) + ' cm' + (reg.marcheOk ? ', sans douleur' : '')],
+    ['Programme épaule commencé le', reg.epDebut ? fd(reg.epDebut) : '—'], ['Dernier padel', padel.length ? fd(padel.map(p => p.date).sort().pop()) : '—'],
+    ['Dernière séance', seances.length ? fd(seances.map(p => p.date).sort().pop()) : '—']];
+  sh.getRange(5, 6, ou.length, 2).setValues(ou);
+  sh.getRange(5, 6, 1, 2).merge().setFontWeight('bold').setBackground('#e6edfc');
+  sh.getRange(6, 6, ou.length - 1, 1).setFontWeight('bold');
+  sh.getRange(5, 6, ou.length, 2).setBorder(true, true, true, true, true, true, '#d6dcea', SpreadsheetApp.BorderStyle.SOLID);
+
+  // Mois par mois
+  const r0 = 5 + t5.length + 2;
+  titre(r0, 'Mois par mois');
+  const plage = sh.getRange(r0 + 1, 1, tabMois.length, L);
+  plage.setValues(tabMois.map(l => l.map(v => v === null || v === undefined ? '' : v)));
+  sh.getRange(r0 + 1, 1, 1, L).setFontWeight('bold').setBackground('#e6edfc').setWrap(true).setHorizontalAlignment('center');
+  if (tabMois.length > 1) {
+    sh.getRange(r0 + 2, 2, tabMois.length - 1, L - 1).setHorizontalAlignment('center');
+    sh.getRange(r0 + 2, 1, tabMois.length - 1, 1).setFontWeight('bold');
+    // Douleur moyenne colorée : vert (0) → rouge (3)
+    sh.setConditionalFormatRules([SpreadsheetApp.newConditionalFormatRule().setGradientMinpointWithValue('#d6f0dc', SpreadsheetApp.InterpolationType.NUMBER, '0')
+      .setGradientMidpointWithValue('#fcefc0', SpreadsheetApp.InterpolationType.NUMBER, '1').setGradientMaxpointWithValue('#f6b8b3', SpreadsheetApp.InterpolationType.NUMBER, '3')
+      .setRanges([sh.getRange(r0 + 2, 2, tabMois.length - 1, 4), sh.getRange(6, 2, 4, 2)]).build()]);
+  }
+  plage.setBorder(true, true, true, true, true, true, '#d6dcea', SpreadsheetApp.BorderStyle.SOLID);
+
+  // Courbe des douleurs mois par mois
+  if (tabMois.length > 1) {
+    const ch = sh.newChart().setChartType(Charts.ChartType.LINE).addRange(sh.getRange(r0 + 1, 1, tabMois.length, 5))
+      .setPosition(r0 + tabMois.length + 3, 1, 0, 0).setNumHeaders(1)
+      .setOption('title', 'Douleurs moyennes par mois (0 = aucune, 3 = forte)').setOption('legend', {position: 'bottom'})
+      .setOption('vAxes', {0: {viewWindow: {min: 0, max: 3}}}).setOption('colors', ['#2a78d6', '#eb6834', '#1baf7a', '#eda100'])
+      .setOption('pointSize', 6).setOption('lineWidth', 2).setOption('width', 760).setOption('height', 320).build();
+    sh.insertChart(ch);
+  }
+  sh.setColumnWidth(1, 210); for (let c = 2; c <= L; c++) sh.setColumnWidth(c, 105); sh.setColumnWidth(6, 200); sh.setColumnWidth(7, 160);
+  sh.setFrozenRows(2);
+  sh.setTabColor('#2f5fd0');
+  // Ordre des onglets, et l'onglet vide du départ retiré
+  ORDRE.forEach((n, i) => { const f = ss.getSheetByName(n); if (f && f.getIndex() !== i + 1) { ss.setActiveSheet(f); ss.moveActiveSheet(Math.min(i + 1, ss.getSheets().length)); } });
+  ['Feuille 1', 'Sheet1', 'Feuille1', 'Accueil'].forEach(n => { const f = ss.getSheetByName(n); if (f && (f.getLastRow() === 0 || n === 'Accueil') && ss.getSheets().length > 2) try { ss.deleteSheet(f); } catch (err) {} });
+  ss.setActiveSheet(sh);
 }
+
+/** À lancer une fois depuis l'éditeur si tu veux refaire le tableau de bord tout de suite. */
+function refaireTableauDeBord() { tableauDeBord(); }

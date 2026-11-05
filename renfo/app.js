@@ -20,20 +20,42 @@ const joli = (s, o) => dt(s).toLocaleDateString('fr-BE', o || {weekday: 'long', 
 const court = s => dt(s).toLocaleDateString('fr-BE', {day: 'numeric', month: 'short'});
 
 // ---------- Données ----------
+// Onglets lisibles de la feuille Google (les plus récents en haut, dates au format belge)
 const tables = recs => {
-  const by = t => recs.filter(r => r.type === t).sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
+  const by = t => recs.filter(r => r.type === t).sort((a, b) => (b.date + (b.heure || '')).localeCompare(a.date + (a.heure || '')));
   const D = ['Aucune', 'Légère gêne', 'Douleur', 'Forte douleur'], dl = v => v == null ? '' : D[v];
+  const fd = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4) : '';
+  const nj = s => JOURS[jourSem(s)];
+  const nomS = k => (SEANCES[k] || {}).nom || k;
+  const dates = [...new Set(recs.filter(r => ['jour', 'seance', 'padel', 'selle'].includes(r.type) && r.date).map(r => r.date))].sort().reverse();
+  const J = {}; recs.filter(r => r.type === 'jour').forEach(j => { J[j.date] = j; });
   const o = {};
-  o['Journal'] = [['Date', 'Aine / adducteur', 'Genou gauche', 'Épaule gauche', 'Épaule droite', 'Test du ballon /10', '« Cloc » la nuit', 'Plancher pelvien', 'Note']]
-    .concat(by('jour').map(j => [j.date, dl(j.d && j.d.aine), dl(j.d && j.d.genou), dl(j.d && j.d.epG), dl(j.d && j.d.epD), j.test == null ? '' : j.test, j.cloc || '', j.pp ? 'fait' : '', j.note || '']));
-  o['Séances'] = [['Date', 'Séance', 'Niveau', 'Durée (min)', 'Exercices faits', 'Ressenti après']]
-    .concat(by('seance').map(s => [s.date, (SEANCES[s.cle] || {}).nom || s.cle, (NIVEAUX[s.niveau] || {}).nom || '', s.duree || '', s.faits + ' / ' + s.total, s.ressenti || '']));
-  o['Padel'] = [['Date', 'Durée (min)', 'Type', 'Smashs main gauche', 'Manchons', 'Note']]
-    .concat(by('padel').map(p => [p.date, p.duree || '', p.genre || '', p.smashs == null ? '' : p.smashs, p.manchons ? 'oui' : 'non', p.note || '']));
-  o['Selles'] = [['Date', 'Heure', 'Aide', 'Selles', 'Passage', 'Note']]
-    .concat(by('selle').map(s => [s.date, s.heure || '', s.aide || '', s.consist || '', s.passage || '', s.note || '']));
-  o['Semaines'] = [['Semaine du', 'Cours le lundi', 'Padel', 'Programme']]
-    .concat(by('semaine').map(s => [s.date, s.cours ? 'oui' : 'non', s.padel || '', planSemaine(s.date).map((j, i) => JOURS[i].slice(0, 3) + ' : ' + j.map(nomElement).join(' + ')).join(' · ')]));
+  o['Journal'] = [['Date', 'Jour', 'Aine / adducteur', 'Genou gauche', 'Épaule gauche', 'Épaule droite', 'Test du ballon /10', 'Activité', 'Selles', '« Cloc » la nuit', 'Plancher pelvien', 'Note']]
+    .concat(dates.map(s => {
+      const j = J[s] || {}, d = j.d || {};
+      const act = recs.filter(r => r.date === s && r.type === 'padel').map(p => '🎾 Padel' + (p.duree ? ' ' + p.duree + ' min' : ''))
+        .concat(recs.filter(r => r.date === s && r.type === 'seance' && !['pp', 'echauf'].includes(r.cle)).map(x => nomS(x.cle) + ' (' + ((NIVEAUX[x.niveau] || {}).nom || '').toLowerCase() + ')'));
+      const sl = recs.filter(r => r.date === s && r.type === 'selle');
+      return [fd(s), nj(s), dl(d.aine), dl(d.genou), dl(d.epG), dl(d.epD), j.test == null ? '' : j.test, act.join(' · '),
+        sl.length ? sl.map(x => [x.aide, x.consist ? x.consist.toLowerCase() : ''].filter(Boolean).join(', ')).join(' / ') : (j.sansSelle ? 'Pas de selle' : ''),
+        j.cloc || '', j.pp ? 'fait' : '', j.note || ''];
+    }));
+  o['Séances'] = [['Date', 'Jour', 'Séance', 'Niveau', 'Durée (min)', 'Exercices faits', 'Ressenti après']]
+    .concat(by('seance').map(x => [fd(x.date), nj(x.date), nomS(x.cle), (NIVEAUX[x.niveau] || {}).nom || '', x.duree || '', x.faits + ' / ' + x.total, x.ressenti || '']));
+  o['Padel'] = [['Date', 'Jour', 'Durée (min)', 'Type', 'Smashs main gauche', 'Manchons', 'Douleur aine le lendemain', 'Test du ballon le lendemain', 'Note']]
+    .concat(by('padel').map(p => { const l = J[plus(p.date, 1)] || {}; return [fd(p.date), nj(p.date), p.duree || '', p.genre || '', p.smashs == null ? '' : p.smashs, p.manchons ? 'oui' : 'non', dl((l.d || {}).aine), l.test == null ? '' : l.test, p.note || '']; }));
+  o['Selles'] = [['Date', 'Jour', 'Heure', 'Aide', 'Selles', 'Passage', 'Note']]
+    .concat(by('selle').map(x => [fd(x.date), nj(x.date), x.heure || '', x.aide || '', x.consist || '', x.passage || '', x.note || '']));
+  o['Semaines'] = [['Semaine du', 'Cours le lundi', 'Padel', ...JOURS]]
+    .concat(by('semaine').map(x => [fd(x.date), x.cours ? 'oui' : 'non', ({ven: 'Vendredi', sam: 'Samedi', aucun: 'Pas de padel'})[x.padel] || '', ...planSemaine(x.date).map(j => j.map(nomElement).join(' + '))]));
+  // Le programme complet, dose par niveau
+  const prog = [['Séance', 'N°', 'Exercice', 'Intensité', 'Douce', 'Normale', 'À fond', 'Comment', 'Conseil / à éviter']];
+  ['pub', 'epaule', 'soupleTout', 'pp', 'echauf'].forEach(k => SEANCES[k].liste.forEach((id, i) => {
+    const e = EX[id], dose = n => e.copenhague ? (e.niv[n] ? 'selon l\'étape (1 à 4)' : 'remplacé par l\'élastique') : e.lancers ? (e.niv[n] ? 'selon la semaine' : '—') : (e.niv[n] ? e.niv[n].d : '—');
+    prog.push([SEANCES[k].nom, String(i + 1), e.nom, COULEURS[e.coul][1], dose('douce'), dose('normale'), dose('forte'), (e.comment || []).join(' '), [e.conseil, e.eviter ? 'À éviter : ' + e.eviter : ''].filter(Boolean).join(' ')]);
+  }));
+  o['Mon programme'] = prog;
+  o['Mes règles'] = [['N°', 'Règle']].concat(REGLES.map((t, i) => [String(i + 1), t])).concat([['', ''], ['Si ça revient', '']]).concat(RECHUTE.map(t => ['•', t]));
   return o;
 };
 const R = Maison.store('renfo', {cfg: CFG, tables, recu: () => rendre()});
