@@ -5,15 +5,15 @@
  * Installation (une seule fois) :
  * 1. Crée une feuille Google vide sur ton Drive (sheets.new), nomme-la « Renforcement ».
  * 2. Menu Extensions > Apps Script. Efface tout et colle ce fichier.
- * 3. Change le mot de passe ci-dessous (CLE), puis 💾 Enregistrer.
+ * 3. Laisse CLE = '2585' (c'est le code d'entrée de l'appli, qui sert aussi ici), puis 💾 Enregistrer.
  * 4. Déployer > Nouveau déploiement > type « Application Web » :
  *      Exécuter en tant que : Moi ; Qui a accès : Tout le monde. Autorise l'accès.
- * 5. Copie l'adresse qui finit par /exec et colle-la dans l'appli (Renforcement > Réglages), avec le mot de passe.
+ * 5. Copie l'adresse qui finit par /exec et colle-la dans l'appli (Renforcement > Réglages).
  *
  * L'onglet caché « _donnees » sert à la synchronisation : ne le modifie pas.
  * Les onglets Journal, Séances, Padel, Selles et Semaines sont réécrits par l'appli (téléchargeables en Excel).
  */
-const CLE = 'change-moi';
+const CLE = '2585'; // le même que le code d'entrée de l'appli
 
 
 const DONNEES = '_donnees';

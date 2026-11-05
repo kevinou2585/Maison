@@ -820,15 +820,15 @@ function survol(el, txt, n, X, W, bw) {
 function vReglages() {
   const r = reg(), c = (() => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } })(), ok = !!(c.url && c.cle);
   let h = `<h2>☁️ Ma feuille Google « Renforcement »</h2><div class="carte">
-    ${ok ? '<p style="margin-top:0"><b>✅ Cet appareil est relié à ta feuille Renforcement.</b><br><span class="note">Tout est enregistré automatiquement, à part de Happiness.</span></p>' : '<p class="note" style="margin-top:0">Tes données de santé vont dans une feuille Google à part, rien que pour toi (pas dans celle de Happiness).</p>'}
+    ${ok ? '<p style="margin-top:0"><b>✅ Cet appareil est relié à ta feuille Renforcement.</b><br><span class="note">Tout est enregistré automatiquement, à part de Happiness. Si la pastille ☁️ en haut dit « mot de passe ? », la ligne CLE du script n\'est pas 2585.</span></p>' : '<p class="note" style="margin-top:0">Tes données de santé vont dans une feuille Google à part, rien que pour toi (pas dans celle de Happiness).</p>'}
     <details ${ok ? '' : 'open'}><summary>${ok ? 'Modifier ou délier' : 'Relier cet appareil'}</summary>
     <label class="l">Adresse du script</label><input id="r-url" value="${esc(c.url || SCRIPT)}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
-    <label class="l">Mot de passe</label><input id="r-cle" value="${esc(c.cle || '')}" autocapitalize="off" spellcheck="false" autocomplete="off">
+    <label class="l">Mot de passe (le même que ton code d'entrée)</label><input id="r-cle" value="${esc(c.cle || '2585')}" autocapitalize="off" spellcheck="false" autocomplete="off">
     <div class="btns"><button type="button" class="go" id="r-ok">Relier</button>${ok ? '<button type="button" id="r-non">Délier cet appareil</button>' : ''}</div><p id="r-etat" class="note"></p>
     <details><summary>Première fois : créer la feuille</summary><ol class="note">
       <li>Sur ton ordinateur, ouvre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> et nomme la feuille « Renforcement ».</li>
       <li>Menu <b>Extensions › Apps Script</b>. Efface tout et colle <a href="google/" target="_blank">ce script</a> (bouton « Copier »).</li>
-      <li>Ligne <code>const CLE = 'change-moi';</code> : mets ton mot de passe à la place de <code>change-moi</code>, puis 💾 Enregistrer.</li>
+      <li>Ligne <code>const CLE</code> : laisse <code>2585</code> (ton code d'entrée), puis 💾 Enregistrer.</li>
       <li><b>Déployer › Nouveau déploiement</b>, roue dentée › <b>Application Web</b>. Exécuter en tant que : <b>Moi</b>. Qui a accès : <b>Tout le monde</b>. Déployer, puis autorise l'accès.</li>
       <li>Copie l'adresse qui finit par <code>/exec</code> et colle-la ici avec ton mot de passe. Pareil sur chaque appareil.</li></ol></details></details></div>`;
   h += `<h2>Ma semaine habituelle</h2><div class="carte"><label class="l">Padel de la fin de semaine</label>${segHtml('padelDefaut', [['ven', 'Vendredi'], ['sam', 'Samedi'], ['aucun', 'Pas de padel']], r.padelDefaut)}
@@ -877,9 +877,17 @@ $('f-verrou').onsubmit = async e => {
   const h = await empreinte($('v-code').value);
   if (h !== codeAttendu()) { $('v-err').textContent = 'Ce n\'est pas le bon code.'; $('v-code').select(); return; }
   try { localStorage.setItem(OUVERT, h); } catch (err) {}
+  relierAuto($('v-code').value);
   $('verrou').hidden = true; rendre();
 };
+// Le code d'entrée sert aussi de mot de passe pour la feuille Google (ligne CLE du script) :
+// l'appareil se relie tout seul, sans rien taper de plus.
+function relierAuto(code) {
+  try { const c = JSON.parse(localStorage.getItem(CFG) || '{}'); if (c.url && c.cle) return;
+    localStorage.setItem(CFG, JSON.stringify({url: SCRIPT, cle: String(code || '2585').trim()})); Maison.toutSynchro(); } catch (e) {}
+}
 let ouvert = null; try { ouvert = localStorage.getItem(OUVERT); } catch (e) {}
+if (ouvert === codeAttendu()) relierAuto(reg().code ? '' : '2585');
 if (ouvert !== codeAttendu()) verrou();
 rendre();
 })();
