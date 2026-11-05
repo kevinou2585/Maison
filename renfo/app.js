@@ -154,7 +154,9 @@ function vAujourdhui() {
     const ln = plus(l, 7), rs = reglageSemaine(ln);
     h += `<div class="carte"><b>🗓️ Prépare ta semaine prochaine</b><div class="note">Semaine du ${esc(joli(ln, {day: 'numeric', month: 'long'}))}</div>${formSemaine(ln, rs)}</div>`;
   }
-  h += '<h2>À faire aujourd\'hui</h2>';
+  const sm = semaine(l), modifie = !!(sm && sm.jours && sm.jours[jourSem(s)]);
+  h += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:22px 0 8px"><h2 style="margin:0">À faire aujourd'hui</h2><button type="button" id="b-chg">✎ Changer</button></div>`;
+  if (modifie) h += `<p class="note" style="margin:0 0 6px">Tu as changé le programme du jour. <button type="button" class="lien" id="b-prog">Revenir au programme prévu</button></p>`;
   plan.forEach(e => { h += itemJour(e, s); });
   // Plancher pelvien, chaque jour
   const ppFait = j.pp || parDate('seance', s).some(x => x.cle === 'pp' || (SEANCES[x.cle] && SEANCES[x.cle].liste.includes('pp') && x.ppFait));
@@ -173,6 +175,8 @@ function vAujourdhui() {
   brancherSeg(s);
   brancherSelles(s);
   $('b-sem').onclick = () => ouvrirSemaine(l);
+  $('b-chg').onclick = () => changerJour(l, jourSem(s), () => {});
+  if ($('b-prog')) $('b-prog').onclick = () => { const x = semaine(l); x.jours[jourSem(s)] = null; R.put(x); rendre(); };
   brancherSemaine();
   vue().querySelectorAll('[data-lancer]').forEach(b => b.onclick = () => choisirNiveau(b.dataset.lancer, s, b.dataset.max));
   vue().querySelectorAll('[data-padel]').forEach(b => b.onclick = () => dlgPadel(s));
@@ -244,7 +248,7 @@ function ouvrirSemaine(l, iSel) {
 function changerJour(l, i, apres) {
   const plan = planSemaine(l), cur = plan[i].map(e => e.split(':')[0]);
   const d2 = document.createElement('dialog'); document.body.appendChild(d2);
-  d2.innerHTML = `<h3 style="margin-top:0">${JOURS[i]}</h3><p class="note">Coche ce que tu veux faire ce jour-là.</p>
+  d2.innerHTML = `<h3 style="margin-top:0">${JOURS[i]} ${dt(plus(l, i)).getDate()}</h3><p class="note">Coche ce que tu veux faire ce jour-là. Prévu au programme : ${esc(routineDe(l).jours[i].map(nomElement).join(' + '))}.</p>
     ${Object.keys(ELEMENTS).map(k => `<label class="item" style="padding:8px 12px;margin:5px 0"><input type="checkbox" value="${k}" ${cur.includes(k) ? 'checked' : ''} style="width:22px;height:22px;flex:none"><span class="txt">${ICO[k] || ''} ${ELEMENTS[k]}</span></label>`).join('')}
     <p id="cj-av" class="note"></p><div class="btns"><button type="button" id="cj-n">Annuler</button><button type="button" class="go" id="cj-o">Enregistrer</button></div>`;
   const verif = () => {
