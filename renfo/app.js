@@ -167,9 +167,11 @@ function vAujourdhui() {
   if (rap.length) h += `<div class="banniere info">${rap.map(t => '💡 ' + esc(t)).join('<br>')}</div>`;
   // Journal rapide
   h += `<h2>Comment ça va aujourd'hui ?</h2><div class="carte">${ZONES.map(([k, t]) => `<label class="l">${t}</label>${segHtml('d-' + k, DOUL, j.d ? j.d[k] : '', 'douleur')}`).join('')}
-    <p class="note" style="margin:10px 0 0">Les selles, le « cloc » et une note : <a href="#journal">Journal du jour</a>.</p></div>`;
+    <label class="l">🚽 Selles</label>${blocSelles(s)}
+    <p class="note" style="margin:12px 0 0">Le test du ballon, le « cloc » et une note : <a href="#journal">Journal du jour</a>.</p></div>`;
   vue().innerHTML = h;
   brancherSeg(s);
+  brancherSelles(s);
   $('b-sem').onclick = () => ouvrirSemaine(l);
   brancherSemaine();
   vue().querySelectorAll('[data-lancer]').forEach(b => b.onclick = () => choisirNiveau(b.dataset.lancer, s, b.dataset.max));
@@ -618,8 +620,8 @@ function vJournal() {
     <label class="l">Test du ballon (sur 10)</label><div class="dix" id="j-test">${[...Array(11).keys()].map(v => `<button type="button" data-v="${v}" class="${j.test === v ? 'on' : ''}">${v}</button>`).join('')}</div>
     <label class="l">« Cloc » de l'épaule gauche cette nuit</label>${segHtml('cloc', [['oui', 'Oui'], ['non', 'Non']], j.cloc || '')}
     <label class="item" style="margin-top:12px;padding:10px 12px"><input type="checkbox" id="j-pp" ${j.pp ? 'checked' : ''} style="width:22px;height:22px;flex:none"><span class="txt">🌬️ Plancher pelvien fait</span></label></div>`;
-  h += `<h2>🚽 Selles</h2><div class="carte">${sel.length ? sel.map(x => `<div class="selle"><span><b>${esc(x.heure || '')}</b> ${esc([x.aide, x.consist, x.passage].filter(Boolean).join(' · '))}${x.note ? '<br><span class="note">' + esc(x.note) + '</span>' : ''}</span><button type="button" data-sl="${x.id}">✎</button></div>`).join('') : `<p class="note" style="margin:0">${j.sansSelle ? 'Pas de selle ce jour-là.' : 'Rien de noté.'}</p>`}
-    <div class="btns"><button type="button" class="go" id="j-selle">＋ Noter un passage</button>${sel.length ? '' : `<button type="button" id="j-sans">${j.sansSelle ? 'Annuler « pas de selle »' : 'Pas de selle aujourd\'hui'}</button>`}</div></div>`;
+  if (s !== auj()) h += `<h2>🚽 Selles</h2><div class="carte">${blocSelles(s)}</div>`;
+  else h += `<p class="note">🚽 Les selles d'aujourd'hui se notent dans <a href="#aujourdhui">Aujourd'hui</a>.</p>`;
   h += `<h2>Activité</h2><div class="carte">${se.length || pa.length ? '' : '<p class="note" style="margin:0">Aucune séance notée.</p>'}
     ${se.map(x => `<div class="selle"><span>${(SEANCES[x.cle] || {}).ico || ''} <b>${esc((SEANCES[x.cle] || {}).nom || x.cle)}</b> · ${esc((NIVEAUX[x.niveau] || {}).nom || '')} · ${x.duree} min${x.ressenti ? ' · ' + esc(x.ressenti) : ''}</span><button type="button" data-se="${x.id}">🗑</button></div>`).join('')}
     ${pa.map(x => `<div class="selle"><span>🎾 <b>Padel</b> · ${esc(resumePadel(x))}</span><button type="button" data-pa="${x.id}">✎</button></div>`).join('')}
@@ -634,13 +636,22 @@ function vJournal() {
   vue().querySelectorAll('[data-seg="cloc"] button').forEach(b => b.onclick = () => { setJour(s, {cloc: j.cloc === b.dataset.v ? '' : b.dataset.v}); rendre(); });
   $('j-pp').onchange = e => setJour(s, {pp: e.target.checked});
   $('j-note').onchange = e => setJour(s, {note: e.target.value.trim()});
-  $('j-selle').onclick = () => dlgSelle(s);
-  if ($('j-sans')) $('j-sans').onclick = () => { setJour(s, {sansSelle: !j.sansSelle}); rendre(); };
-  vue().querySelectorAll('[data-sl]').forEach(b => b.onclick = () => dlgSelle(s, b.dataset.sl));
+  brancherSelles(s);
   vue().querySelectorAll('[data-pa]').forEach(b => b.onclick = () => dlgPadel(s, b.dataset.pa));
   vue().querySelectorAll('[data-se]').forEach(b => b.onclick = () => { if (confirm('Supprimer cette séance du journal ?')) { R.del(b.dataset.se); rendre(); } });
   $('j-padel').onclick = () => dlgPadel(s, 'nouveau');
   $('j-fait').onclick = () => dlgSeanceFaite(s);
+}
+// Selles du jour : liste des passages + boutons (dans Aujourd'hui, et dans le Journal pour les jours passés)
+function blocSelles(s) {
+  const j = jour(s), sel = parDate('selle', s).sort((a, b) => (a.heure || '').localeCompare(b.heure || ''));
+  return `${sel.length ? sel.map(x => `<div class="selle"><span><b>${esc(x.heure || '')}</b> ${esc([x.aide, x.consist, x.passage].filter(Boolean).join(' · '))}${x.note ? '<br><span class="note">' + esc(x.note) + '</span>' : ''}</span><button type="button" data-sl="${x.id}">✎</button></div>`).join('') : `<p class="note" style="margin:4px 0 0">${j.sansSelle ? 'Pas de selle ce jour-là.' : 'Rien de noté.'}</p>`}
+    <div class="btns"><button type="button" class="go" id="j-selle">＋ Noter un passage</button>${sel.length ? '' : `<button type="button" id="j-sans">${j.sansSelle ? 'Annuler « pas de selle »' : (s === auj() ? 'Pas de selle aujourd\'hui' : 'Pas de selle ce jour-là')}</button>`}</div>`;
+}
+function brancherSelles(s) {
+  if ($('j-selle')) $('j-selle').onclick = () => dlgSelle(s);
+  if ($('j-sans')) $('j-sans').onclick = () => { setJour(s, {sansSelle: !jour(s).sansSelle}); rendre(); };
+  vue().querySelectorAll('[data-sl]').forEach(b => b.onclick = () => dlgSelle(s, b.dataset.sl));
 }
 function dlgSelle(s, id) {
   const d = dialogue(), now = new Date();
