@@ -326,3 +326,21 @@ if (typeof module !== 'undefined') module.exports = {EX, SEANCES, ROUTINES, cons
 
 // Rythme d'une répétition (secondes) quand l'appli compte à voix haute. Par défaut 3 s.
 const TEMPO = {p1: 4, p2: 4, p3: 3, p4: 4, p5: 3, p6: 3, p6b: 6, p7: 5, p9: 5, p10: 5, p10b: 4, p11: 4, p12: 4, e1: 4, e2: 4, e3: 3, e4: 5, e4b: 4, e5: 4, eD: 4, s2: 4, s3: 5};
+
+// Matériel de chaque exercice (affiché et lu au début de la séance)
+const MATERIEL = {
+  p0: ['Tapis', 'Petit ballon (ou coussin ferme)'], p1: ['Tapis', 'Petit ballon (ou coussin ferme)'], p2: ['Tapis', 'Gros ballon de Klein'],
+  p4: ['Haie basse (ou chaise d\'enfant)'], p5: ['Gros ballon de Klein'], p6: ['Marche ou step'], p6b: ['Marche ou step'],
+  p7: ['Corde (ou haie) tendue à 1 m'], p8: ['Tapis', 'Petit ballon (ou coussin ferme)'], p8b: ['Mur', 'Petit ballon (ou coussin ferme)'],
+  p9: ['Coussin en mousse', 'Disque glissant (ou torchon sur carrelage)', 'Bâton'], p10: ['Tapis', 'Banc (ou box, tabouret)'],
+  p10b: ['Élastique avec un point d\'attache bas'], p11: ['Coussin d\'équilibre gonflable (ou gros ballon)', 'Haltère de 1 kg'],
+  p12: ['Gros ballon de Klein'], pp: ['Tapis', 'Chaise ou canapé'],
+  e0: ['Élastique'], e1: ['Mur'], e2: ['Tapis', 'Serviette roulée', 'Haltères de 0,5 à 1 kg (à fond)'], e3: ['Élastique accroché à une porte'],
+  e4: ['Élastique accroché à une porte'], e4b: ['Élastique accroché à une porte'], e5: ['Tapis', 'Serviette roulée', 'Coussin', 'Petit haltère (ou bouteille d\'1 L)'],
+  e6: ['Tapis'], e7: ['Mur', 'Ballon (foot, basket ou volley)'], e8: ['Kettlebell de 4 à 8 kg (ou marteau)'], eD: ['Mur', 'Balle de tennis (medecine-ball plus tard)'],
+  w: ['Petit ballon (ou coussin ferme)', 'Manchons pour le genou gauche'],
+  s1: ['Tapis'], s2: ['Tapis'], s3: ['Tapis'], s4: ['Tapis'], s5: ['Tapis', 'Coussin'], s6: ['Tapis'], s7: ['Tapis', 'Sangle (ou serviette)'], s8: ['Tapis'],
+  s9: ['Mur'], s11: ['Tapis'], s12: ['Tapis'], s14: ['Porte'], s15: ['Table ou dossier de canapé'], s17: ['Tapis', 'Chaise ou canapé']
+};
+// Liste sans doublon pour une séance construite
+const materiel = l => { const o = []; l.forEach(x => (MATERIEL[x.id] || []).forEach(m => { if (!o.includes(m)) o.push(m); })); return o; };

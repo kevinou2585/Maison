@@ -352,6 +352,7 @@ function choisirNiveau(k, s, max) {
       <p class="note" style="margin:0 0 8px">Comment tu te sens ? ${t ? 'Dernier test du ballon : ' + t.test + '/10 (' + court(t.date) + ').' : ''}</p>
       <div class="niv">${ordre.map(v => `<button type="button" data-n="${v}" class="${v === n ? 'on' : ''} ${v === cons ? 'conseille' : ''}"><span>${NIVEAUX[v].ico}</span>${NIVEAUX[v].nom}<small>${duree(construire(k, v, ctx()))} min</small></button>`).join('')}</div>
       <p class="note">${esc(NIVEAUX[n].txt)}${max && n !== 'douce' && ordre.indexOf(n) > ordre.indexOf(max) ? ' ⚠️ Aujourd\'hui, la routine conseille de ne pas forcer le rouge.' : ''}${rechute() && n !== 'douce' ? ' ⚠️ Tu es en période où on allège : Douce est conseillé.' : ''}</p>
+      <p class="note" style="margin:6px 0"><b>🧰 Matériel :</b> ${esc(materiel(l).join(', ') || 'rien')}</p>
       <details><summary class="note">Voir les ${l.length} exercices (environ ${duree(l)} min)</summary><ol class="apercu note">${l.map(x => `<li>${COULEURS[EX[x.id].coul][0]} ${esc(EX[x.id].nom)} : ${esc(x.dose.d || '')}</li>`).join('')}</ol></details>
       <div class="btns"><button type="button" id="n-x">Annuler</button><button type="button" class="go" id="n-go" style="flex:1">▶ Commencer</button></div>`;
     d.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { n = b.dataset.n; dessiner(); });
@@ -387,8 +388,17 @@ document.addEventListener('visibilitychange', () => { if (L && document.visibili
 function lancer(k, n, s) {
   L = {k, n, s, liste: construire(k, n, ctx()), i: 0, faits: {}, debut: Date.now(), ppFait: false, annonce: -1};
   $('lecteur').hidden = false; document.body.style.overflow = 'hidden'; document.body.classList.add('lecture'); garderEcran();
-  dire(SEANCES[k].nom + (['pp', 'echauf'].includes(k) ? '' : ', niveau ' + NIVEAUX[n].nom) + '. C\'est parti.');
-  L.st = etatEx(); dessinerEx();
+  L.st = etatEx();
+  const mat = materiel(L.liste);
+  if (!mat.length) { dire(SEANCES[k].nom + '. C\'est parti.'); dessinerEx(); return; }
+  $('lect').innerHTML = `<div class="lh"><button type="button" class="lien" id="l-q0">✕ Fermer</button><span class="note">${L.liste.length} exercice${L.liste.length > 1 ? 's' : ''} · ~${duree(L.liste)} min</span></div>
+    <h2 class="exnom" style="margin-top:14px">${SEANCES[k].ico} ${esc(SEANCES[k].nom)}</h2><p class="note" style="margin:0">${['pp', 'echauf'].includes(k) ? '' : 'Niveau ' + esc(NIVEAUX[n].nom)}</p>
+    <h3>🧰 Prépare ton matériel</h3><div class="carte">${mat.map((m, i) => `<label class="item" style="padding:9px 12px;margin:5px 0"><input type="checkbox" data-m="${i}" style="width:22px;height:22px;flex:none"><span class="txt">${esc(m)}</span></label>`).join('')}</div>
+    <button type="button" class="go bouton-plein" id="l-pret">▶ C'est prêt, on commence</button>`;
+  $('lecteur').scrollTop = 0;
+  dire(SEANCES[k].nom + '. Prépare ton matériel : ' + mat.map(m => m.replace(/\(.*?\)/g, '')).join(', ') + '.');
+  $('l-q0').onclick = fermerLecteur;
+  $('l-pret').onclick = () => { dire('C\'est parti.'); dessinerEx(); };
 }
 // Annonce le nouvel exercice à voix haute (une seule fois)
 function annoncer() {
