@@ -17,7 +17,7 @@ Appli de la maison, servie par GitHub Pages et installable sur téléphone et or
 - `mdp/` : mots de passe, un compte par personne avec son propre code. Chiffrés (PBKDF2 + AES-GCM) avec ce code, sauf si le compte
   choisit une copie lisible dans la feuille. Import de listes (CSV de Chrome, iPhone, Firefox… ou collée).
 - `le-fist/` : les fléchettes, copiées de l'appli EPS ultime.
-- `renfo/` : Renforcement, l'appli de sport et de santé de Kevin, protégée par un code. `programme.js` = tous les exercices (pubalgie, épaule gauche, plancher pelvien, souplesse) avec leurs doses en 3 niveaux (douce, normale, à fond ; jamais plus de 45 min) et les routines de la semaine selon le padel ; `app.js` = Aujourd'hui, séances guidées à voix haute, journal (douleurs, test du ballon, selles), suivi en graphiques. Données dans une feuille Google à part (`renfo/google/Code.gs`, clé `maison:drive-renfo`).
+- `renfo/` : Renforcement, l'appli de sport et de santé de Kevin, protégée par un code. `programme.js` = tous les exercices (pubalgie, épaule gauche, plancher pelvien, souplesse) avec leurs doses en 3 niveaux (douce, normale, à fond ; jamais plus de 45 min) et les routines de la semaine selon le padel ; `schemas.js` = le personnage dessiné en SVG et animé, `schemas-ex.js` = les positions de chaque exercice et les points importants ; `app.js` = Aujourd'hui, séances guidées à voix haute, journal (douleurs, test du ballon, selles), suivi en graphiques. Données dans une feuille Google à part (`renfo/google/Code.gs`, clé `maison:drive-renfo`).
 
 Synchro : `sync.js` échange les données avec une feuille Google de ton Drive via le script `google/Code.gs`
 (mode d'emploi en tête du script). La feuille garde un onglet lisible par partie, téléchargeable en Excel.
