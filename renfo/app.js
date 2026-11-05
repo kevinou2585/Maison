@@ -50,7 +50,7 @@ const tables = recs => {
     .concat(by('semaine').map(x => [fd(x.date), x.cours ? 'oui' : 'non', ({ven: 'Vendredi', sam: 'Samedi', aucun: 'Pas de padel'})[x.padel] || '', ...planSemaine(x.date).map(j => j.map(nomElement).join(' + '))]));
   // Le programme complet, dose par niveau
   const prog = [['Séance', 'N°', 'Exercice', 'Intensité', 'Douce', 'Normale', 'À fond', 'Comment', 'Conseil / à éviter']];
-  ['pub', 'epaule', 'soupleTout', 'pp', 'echauf'].forEach(k => SEANCES[k].liste.forEach((id, i) => {
+  ['pub', 'epaule', 'soupleTout', 'detente', 'pp', 'echauf'].forEach(k => SEANCES[k].liste.forEach((id, i) => {
     const e = EX[id], dose = n => e.copenhague ? (e.niv[n] ? 'selon l\'étape (1 à 4)' : 'remplacé par l\'élastique') : e.lancers ? (e.niv[n] ? 'selon la semaine' : '—') : (e.niv[n] ? e.niv[n].d : '—');
     prog.push([SEANCES[k].nom, String(i + 1), e.nom, COULEURS[e.coul][1], dose('douce'), dose('normale'), dose('forte'), (e.comment || []).join(' '), [e.conseil, e.eviter ? 'À éviter : ' + e.eviter : ''].filter(Boolean).join(' ')]);
   }));
@@ -77,7 +77,7 @@ function planSemaine(l) {
 const routineDe = l => { const rs = reglageSemaine(l); return ROUTINES[(rs.cours ? 'o' : 'n') + '-' + rs.padel] || ROUTINES['n-ven']; };
 const planJour = s => planSemaine(lundiDe(s))[jourSem(s)];
 const nomElement = e => { const [k, n] = e.split(':'); return (ELEMENTS[k] || k) + (n ? ' (' + NIVEAUX[n].nom.toLowerCase() + ' maximum)' : ''); };
-const ICO = {pub: '🦵', verts: '🟢', epaule: '💪', combi: '⚡', padel: '🎾', repos: '🚶', test: '⚽', soupleTout: '🧘', soupleBas: '🧘', soupleHaut: '🧘', pp: '🌬️', echauf: '🎾'};
+const ICO = {pub: '🦵', verts: '🟢', epaule: '💪', combi: '⚡', padel: '🎾', repos: '🚶', test: '⚽', soupleTout: '🧘', soupleBas: '🧘', soupleHaut: '🧘', detente: '🌙', pp: '🌬️', echauf: '🎾'};
 
 // ---------- Test du ballon, rechute, niveau conseillé ----------
 const tests = () => R.tous('jour').filter(j => j.test != null).sort((a, b) => a.date.localeCompare(b.date));
@@ -316,7 +316,7 @@ function dlgPadel(s, id) {
 const ctx = () => { const r = reg(); return {cop: r.cop, semEp: semEp(), options: r.options !== false}; };
 function vSeances() {
   const c = conseil(auj());
-  const grp = [['Renforcement', ['pub', 'verts', 'epaule', 'combi']], ['Souplesse', ['soupleTout', 'soupleBas', 'soupleHaut']], ['Tous les jours et padel', ['pp', 'echauf']]];
+  const grp = [['Renforcement', ['pub', 'verts', 'epaule', 'combi']], ['Souplesse', ['soupleTout', 'soupleBas', 'soupleHaut']], ['Plancher pelvien et padel', ['detente', 'pp', 'echauf']]];
   let h = `<p class="note">Hors programme : choisis la séance que tu veux faire maintenant. Le niveau se choisit juste avant de commencer.</p>`;
   const demainPadel = planJour(plus(auj(), 1)).some(e => e.startsWith('padel'));
   if (demainPadel) h += `<div class="banniere info">💡 Demain c'est padel : pas d'épaule aujourd'hui, seulement les exercices verts.</div>`;
@@ -517,7 +517,10 @@ function tic(fin) {
   stop();
   minuteur = setInterval(() => {
     L.st.reste--; const c = $('c-n'); if (c) c.textContent = fmt(Math.max(0, L.st.reste));
-    if (L.st.reste <= 3 && L.st.reste > 0) { if (!dire(nb(L.st.reste))) bip(); }
+    const xs = L.liste[L.i], es = xs && EX[xs.id];
+    // séances de détente : la voix donne le rythme de la respiration (4 s / 6 s)
+    if (es && es.souffle && L.st.phase === 'tenue' && L.st.reste > 5) { const ec = xs.dose.t - L.st.reste; if (ec % 10 === 0) dire('Inspire'); else if (ec % 10 === 4) dire('Expire'); }
+    else if (L.st.reste <= 3 && L.st.reste > 0) { if (!dire(nb(L.st.reste))) bip(); }
     else if (L.st.phase === 'repos' && L.st.reste === 10) dire('10 secondes');
     if (L.st.reste <= 0) { stop(); fin(); }
   }, 1000);
@@ -549,7 +552,7 @@ function demarrer() {
     return;
   }
   const cotesD = ds.c === 2 ? ['côté gauche. ', 'côté droit. '] : [''];
-  if (st.phase === 'pause' && st.ph2) { st.phase = st.ph2; } else { st.phase = 'tenue'; st.reste = ds.t; dire((ds.s > 1 && st.rep === 1 ? 'Série ' + nb(st.serie) + ', ' : '') + (st.rep === 1 ? cotesD[st.cote] : '') + (x.id === 'p8' ? 'Serre' : 'Tiens') + ', ' + enSec(ds.t) + '.'); }
+  if (st.phase === 'pause' && st.ph2) { st.phase = st.ph2; } else { st.phase = 'tenue'; st.reste = ds.t; dire((ds.s > 1 && st.rep === 1 ? 'Série ' + nb(st.serie) + ', ' : '') + (st.rep === 1 ? cotesD[st.cote] : '') + (x.id === 'p8' ? 'Serre' : e.souffle ? 'Respire lentement' : 'Tiens') + ', ' + enSec(ds.t) + '.'); }
   dessinerEx();
   const apresTenue = () => {
     bip(true); L.faits[x.id] = 1;

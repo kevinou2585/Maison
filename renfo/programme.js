@@ -158,6 +158,64 @@ const EX = {
     etapes: [['Trottinement et pas chassés', 120], ['10 serrages de ballon (ou de poings entre les genoux) de 5 s', 100], ['10 fentes latérales douces par côté', 90], ['Balancements de jambes avant/arrière et sur les côtés', 90], ['Accélérations et changements de direction à 50 %, puis 70 %', 120]],
     niv: {douce: {d: '10 min', m: 10}, normale: {d: '10 min', m: 10}, forte: {d: '10 min', m: 10}}},
 
+
+  // ---------------- DÉTENTE DU PLANCHER PELVIEN (20-30 min, à la demande) ----------------
+  // But : relâcher et étirer autour, jamais renforcer (pas de Kegel). Les jours de douleur : niveau Douce
+  // (plus de respiration, ouvertures de hanche plus courtes, sans l'accroupi).
+  d1: {nom: 'Installation et respiration ventrale', coul: 'calme', souffle: 1,
+    comment: ['Sur le dos, mollets posés sur le canapé (ou une chaise), une main sur le ventre.', 'Inspire 4 s par le nez en gonflant le ventre, expire 6 s par la bouche.', 'Laisse peser le corps dans le sol : mâchoire, épaules et fesses relâchées.'],
+    conseil: 'Ici, rien à réussir : on laisse le corps se poser.',
+    niv: {douce: {d: '4 min', s: 1, r: 1, t: 240, m: 4}, normale: {d: '3 min', s: 1, r: 1, t: 180, m: 3}, forte: {d: '3 min', s: 1, r: 1, t: 180, m: 3}}},
+  d2: {nom: 'Le périnée qui s\'ouvre', coul: 'calme', souffle: 1,
+    quoi: 'Le cœur de la séance : sentir le fond du bassin descendre et s\'ouvrir à l\'inspiration.',
+    comment: ['Même position, mollets sur le canapé.', 'Inspire 4 s : le ventre gonfle et le fond du bassin (entre les bourses et l\'anus) descend un peu, s\'ouvre, comme au tout début d\'un pipi. Sans pousser.', 'Expire 6 s, lèvres pincées : il remonte tout seul, sans le serrer.', 'Pour sentir : le bout des doigts sur le périnée, par-dessus le caleçon, il bombe très légèrement à l\'inspiration.'],
+    conseil: 'Si tu ne sens rien, c\'est normal au début : l\'intention suffit, la sensation vient avec les séances.',
+    eviter: 'Pousser comme aux toilettes, bloquer la respiration, serrer les fesses ou le périnée.',
+    niv: {douce: {d: '6 min', s: 1, r: 1, t: 360, m: 6}, normale: {d: '4 min', s: 1, r: 1, t: 240, m: 4}, forte: {d: '4 min', s: 1, r: 1, t: 240, m: 4}}},
+  d3: {nom: 'Bascule douce du bassin', coul: 'calme',
+    comment: ['Sur le dos, genoux pliés, pieds au sol.', 'En expirant, le bas du dos s\'enfonce doucement dans le sol (le bassin bascule vers toi). En inspirant, il revient, petit creux sous le bas du dos.', 'Mouvement tout petit, au rythme de la respiration.'],
+    conseil: 'Ça décoince le bassin sans aucun effort. Les fesses restent posées.',
+    niv: {douce: {d: '8 bascules lentes', s: 1, r: 8, m: 1.5}, normale: {d: '10 bascules lentes', s: 1, r: 10, m: 1.5}, forte: {d: '12 bascules lentes', s: 1, r: 12, m: 2}}},
+  dK: {nom: 'Un genou vers la poitrine', coul: 'calme', souffle: 1,
+    comment: ['Sur le dos, une jambe allongée (ou pliée, pied au sol).', 'Ramène doucement l\'autre genou vers la poitrine, mains sous le genou.', 'Respire dans le ventre, puis change de côté.'],
+    conseil: 'Doux, sans tirer : si l\'aine pince, éloigne un peu le genou vers l\'extérieur.',
+    niv: {douce: {d: '45 s par côté', s: 1, r: 1, t: 45, c: 2, m: 1.5}, normale: {d: '1 min par côté', s: 1, r: 1, t: 60, c: 2, m: 2}, forte: {d: '1 min par côté', s: 1, r: 1, t: 60, c: 2, m: 2}}},
+  dW: {nom: 'Essuie-glace allongé', coul: 'calme',
+    comment: ['Sur le dos, genoux pliés, pieds au sol plus écartés que le bassin, bras en croix.', 'Laisse tomber lentement les deux genoux d\'un côté, puis de l\'autre, comme un essuie-glace.', 'Les épaules restent posées, amplitude sans douleur.'],
+    conseil: 'Ça détend les hanches et le bas du dos en douceur.',
+    niv: {douce: {d: '6 de chaque côté, petite amplitude', s: 1, r: 6, m: 1.5}, normale: {d: '8 de chaque côté', s: 1, r: 8, m: 1.5}, forte: {d: '10 de chaque côté', s: 1, r: 10, m: 2}}},
+  d4: {nom: 'Bébé heureux', coul: 'calme', souffle: 1,
+    comment: ['Sur le dos, attrape tes pieds (ou l\'arrière des genoux), genoux vers les aisselles.', 'Laisse le bas du dos posé, respire dans le ventre : à chaque inspiration, le fond du bassin s\'ouvre.'],
+    conseil: 'La posture la plus efficace pour relâcher le plancher pelvien. Si l\'aine tire : mains derrière les genoux, genoux moins écartés.',
+    niv: {douce: {d: '1 min, mains derrière les genoux', s: 1, r: 1, t: 60, m: 1}, normale: {d: '2 min', s: 1, r: 1, t: 120, m: 2}, forte: {d: '2 min 30', s: 1, r: 1, t: 150, m: 2.5}}},
+  d5: {nom: 'Papillon couché, genoux soutenus', coul: 'calme', souffle: 1,
+    comment: ['Sur le dos, plantes des pieds collées, genoux qui s\'ouvrent sur les côtés.', 'Un coussin sous chaque genou : les jambes sont portées, rien ne tire.', 'Mains sur le ventre, respire lentement.'],
+    conseil: 'On ne cherche pas à étirer : les coussins font le travail. Plus les coussins sont hauts, plus c\'est doux.',
+    eviter: 'Laisser les genoux pendre dans le vide ou appuyer dessus.',
+    niv: {douce: {d: '2 min, coussins hauts', s: 1, r: 1, t: 120, m: 2}, normale: {d: '3 min', s: 1, r: 1, t: 180, m: 3}, forte: {d: '3 min', s: 1, r: 1, t: 180, m: 3}}},
+  d6: {nom: 'Fessier en « 4 »', coul: 'calme', souffle: 1,
+    comment: ['Sur le dos, genoux pliés. Pose la cheville droite sur le genou gauche.', 'Attrape la cuisse gauche et ramène-la doucement vers toi : tu sens la fesse droite.', 'Puis l\'autre côté.'],
+    conseil: 'Les muscles profonds de la fesse sont collés au plancher pelvien : quand ils lâchent, il lâche aussi.',
+    niv: {douce: {d: '45 s par côté, sans ramener la cuisse', s: 1, r: 1, t: 45, c: 2, m: 1.5}, normale: {d: '1 min par côté', s: 1, r: 1, t: 60, c: 2, m: 2}, forte: {d: '1 min 15 par côté', s: 1, r: 1, t: 75, c: 2, m: 2.5}}},
+  d7: {nom: 'Posture de l\'enfant, genoux écartés', coul: 'calme', souffle: 1,
+    comment: ['À genoux, gros orteils qui se touchent, genoux écartés.', 'Fesses vers les talons, bras allongés devant, front posé (sur un coussin si besoin).', 'Respire dans le bas du dos et le bassin : le fond du bassin s\'ouvre à l\'inspiration.'],
+    conseil: 'Genoux moins écartés si l\'aine tire. Un coussin entre les fesses et les talons si les genoux sont raides.',
+    niv: {douce: {d: '2 min', s: 1, r: 1, t: 120, m: 2}, normale: {d: '2 min', s: 1, r: 1, t: 120, m: 2}, forte: {d: '2 min 30', s: 1, r: 1, t: 150, m: 2.5}}},
+  d8: {nom: 'Accroupi sur un petit tabouret', coul: 'calme', souffle: 1,
+    quoi: 'La position « toilettes » : celle où le bassin s\'ouvre le plus naturellement.',
+    comment: ['Assis sur un petit tabouret bas (ou une pile de livres), pieds à plat, un peu écartés, genoux plus hauts que les hanches.', 'Avant-bras posés sur les cuisses, dos long, penché un peu en avant.', 'Respire dans le ventre et laisse le fond du bassin descendre et s\'ouvrir.'],
+    conseil: 'Le tabouret porte ton poids : le genou gauche ne travaille pas. C\'est aussi la bonne position aux toilettes, pieds sur un petit marchepied.',
+    eviter: 'Pousser. Ici on relâche seulement.',
+    niv: {normale: {d: '2 min', s: 1, r: 1, t: 120, m: 2}, forte: {d: '2 min 30', s: 1, r: 1, t: 150, m: 2.5}}},
+  d9: {nom: 'Chat-vache très lent', coul: 'calme',
+    comment: ['À quatre pattes, mains sous les épaules, genoux sous les hanches.', 'Inspire en creusant doucement le dos : le bassin bascule, le fond du bassin s\'ouvre.', 'Expire en arrondissant le dos, sans serrer.'],
+    conseil: 'Le plus lentement possible, en suivant la respiration.',
+    niv: {douce: {d: '6 lentement', s: 1, r: 6, m: 1}, normale: {d: '8 lentement', s: 1, r: 8, m: 1.5}, forte: {d: '10 lentement', s: 1, r: 10, m: 2}}},
+  d10: {nom: 'Relâchement final, de la tête au bassin', coul: 'calme', souffle: 1,
+    comment: ['Sur le dos, mollets sur le canapé, yeux fermés.', 'Relâche une zone à chaque expiration : la mâchoire (dents qui ne se touchent pas), les épaules, le ventre, les fesses, puis le fond du bassin.', 'Reste à respirer tranquillement jusqu\'à la fin.'],
+    conseil: 'Le plancher pelvien se relâche souvent en même temps que la mâchoire : commence toujours par elle.',
+    niv: {douce: {d: '4 min', s: 1, r: 1, t: 240, m: 4}, normale: {d: '3 min', s: 1, r: 1, t: 180, m: 3}, forte: {d: '4 min', s: 1, r: 1, t: 240, m: 4}}},
+
   // ---------------- SOUPLESSE ----------------
   // Pensée pour : pubalgie (pas d'étirement forcé des adducteurs), genou rotulien (quadriceps, hanche, mollets),
   // plancher pelvien (postures de relâchement), lésion SLAP à droite (pas d'étirement bras en arrière ni au-dessus de la tête en force),
@@ -220,6 +278,7 @@ const SEANCES = {
   epaule: {nom: 'Épaule gauche', ico: '💪', txt: 'Omoplate, coiffe, stabilité, lancers main gauche', liste: ['e0', 'e1', 'e2', 'e3', 'e4', 'e4b', 'e5', 'e6', 'e7', 'e8', 'eD', 'e9']},
   combi: {nom: 'Épaule + pubalgie', ico: '⚡', txt: 'Les deux en 45 min : épaule en version courte + l\'essentiel de la pubalgie',
     liste: ['e1', 'e2', 'e3', 'e4', 'e4b', 'e6', 'e7', 'p0', 'p5', 'p8', 'p9', 'p10', 'p10b', 'p11', 'pp'], epauleCourte: 1},
+  detente: {nom: 'Détente du plancher pelvien', ico: '🌙', txt: '20-30 min pour relâcher le bassin, quand tu veux. Douce les jours de douleur.', liste: ['d1', 'd2', 'd3', 'dK', 'd4', 'd5', 'd6', 'dW', 'd7', 'd8', 'd9', 'd10']},
   pp: {nom: 'Plancher pelvien', ico: '🌬️', txt: 'Les 5 minutes de relâchement de chaque jour', liste: ['pp']},
   echauf: {nom: 'Échauffement padel', ico: '🎾', txt: '10 min avant de jouer', liste: ['w']},
   soupleTout: {nom: 'Souplesse tout le corps', ico: '🧘', txt: 'Environ 30 min, en douceur', liste: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10', 's11', 's12', 's13', 's14', 's15', 's16', 's17']},
@@ -325,7 +384,7 @@ const duree = l => Math.round(l.reduce((a, x) => a + (x.dose.m || 0), 0));
 if (typeof module !== 'undefined') module.exports = {EX, SEANCES, ROUTINES, construire, duree, NIVEAUX};
 
 // Rythme d'une répétition (secondes) quand l'appli compte à voix haute. Par défaut 3 s.
-const TEMPO = {p1: 4, p2: 4, p3: 3, p4: 4, p5: 3, p6: 3, p6b: 6, p7: 5, p9: 5, p10: 5, p10b: 4, p11: 4, p12: 4, e1: 4, e2: 4, e3: 3, e4: 5, e4b: 4, e5: 4, eD: 4, s2: 4, s3: 5};
+const TEMPO = {p1: 4, p2: 4, p3: 3, p4: 4, p5: 3, p6: 3, p6b: 6, p7: 5, p9: 5, p10: 5, p10b: 4, p11: 4, p12: 4, e1: 4, e2: 4, e3: 3, e4: 5, e4b: 4, e5: 4, eD: 4, s2: 4, s3: 5, d3: 6, d9: 8, dW: 8};
 
 // Matériel de chaque exercice (affiché et lu au début de la séance)
 const MATERIEL = {
@@ -340,7 +399,7 @@ const MATERIEL = {
   e6: ['Tapis'], e7: ['Mur', 'Ballon (foot, basket ou volley)'], e8: ['Kettlebell de 4 à 8 kg (ou marteau)'], eD: ['Mur', 'Balle de tennis (medecine-ball plus tard)'],
   w: ['Petit ballon (ou coussin ferme)', 'Manchons pour le genou gauche'],
   s1: ['Tapis'], s2: ['Tapis'], s3: ['Tapis'], s4: ['Tapis'], s5: ['Tapis', 'Coussin'], s6: ['Tapis'], s7: ['Tapis', 'Sangle (ou serviette)'], s8: ['Tapis'],
-  s9: ['Mur'], s11: ['Tapis'], s12: ['Tapis'], s14: ['Porte'], s15: ['Table ou dossier de canapé'], s17: ['Tapis', 'Chaise ou canapé']
+  s9: ['Mur'], s11: ['Tapis'], s12: ['Tapis'], s14: ['Porte'], d1: ['Tapis', 'Canapé (ou chaise)'], d5: ['Deux coussins'], d7: ['Coussin (si besoin)'], d8: ['Petit tabouret bas (ou pile de livres)'], s15: ['Table ou dossier de canapé'], s17: ['Tapis', 'Chaise ou canapé']
 };
 // Liste sans doublon pour une séance construite
 const materiel = l => { const o = []; l.forEach(x => (MATERIEL[x.id] || []).forEach(m => { if (!o.includes(m)) o.push(m); })); return o; };
