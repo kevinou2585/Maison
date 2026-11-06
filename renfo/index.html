@@ -105,7 +105,13 @@ ol.etapes li{margin:5px 0}
 .cles li{position:relative;padding:8px 12px 8px 36px;margin:5px 0;border-radius:12px;background:var(--accent-pale);font-weight:600;font-size:16px}
 .cles li::before{content:"✓";position:absolute;left:12px;top:8px;color:var(--accent);font-weight:900}
 details.plus{margin:8px 0}
-details.plus summary{cursor:pointer;color:var(--accent);font-weight:600;padding:6px 0}
+details.plus summary{cursor:pointer;color:var(--accent);font-weight:700;padding:10px 12px;border:2px solid var(--accent-pale);border-radius:12px;background:#fff;text-align:center;list-style:none}
+details.plus summary::-webkit-details-marker{display:none}
+details.plus[open] summary{margin-bottom:6px}
+details.plus .sch-vignettes{grid-template-columns:1fr 1fr}
+details.plus .sch-vignettes figure{cursor:default}
+details.plus .sch-vignettes figcaption{display:block;font-size:13px;line-height:1.3;padding:4px 6px 6px;background:#fff}
+details.plus .sch-titre{margin-top:10px}
 .conseil{background:var(--accent-pale);border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
 .eviter{background:#fdf0e3;color:#6b3a0b;border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .eviter{background:#3a2a16;color:#f6d3a8}}
