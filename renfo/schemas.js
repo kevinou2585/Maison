@@ -251,7 +251,7 @@ function melange(A, B, t) {
   R.h = angle(A.h == null ? A.t : A.h, B.h == null ? B.t : B.h, t);
   ['b1', 'b2', 'j1', 'j2'].forEach(k => {
     const a = A[k] || (k[0] === 'b' ? [0, 0] : [0, 0, 90]), b = B[k] || (k[0] === 'b' ? [0, 0] : [0, 0, 90]);
-    R[k] = [0, 1, 2].map(i => angle(a[i] == null ? a[1] : a[i], b[i] == null ? b[1] : b[i], t));
+    R[k] = [...Array(Math.max(3, a.length, b.length)).keys()].map(i => i === 1 && a.length > 3 || i === 3 ? lerp(a[i], b[i], t) : angle(a[i] == null ? a[1] : a[i], b[i] == null ? b[1] : b[i], t));
   });
   if (A.ls || B.ls) {
     R.ls = {}; const ks = new Set(Object.keys(A.ls || {}).concat(Object.keys(B.ls || {})));
@@ -337,6 +337,46 @@ const face = (o = {}) => Object.assign({x: 0, y: -97, t: 180, h: 180, b1: [-8, -
 const surDos = (o = {}) => Object.assign({x: 0, y: -12, t: -90, h: -86, b1: [84, 88, 88], b2: [86, 89, 89], j1: [148, 30, 100], j2: [146, 28, 98]}, o);
 
 
+// ---------- Personnage debout vu de dessus (pour les rotations d'épaule) ----------
+// c = centre de la tête, il regarde vers le bas de l'image (« devant »).
+// o.b1 / o.b2 = [angle bras, longueur visible 0-1, angle avant-bras, longueur visible 0-1] (b1 = côté gauche de l'image)
+// o.poing1 / o.poing2 : main fermée vue de dessus quand l'avant-bras est vertical.
+function dessusDebout(c, o = {}) {
+  const pk = COUL.peau, hc = COUL.haut, ch = COUL.cheveux, cs = COUL.chaussure, x = c[0], y = c[1];
+  const P = (u, v) => [x + u, y + v];
+  let s = '';
+  // pieds qui dépassent devant
+  [-9, 9].forEach(u => { const g = (a, b) => P(u + a, 16 + b);
+    s += chemin(lisse([g(-5, -6), g(-5.4, 6), g(-3.4, 12.5), g(0, 14), g(3.4, 12.5), g(5.4, 6), g(5, -6)]), cs[0], cs[2], 1.1) + chemin(courbe([g(-3, 12), g(0, 13.4), g(3, 12)]), 'none', COUL.semelle, 1.5); });
+  // épaules et dos (le t-shirt)
+  const ep = [P(-22, -1), P(-20, -9), P(-10, -12), P(0, -12.5), P(10, -12), P(20, -9), P(22, -1), P(21, 6), P(12, 10.5), P(0, 11.5), P(-12, 10.5), P(-21, 6)];
+  s += chemin(lisse(ep), hc[0], hc[2], 1.3) + chemin(courbe([P(-9, 8.5), P(0, 10.3), P(9, 8.5)]), 'none', hc[2], 1);
+  // bras
+  const bras = (side, b) => {
+    if (!b || b.length < 4) return '';
+    const e0 = P(side * 19, 0), e1 = add(e0, dir(b[0]), LG.bh * b[1]), w = add(e1, dir(b[2]), LG.ab * b[3]);
+    let t = '';
+    const parts = [];
+    if (b[1] > .25) parts.push(lisse(forme(e0, b[0], LG.bh * b[1], P_FACE.bh)));
+    if (b[3] > .25) { parts.push(lisse(forme(e1, b[2], LG.ab * b[3], P_FACE.ab))); parts.push(lisse(forme(w, b[2], LG.ma * Math.max(.5, b[3]), P_FACE.ma))); }
+    else parts.push(`M${f(add(e1, [4.8, 0]))}A4.8 4.8 0 1 1 ${f(add(e1, [-4.8, 0]))}A4.8 4.8 0 1 1 ${f(add(e1, [4.8, 0]))}Z`);
+    t += groupe(parts, pk[0], pk[2]);
+    if (b[3] <= .25) t += `<circle cx="${n1(e1[0])}" cy="${n1(e1[1])}" r="4.4" fill="${pk[0]}" stroke="${pk[2]}" stroke-width="1.1"/><path d="M${n1(e1[0] - 2.6)} ${n1(e1[1] - 1)}h5.2M${n1(e1[0] - 2.6)} ${n1(e1[1] + 1.2)}h5.2" stroke="${pk[2]}" stroke-width=".7"/>`;
+    // manche
+    t += chemin(lisse(forme(e0, b[0], Math.max(5, Math.min(10, LG.bh * b[1] * .4)), [[0, 7, 7], [1, 6.4, 6.4]], 1, 1)), hc[0], hc[2], 1.2);
+    return t;
+  };
+  const hautBras = (side, b) => b && b[0] != null && Math.abs(((b[0] % 360) + 360) % 360 - 180) < 90; // bras qui part vers l'arrière : sous le buste
+  s = (hautBras(-1, o.b1) ? bras(-1, o.b1) : '') + (hautBras(1, o.b2) ? bras(1, o.b2) : '') + s +
+    (hautBras(-1, o.b1) ? '' : bras(-1, o.b1)) + (hautBras(1, o.b2) ? '' : bras(1, o.b2));
+  // tête : cheveux, oreilles, bout du nez
+  s += chemin(lisse([P(-2.4, 9.5), P(0, 12.6), P(2.4, 9.5)]), pk[0], pk[2], 1) +
+    `<ellipse cx="${n1(x - 9.4)}" cy="${n1(y + 1.5)}" rx="2" ry="3.4" fill="${pk[1]}" stroke="${pk[2]}" stroke-width="1"/><ellipse cx="${n1(x + 9.4)}" cy="${n1(y + 1.5)}" rx="2" ry="3.4" fill="${pk[1]}" stroke="${pk[2]}" stroke-width="1"/>` +
+    `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="9.4" ry="10.4" fill="${pk[0]}" stroke="${pk[2]}" stroke-width="1.2"/>` +
+    chemin(lisse([P(-9.6, 2), P(-8.6, -6.5), P(-4, -10.8), P(0, -11.4), P(4, -10.8), P(8.6, -6.5), P(9.6, 2), P(7, 5.5), P(0, 4.2), P(-7, 5.5)]), ch[0], ch[1], 1.1);
+  return s;
+}
+
 // ---------- Mise en scène ----------
 // Mesure la place prise par un dessin (navigateur seulement)
 function mesure(contenu) {
@@ -349,16 +389,16 @@ function mesure(contenu) {
 function scene(def) {
   const vue = def.vue || 'cote';
   prepare.dessus = !!def.dessus;
-  const poses = def.poses.map(p => prepare(p, vue));
+  const poses = def.custom ? def.poses : def.poses.map(p => prepare(p, vue));
   prepare.dessus = false;
-  const Js = poses.map(p => squelette(p, vue));
+  const Js = def.custom ? poses.map(() => ({})) : poses.map(p => squelette(p, vue));
   const sc = {vue, poses, Js, def};
-  const pts = []; poses.forEach(p => pts.push(...contour(p, vue).pts));
-  let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(4, ...pts.map(p => p[1]));
+  const pts = def.custom ? [[0, 0]] : []; if (!def.custom) poses.forEach(p => pts.push(...contour(p, vue).pts));
+  let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(def.custom ? 0 : 4, ...pts.map(p => p[1]));
   const b = mesure(poses.map((p, i) => contenu(sc, p, i)).join(''));
-  if (b) { x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, Math.min(b[3], 12)); }
+  if (b) { x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, def.custom || def.dessus ? b[3] : Math.min(b[3], 12)); }
   if (def.cadre) { x0 = Math.min(x0, def.cadre[0]); y0 = Math.min(y0, def.cadre[1]); x1 = Math.max(x1, def.cadre[2]); y1 = Math.max(y1, def.cadre[3]); }
-  const m = 12; x0 -= m; x1 += m; y0 -= m; y1 += def.dessus ? m : 8;
+  const m = 12; x0 -= m; x1 += m; y0 -= m + (def.vueTxt === '' ? 0 : Math.max(10, (x1 - x0) * .07)); y1 += def.dessus ? m : 8;
   // format au moins 5/4 en largeur, au plus 2,1/1
   let w = x1 - x0, h = y1 - y0;
   if (w / h < (def.ratio || 1.25)) { const nw = h * (def.ratio || 1.25); x0 -= (nw - w) / 2; w = nw; }
@@ -369,12 +409,15 @@ function scene(def) {
 // Le dessin d'une pose : objets derrière, personnage, objets devant, flèches
 function contenu(sc, P, i) {
   const def = sc.def;
+  if (def.custom) return (def.fond ? def.fond({}, i, sc.Js, P) : '') + (def.fantome != null && P !== sc.poses[def.fantome] ? `<g opacity=".24">${def.custom(sc.poses[def.fantome], def.fantome)}</g>` : '') + def.custom(P, i) + (def.avant ? def.avant({}, i, sc.Js, P) : '');
   const J0 = squelette(P, sc.vue);
   const {svg, J} = personnage(P, sc.vue, def.milieu ? def.milieu(J0, i, sc.Js, P) : '');
   const {pts} = contour(P, sc.vue);
   const bas = pts.filter(p => p[1] > -5 && p[1] < 5);
   let c = def.fond ? def.fond(J, i, sc.Js, P) : '';
   if (bas.length && !def.sansOmbre && !def.dessus) { const a = Math.min(...bas.map(p => p[0])), b = Math.max(...bas.map(p => p[0])); c = O.ombre((a + b) / 2, (b - a) / 2 + 6) + c; }
+  // fantôme : la position de départ en transparence, pour voir le chemin parcouru
+  if (def.fantome != null && P !== sc.poses[def.fantome]) c += `<g opacity=".24">${personnage(sc.poses[def.fantome], sc.vue).svg}</g>`;
   c += svg + (def.avant ? def.avant(J, i, sc.Js, P) : '');
   return c;
 }
@@ -384,7 +427,10 @@ function image(sc, P, i) {
     (def.dessus ? `<rect x="${n1(x0)}" y="${n1(y0)}" width="${n1(w)}" height="${n1(h)}" fill="#e6edf5"/>` : `<rect x="${n1(x0)}" y="0" width="${n1(w)}" height="${n1(y0 + h)}" fill="#dfe7f0"/><path d="M${n1(x0)} 0H${n1(x0 + w)}" stroke="#c3cedb" stroke-width="1.4"/>`);
   let c = contenu(sc, P, i);
   if (def.miroir) c = `<g transform="translate(${n1(2 * x0 + w)} 0) scale(-1 1)">${c}</g>`;
-  if (def.dessus) c += `<text x="${n1(x0 + w - 6)}" y="${n1(y0 + 13)}" font-size="9" font-weight="700" fill="#7a8899" text-anchor="end" font-family="system-ui,sans-serif">vu de dessus</text>`;
+  // l'angle de vue, toujours écrit en haut à gauche
+  const vt = def.vueTxt != null ? def.vueTxt : def.dessus ? 'vu de dessus' : sc.vue === 'face' ? (def.poses[0].dos ? 'vu de dos' : 'vu de face') : 'vu de côté';
+  if (vt) { const tw = vt.length * 5.1 + 12, fs = w / 27;
+    c += `<g font-family="system-ui,sans-serif"><rect x="${n1(x0 + 5)}" y="${n1(y0 + 5)}" width="${n1(tw * fs / 9)}" height="${n1(fs + 6)}" rx="${n1((fs + 6) / 2)}" fill="#fff" opacity=".85"/><text x="${n1(x0 + 5 + tw * fs / 18)}" y="${n1(y0 + 5 + fs + 1.5)}" font-size="${n1(fs)}" font-weight="700" fill="#5d6b7d" text-anchor="middle">${vt}</text></g>`; }
   return s + c;
 }
 const ease = t => .5 - Math.cos(Math.PI * t) / 2;
@@ -447,5 +493,5 @@ function ik(P, vue, m, cible, sens = 1, fin) {
 }
 window.RENFO_SCHEMAS = S;
 window.RENFO_SCHEMA = {afficher, fixe, existe: id => !!S[id], planches};
-window.RENFO_DESSIN = {ik, dir, add, squelette, personnage, prepare, melange, contour, O, fleche, rotation, ondes, debout, surDos, face, DEFS, LG};
+window.RENFO_DESSIN = {dessusDebout, ik, dir, add, squelette, personnage, prepare, melange, contour, O, fleche, rotation, ondes, debout, surDos, face, DEFS, LG};
 })();

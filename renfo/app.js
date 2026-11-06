@@ -416,19 +416,31 @@ function fermerLecteur() {
   stop(); clearTimeout(minuteur); try { speechSynthesis.cancel(); } catch (e) {} $('lecteur').hidden = true; document.body.style.overflow = ''; document.body.classList.remove('lecture'); L = null;
   try { verrouEcran && verrouEcran.release(); } catch (e) {} verrouEcran = null; rendre();
 }
+// Toutes les positions de l'exercice en petites images numérotées (dans le détail écrit)
+function vignettesEx(id, seule) {
+  if (!window.RENFO_SCHEMA || !RENFO_SCHEMA.existe(id)) return '';
+  return RENFO_SCHEMA.planches(id).map((d, k) => seule != null && k !== Math.min(seule, RENFO_SCHEMA.planches(id).length - 1) ? '' : (d.poses.length < 2 && !(d.legendes || [])[0] ? '' :
+    `${d.titre ? `<div class="sch-titre">${esc(d.titre)}</div>` : ''}<div class="sch-vignettes">${d.poses.map((p, i) => `<figure>${RENFO_SCHEMA.fixe(id, i, k)}<figcaption><b>${i + 1}</b>${esc((d.legendes || [])[i] || '')}</figcaption></figure>`).join('')}</div>`)).join('');
+}
 function dessinerEx() {
   stop();
+  if (L.dernier !== L.i) L.detOuvert = false;
   const x = L.liste[L.i], e = EX[x.id], ds = x.dose, st = L.st, n = L.liste.length;
   const reste = L.liste.slice(L.i).reduce((a, y) => a + (y.dose.m || 0), 0);
   const cotes = ds.c === 2 ? ['côté gauche', 'côté droit'] : [''];
   let h = `<div class="lh"><button type="button" class="lien" id="l-q">✕ Arrêter</button><button type="button" class="lien" id="l-voix">${voixOn() ? '🔊 Voix' : '🔇 Muet'}</button><span class="note">${L.i + 1} / ${n} · encore ~${Math.round(reste)} min</span></div>
     <div class="prog"><i style="width:${(L.i / n) * 100}%"></i></div>
-    <span class="pill">${COULEURS[e.coul][0]} ${COULEURS[e.coul][1]}</span>${e.bloc ? ` <span class="pill">${esc(e.bloc)}</span>` : ''}
-    <h2 class="exnom">${esc(e.nom)}</h2>${e.quoi ? `<p class="note" style="margin:0">${esc(e.quoi)}</p>` : ''}
-    ${ds.txt ? `<p style="margin:8px 0 0;font-weight:600">${esc(ds.txt)}</p>` : ''}
+    <h2 class="exnom">${esc(e.nom)}</h2>
     <div class="dose">${esc(ds.d || '')}</div>
     ${window.RENFO_SCHEMA && RENFO_SCHEMA.existe(x.id) ? `<div class="sch" id="l-sch"></div>` : ''}
-    ${(window.RENFO_CLES || {})[x.id] ? `<ul class="cles">${RENFO_CLES[x.id].map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`;
+    <details class="plus" id="l-det"${L.detOuvert ? ' open' : ''}><summary>📖 Je ne comprends pas le schéma : tout le détail</summary>
+    <p style="margin:6px 0"><span class="pill">${COULEURS[e.coul][0]} ${COULEURS[e.coul][1]}</span>${e.bloc ? ` <span class="pill">${esc(e.bloc)}</span>` : ''}</p>
+    ${e.quoi ? `<p class="note" style="margin:0">${esc(e.quoi)}</p>` : ''}${ds.txt ? `<p style="margin:8px 0 0;font-weight:600">${esc(ds.txt)}</p>` : ''}
+    ${(window.RENFO_CLES || {})[x.id] ? `<ul class="cles">${RENFO_CLES[x.id].map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+    <ol class="etapes">${(e.comment || []).map(t => `<li>${esc(t)}</li>`).join('')}</ol>
+    ${e.conseil ? `<div class="conseil">💡 ${esc(e.conseil)}</div>` : ''}${e.eviter ? `<div class="eviter">⛔ À éviter : ${esc(e.eviter)}</div>` : ''}
+    ${vignettesEx(x.id, e.type === 'etapes' ? st.rep - 1 : null)}
+    ${e.video ? `<p class="note"><a href="${VIDEO}" target="_blank" rel="noopener">▶ Voir la vidéo Clairefontaine</a></p>` : ''}</details>`;
   // Zone d'action
   if (e.type === 'test') {
     const t = jour(L.s).test;
@@ -453,16 +465,14 @@ function dessinerEx() {
   } else {
     h += `<p class="note">Fais l'exercice à ton rythme, puis passe au suivant.</p>`;
   }
-  h += `<details class="plus" open><summary>Le détail de l'exercice</summary><ol class="etapes">${(e.comment || []).map(t => `<li>${esc(t)}</li>`).join('')}</ol>
-    ${e.conseil ? `<div class="conseil">💡 ${esc(e.conseil)}</div>` : ''}${e.eviter ? `<div class="eviter">⛔ À éviter : ${esc(e.eviter)}</div>` : ''}</details>
-    ${e.video ? `<p class="note"><a href="${VIDEO}" target="_blank" rel="noopener">▶ Voir la vidéo Clairefontaine</a></p>` : ''}
-    ${x.id === 'p6b' ? `<div class="carte"><b>Genou gauche après la descente</b>${segHtml('genou-marche', DOUL, (jour(L.s).d || {}).genou, 'douleur')}</div>` : ''}
+  h += `    ${x.id === 'p6b' ? `<div class="carte"><b>Genou gauche après la descente</b>${segHtml('genou-marche', DOUL, (jour(L.s).d || {}).genou, 'douleur')}</div>` : ''}
     ${e.copenhague ? `<p class="note">Étape actuelle : ${ds.etape}/4. <button type="button" class="lien" id="c-cop">Changer d'étape</button></p>` : ''}
     <div class="bas-lecteur"><button type="button" id="l-av" ${L.i ? '' : 'disabled'}>‹ Précédent</button><button type="button" class="${st.phase === 'fini' || e.type === 'test' ? 'go' : ''}" id="l-ap">${L.i === n - 1 ? 'Terminer ✓' : 'Suivant ›'}</button></div>`;
   const haut = L.dernier === L.i ? $('lecteur').scrollTop : 0; L.dernier = L.i;
   if (L.anim) L.anim.stop();
   $('lect').innerHTML = h; $('lecteur').scrollTop = haut;
-  if ($('l-sch')) L.anim = RENFO_SCHEMA.afficher($('l-sch'), x.id, e.type === 'etapes' ? {planche: st.rep - 1} : {});
+  if ($('l-sch')) L.anim = RENFO_SCHEMA.afficher($('l-sch'), x.id, e.type === 'etapes' ? {planche: st.rep - 1, vignettes: false} : {vignettes: false});
+  $('l-det').ontoggle = () => { L.detOuvert = $('l-det').open; };
   $('l-q').onclick = () => { if (Object.keys(L.faits).length === 0 || confirm('Arrêter la séance ? Ce qui est fait sera enregistré.')) finir(true); };
   $('l-voix').onclick = () => { try { localStorage.setItem(VOIX, voixOn() ? '0' : '1'); } catch (er) {} if (!voixOn()) try { speechSynthesis.cancel(); } catch (er) {} $('l-voix').textContent = voixOn() ? '🔊 Voix' : '🔇 Muet'; };
   $('l-av').onclick = () => { L.i--; L.st = etatEx(); dessinerEx(); };

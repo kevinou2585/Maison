@@ -32,11 +32,11 @@ S.s1 = {poses: [surDos({b1: mainVentre, ls: {ab1: .78}, ve: 4}), surDos({b1: mai
 
 // ---------- À quatre pattes ----------
 const quatre = o => Object.assign({x: 0, y: -50, t: 97, h: 112, b1: [2, 0, 90], b2: [-2, -2, 90], j1: [-4, -90, 0], j2: [-6, -92, 2]}, o);
-S.p1 = {poses: [quatre(), quatre({j1: [6, -78, 8], j2: [4, -80, 10], v: 7, h: 40, t: 99})], duree: 1.6, tenue: 1,
+S.p1 = {fantome: 0, poses: [quatre(), quatre({j1: [6, -78, 8], j2: [4, -80, 10], v: 7, h: 40, t: 99})], duree: 1.6, tenue: 1,
   fond: () => O.tapis(-75, 85), milieu: J => O.foot(dec(J.genou1, 1, -6), 10),
   avant: (J, i, Js) => { const m = mil(Js[0].bassin, Js[0].cou); return i === 1 ? fl(dec(m, 0, -16), dec(m, 0, -34), 0) : ''; },
   legendes: ['Dos plat, ballon serré entre les genoux : inspire', 'Genoux décollés, ventre rentré, dos rond : expire longuement']};
-S.s2 = {poses: [quatre({v: -5, h: 140}), quatre({v: 7, h: 40})], duree: 2, tenue: 1,
+S.s2 = {fantome: 0, poses: [quatre({v: -5, h: 140}), quatre({v: 7, h: 40})], duree: 2, tenue: 1,
   fond: () => O.tapis(-75, 85),
   legendes: ['Inspire : creuse doucement le dos, regard devant', 'Expire : arrondis le dos, menton vers la poitrine']};
 
@@ -56,30 +56,37 @@ const croisesC = {b1: [26, 166, 172], b2: [22, 164, 170], ls: {ab1: .72, ab2: .7
 // p3 : debout, genou levé vers nous, le tibia bascule dehors puis dedans
 const p3pose = a => face(Object.assign({j1: [178, a, a], ls: {cu1: .16}}, hanchesF));
 S.p3 = [{titre: 'De profil : le genou levé haut', poses: [debout({b1: [20, 150, 150], b2: [16, 146, 146], ls: {ab1: .55, ab2: .55}, j1: [100, 0, 90]})], legendes: ['Debout, mains sur les hanches, un genou levé haut (tiens-toi au mur si besoin)']},
-  {titre: 'De face : la rotation', vue: 'face', poses: [p3pose(-38), p3pose(30)], duree: 1.3,
+  {titre: 'De face : la rotation', vue: 'face', poses: [p3pose(-38), p3pose(30)], duree: 1.3, fantome: 0,
   fond: () => '', avant: (J, i, Js) => i === 0 ? fl(dec(Js[0].cheville1, -2, 14), dec(Js[1].cheville1, 2, 14), .3, undefined, true) : '',
   legendes: ['Genou levé et fixe : le pied part vers l\'extérieur', 'Puis vers l\'intérieur. Seul le tibia bouge']}];
 
 // p4 : passage de haie sur le côté
-S.p4 = {vue: 'face', poses: [face(Object.assign({j2: [10, 4, 4]}, hanchesF)), face(Object.assign({t: 176, h: 178, j2: [104, 6, 10], ls: {cu2: .9}}, hanchesF))], duree: 1.5,
+S.p4 = {fantome: 0, vue: 'face', poses: [face(Object.assign({j2: [10, 4, 4]}, hanchesF)), face(Object.assign({t: 176, h: 178, j2: [104, 6, 10], ls: {cu2: .9}}, hanchesF))], duree: 1.5,
   fond: () => O.obstacle(44, 34, false),
   avant: (J, i, Js) => i === 0 ? fl(dec(Js[0].cheville2, 6, -14), dec(Js[1].genou2, 8, -18), -.45) : '',
   legendes: ['Debout, la haie basse sur le côté', 'Écarte la jambe et monte le genou haut pour passer par-dessus, puis reviens']};
 
 // p5 : assis sur le gros ballon, le bassin roule
-const p5pose = x => { let P = Object.assign({x, y: -76, t: 180, h: 180, sol: false, j1: [58, 0, 90], j2: [56, 2, 90]}, croisesC);
+const p5pose = (x, v, t) => { let P = Object.assign({x, y: -76, t, h: 180, v, sol: false, j1: [58, 0, 90], j2: [56, 2, 90]}, croisesC);
   P = ik(P, 'cote', 'j1', [40, -8], 1, 90); return ik(P, 'cote', 'j2', [38, -8], 1, 90); };
-S.p5 = {poses: [p5pose(-9), p5pose(9)], duree: 1.4, tenue: .5,
+const p5face = (x, t) => { let P = face(Object.assign({x, y: -72, t, h: 180, sol: false, ls: {cu1: .42, cu2: .42}}, croisesF));
+  P = ik(P, 'face', 'j1', [-15, -9], -1, 0); return ik(P, 'face', 'j2', [15, -9], 1, 0); };
+S.p5 = [{titre: 'De profil : avant / arrière', poses: [p5pose(-9, 5, 184), p5pose(9, -4, 178)], duree: 1.4, tenue: .5, fantome: 0,
   milieu: J => O.klein([J.bassin[0] - 3, -32], 32),
   avant: (J, i, Js) => i === 0 ? fl(dec(Js[0].bassin, -2, 40), dec(Js[1].bassin, 2, 40), 0, undefined, true) : '',
-  legendes: ['Fais rouler le ballon avec le bassin vers l\'arrière (expire)…', '…puis vers l\'avant (inspire). Pareil à droite, à gauche, puis en cercles']};
+  legendes: ['Fais rouler le ballon vers l\'arrière avec le bassin, le bas du dos s\'arrondit (expire)…', '…puis vers l\'avant, le bas du dos se creuse un peu (inspire). Le buste reste droit']},
+  {titre: 'De face : droite / gauche, puis des cercles', vue: 'face', poses: [p5face(-9, 176), p5face(9, 184)], duree: 1.4, tenue: .5, fantome: 0,
+  milieu: J => O.klein([J.bassin[0], -32], 32),
+  avant: (J, i, Js) => i === 0 ? fl(dec(Js[0].bassin, -6, 44), dec(Js[1].bassin, 6, 44), 0, undefined, true) : '',
+  legendes: ['Le bassin roule le ballon vers la droite…', '…puis vers la gauche, les épaules restent au-dessus du ballon. Enfin, fais des cercles']}];
 
 // p6 : bascule du bassin sur une marche (de face)
 const p6pose = (t, a2) => face(Object.assign({t, h: 180, j1: [0, 0, 0], j2: [a2, a2, a2], cale: ['cheville1', -26, -9.5]}, croisesF));
-S.p6 = {vue: 'face', poses: [p6pose(180, 0), p6pose(170, -10)], duree: 1.5,
+const ligneBassin = J => { const a = J.hanche1, b = J.hanche2, d = [b[0] - a[0], b[1] - a[1]]; return `<path d="M${a[0] - d[0] * .9} ${a[1] - d[1] * .9}L${b[0] + d[0] * .9} ${b[1] + d[1] * .9}" stroke="#ff6b2c" stroke-width="2.2" stroke-dasharray="5 3" stroke-linecap="round"/>`; };
+S.p6 = {vue: 'face', poses: [p6pose(180, 0), p6pose(168, -12)], duree: 1.5, fantome: 0,
   fond: () => O.marche(-36, -1, 18),
-  avant: (J, i, Js) => i === 1 ? fl(dec(Js[0].cheville2, 16, -2), dec(Js[1].cheville2, 16, 2), -4) : fl(dec(Js[1].cheville2, 16, 2), dec(Js[0].cheville2, 16, -2), 4),
-  legendes: ['Debout sur la marche, jambe tendue dans le vide', 'Laisse descendre la jambe libre en basculant le bassin, puis remonte-la']};
+  avant: (J, i, Js) => ligneBassin(J) + (i === 0 ? fl(dec(Js[0].cheville2, 18, -4), dec(Js[1].cheville2, 18, 4), -.5, undefined, true) : ''),
+  legendes: ['Debout sur la marche, jambe tendue dans le vide, bassin à l\'horizontale', 'Le bassin bascule : la jambe libre descend (genoux tendus), puis remonte']};
 
 // p6b : descente de marche lente sur la jambe gauche (de profil, on voit le côté gauche)
 const p6bpose = (bas) => { let P = debout({b1: [62, 72], b2: [58, 70], cale: ['cheville1', -26, 0], sol: false});
@@ -87,29 +94,43 @@ const p6bpose = (bas) => { let P = debout({b1: [62, 72], b2: [58, 70], cale: ['c
   return P; };
 const p6b2 = () => { let P = debout({b1: [68, 80], b2: [64, 78], sol: false, y: -86, x: -12, t: 166, h: 172});
   P = ik(P, 'cote', 'j1', [0, -26], 1, 90); return ik(P, 'cote', 'j2', [30, -7], 1, 120); };
-S.p6b = {poses: [debout({b1: [62, 72], b2: [58, 70], j2: [16, 8, 100], cale: ['cheville1', -26, 0]}), p6b2()], duree: 2.4,
+S.p6b = {fantome: 0, poses: [debout({b1: [62, 72], b2: [58, 70], j2: [16, 8, 100], cale: ['cheville1', -26, 0]}), p6b2()], duree: 2.4,
   fond: () => O.marche(-22, 22, 18),
   legendes: ['Debout sur la marche, sur la jambe gauche', 'Plie le genou gauche en 4 s : le talon droit touche le sol devant']};
 
-// p7 : passage sous la corde en fente latérale
-const p7bas = face(Object.assign({x: 0, t: 186, h: 184, j1: [-56, -56, -56], j2: [52, -14, 0], sol: 0}, croisesF));
-S.p7 = {vue: 'face', poses: [face(Object.assign({x: -55}, croisesF)), p7bas, face(Object.assign({x: 55}, croisesF))], seq: [0, 1, 2, 1], duree: 1.4, tenue: .6,
-  fond: (J, i, Js) => O.obstacle(2, Math.round(-Js[1].tete[1] + 14), true),
-  legendes: ['Debout à côté de la corde', 'Descends en fente latérale basse pour passer dessous', 'Remonte de l\'autre côté, puis reviens']};
+// p7 : passage sous la corde en fente latérale. La corde part vers le fond (perspective) :
+// le poteau du fond et la moitié arrière de la corde derrière le personnage, le poteau de devant et l'autre moitié devant.
+const H7 = 108, avPt = [-4, 22 - H7 * 1.1], arPt = [30, -34 - H7 * .86], miPt = mil(avPt, arPt);
+const poteau7 = (x, y, h, w) => `<path d="M${x} ${y}V${y - h}" stroke="#7d8796" stroke-width="${w}" stroke-linecap="round"/><path d="M${x - 6} ${y}h12" stroke="#7d8796" stroke-width="${w * .8}" stroke-linecap="round"/>`;
+const corde7 = (a, b) => `<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#e5484d" stroke-width="3" stroke-linecap="round"/>`;
+const p7debout = x => face(Object.assign({x}, croisesF));
+const p7bas = () => { let P = face(Object.assign({x: 4, y: -46, sol: false, t: 200, h: 194, ls: {tr: .62}}, croisesF));
+  P = ik(P, 'face', 'j2', [40, -9], 1, 0); return ik(P, 'face', 'j1', [-70, -9], -1, -10); };
+S.p7 = {vue: 'face', poses: [p7debout(-62), p7bas(), p7debout(66)], seq: [0, 1, 2, 1], duree: 1.4, tenue: .6,
+  fond: () => poteau7(arPt[0], -34, H7 * .86, 2.4) + corde7(miPt, arPt) + `<path d="M${avPt[0]} 22L${arPt[0]} -34" stroke="#c3cedb" stroke-width="1.5" stroke-dasharray="3 4"/>`,
+  avant: (J, i) => poteau7(avPt[0], 22, H7 * 1.1, 3.8) + corde7(avPt, miPt) + (i === 0 ? fl([-40, -150], [40, -150], -.2) : ''),
+  legendes: ['Debout à côté de la corde (à environ 1 m de haut), bras croisés', 'Descends en fente latérale basse et passe sous la corde', 'Remonte de l\'autre côté, puis reviens']};
 
 // p8b : chaise contre le mur
-S.p8b = {poses: [debout({x: 0, b1: [8, 4], b2: [4, 2]}), debout({x: 2, j1: [80, 0, 90], j2: [78, 2, 90], b1: [40, 76], b2: [36, 74]})], duree: 1.8, tenue: 1.2,
+S.p8b = {fantome: 0, poses: [debout({x: 0, b1: [8, 4], b2: [4, 2]}), debout({x: 2, j1: [80, 0, 90], j2: [78, 2, 90], b1: [40, 76], b2: [36, 74]})], duree: 1.8, tenue: 1.2,
   fond: () => O.mur(-12.5, -1),
   legendes: ['Dos contre le mur', 'Descends (genoux entre 60° et 90°), genoux au-dessus des chevilles, et tiens']};
 
 // p9 : glissé latéral à genoux (de face)
-const p9pose = a2 => { let P = face({t: 180, j1: [-2, 0, 0], j2: [a2, -a2 * .3, 0], ls: {ja1: .1, ja2: .1}, cache: ['pied1', 'pied2'], sol: 6, b1: [-20, 20], b2: [20, -20]});
-  P = Object.assign(P, {b2: hanchesF.b2}); return ik(P, 'face', 'b1', [-36, -92], 1); };
+const p9pose = a2 => { const fais = t => { let P = face({t, h: 180, j1: [-a2 * .45, 0, 0], j2: [a2, -a2 * .3, 0], ls: {ja1: .02, ja2: .02}, cache: ['pied1', 'pied2'], sol: 6, b1: [-20, 20], b2: hanchesF.b2}); return P; };
+  // le bassin penche juste ce qu'il faut pour que les deux genoux restent au sol
+  let best = null; for (let t = 160; t <= 200; t += .5) { const J = D.squelette(fais(t), 'face'), e = Math.abs(J.genou1[1] - J.genou2[1]); if (!best || e < best[0]) best = [e, t]; }
+  const P = fais(best[1]), J = D.squelette(D.prepare(P, 'face'), 'face'); P.x += -9.6 - J.genou1[0]; return ik(P, 'face', 'b1', [-36, -92], 1); };
 const prepare_ = P => P;
-S.p9 = {vue: 'face', poses: [p9pose(2), p9pose(34)], duree: 2.2, tenue: .8,
+const p9cote = () => { let P = {x: 0, y: -50, t: 180, h: 180, j1: [2, -88, -96], j2: [0, -90, -98], b1: [40, 120], b2: [36, 116]};
+  P = ik(P, 'cote', 'b1', [34, -112], -1, 170); return ik(P, 'cote', 'b2', [32, -100], -1, 170); };
+S.p9 = [{titre: 'De profil : la position à genoux', poses: [p9cote()],
+  fond: () => O.coussin([2, -2], 24, 6), avant: () => O.baton([33, 2], [33, -132]),
+  legendes: ['À genoux, buste droit, tibias au sol, les mains tiennent le bâton planté devant toi']},
+  {titre: 'De face : le genou glisse sur le côté', vue: 'face', poses: [p9pose(2), p9pose(34)], duree: 2.2, tenue: .8, fantome: 0,
   fond: (J) => O.coussin([J.genou1[0], -1], 24, 7) + O.disqueGlisse([J.genou2[0], 1]),
   milieu: () => O.baton([-36, 2], [-36, -132]), avant: (J, i, Js) => (i === 0 ? fl(dec(Js[0].genou2, 14, -4), dec(Js[1].genou2, 14, -4), -.3) : ''),
-  legendes: ['À genoux, buste droit, un genou sur la mousse, l\'autre sur le disque', 'Laisse glisser lentement vers l\'extérieur en freinant, reviens en tirant sur le bâton']};
+  legendes: ['Un genou sur la mousse (fixe), l\'autre sur le disque glissant', 'Laisse glisser lentement vers l\'extérieur en freinant, reviens en tirant sur le bâton']}];
 
 // p10 : Copenhague (vu de face, couché sur le côté droit, jambe du dessus sur le banc)
 const copen = (bas) => { let P = face({x: 0, y: -40, t: -102, h: -100, cale: ['main1', -1], b1: [-4, -4, -90], b2: [74, 74, 74], j1: [bas ? 44 : 82, bas ? 44 : 82, bas ? 44 : 82], j2: [92, 92, 92], cache: [], ls: {}});
@@ -120,7 +141,7 @@ S.p10 = {vue: 'face', poses: [ik(copen(true), 'face', 'j1', [60, -9]), copen(fal
 
 // p10b : adduction debout à l'élastique (de face)
 const p10b = a => face(Object.assign({j1: [a, a, a], ordre: ['milieu', 'jambe2', 'jambe1', 'short', 'tronc', 'tete', 'bras1', 'bras2']}, hanchesF));
-S.p10b = {vue: 'face', poses: [p10b(-26), p10b(12)], duree: 1.2, tenue: .6,
+S.p10b = {fantome: 0, vue: 'face', poses: [p10b(-26), p10b(12)], duree: 1.2, tenue: .6,
   fond: () => O.poteau(-82, 22),
   avant: (J) => O.elastique([-82, -18], dec(J.cheville1, 0, -2), 2),
   legendes: ['Élastique à la cheville, jambe écartée', 'Ramène-la devant l\'autre, puis laisse-la repartir lentement (3 s)']};
@@ -134,9 +155,9 @@ S.p11 = {poses: [p11([180, 180, 180]), p11([20, 20, 20], {bh1: .55, ab1: .55, ma
   legendes: ['Bassin décollé, corps en planche, bras tendus vers le plafond', 'Descends un bras sur le côté, reviens, alterne. Le bassin ne bouge pas']};
 
 // p12 : à genoux sur le gros ballon
-const p12 = (haut) => ({x: 0, y: -114, t: 180, h: 180, sol: false, cale: ['genou1', -68, 4], j1: [-2, -104, -40], j2: [-2, -102, -38],
+const p12 = (haut) => ({x: 0, y: -114, t: 180, h: 180, sol: false, cale: ['genou1', -66, 8], j1: [4, -64, -34], j2: [2, -66, -36],
   b1: haut ? [172, 176, 176] : [14, 30, 30], b2: haut ? [170, 174, 174] : [10, 26, 26]});
-S.p12 = {poses: [p12(false), p12(true)], duree: 1.8, tenue: .8,
+S.p12 = {poses: [p12(false), p12(true)], duree: 1.8, tenue: .8, fantome: 0,
   fond: () => O.klein([0, -32], 32),
   avant: (J) => O.baton(dec(J.main1, -5, 4), dec(J.main1, 7, -6)),
   legendes: ['À genoux sur le ballon, buste droit, bâton dans les mains', 'Lève les bras au-dessus de la tête, sans que le bassin bouge, puis redescends']};
@@ -144,16 +165,23 @@ S.p12 = {poses: [p12(false), p12(true)], duree: 1.8, tenue: .8,
 // ---------- ÉPAULE GAUCHE (de profil, on voit le côté gauche) ----------
 // e0 : échauffement en 3 étapes (une planche par étape)
 const cercle = a => debout({b1: [a, a, a], b2: [a + 180, a + 180, a + 180]});
-const rotCoude = (a, ancre) => face(Object.assign({b2: [4, a, a], ls: {ab2: a < 30 ? .35 : 1}}, {b1: [-6, -3]}));
-const rotExt = {vue: 'face', poses: [rotCoude(8), rotCoude(88)], duree: 1.3,
-  fond: () => O.porte(-70), avant: J => O.elastique([-67, -100], J.main2, 4) + `<circle cx="${J.coude2[0] + 1}" cy="${J.coude2[1] - 4}" r="3.5" fill="#f28b82" stroke="#c4554c"/>`,
-  legendes: ['Coude collé au corps (serviette roulée), avant-bras devant le ventre', 'Pivote l\'avant-bras vers l\'extérieur, le coude ne bouge pas']};
-const rotInt = {vue: 'face', poses: [rotCoude(88), rotCoude(8)], duree: 1.3,
-  fond: () => O.porte(80), avant: J => O.elastique([77, -100], J.main2, 4),
-  legendes: ['Coude collé au corps, élastique tendu sur le côté', 'Ramène l\'avant-bras devant le ventre, lentement']};
+// vu de dessus, debout : rotations du bras gauche (côté droit de l'image), coude au corps
+const haut = (o = {}) => Object.assign({y: 0}, o);
+const mainHaut = (P, side = 1) => { const b = P['b' + (side > 0 ? 2 : 1)], e1 = D.add([side * 19, P.y], D.dir(b[0]), D.LG.bh * b[1]); return D.add(e1, D.dir(b[2]), D.LG.ab * b[3] + 5); };
+const coudeHaut = (P, side = 1) => { const b = P['b' + (side > 0 ? 2 : 1)]; return D.add([side * 19, P.y], D.dir(b[0]), D.LG.bh * b[1]); };
+const dessinHaut = P => D.dessusDebout([0, P.y || 0], P);
+const montant = (x, y) => `<rect x="${x - 5}" y="${y - 7}" width="10" height="14" rx="1.5" fill="#d9c09a" stroke="#a98a5f" stroke-width="1.2"/>`;
+const rotDessus = (a0, a1, porteX) => ({custom: dessinHaut, dessus: true, poses: [haut({b2: [10, .16, a0, 1]}), haut({b2: [10, .16, a1, 1]})], duree: 1.4, tenue: .8, fantome: 0,
+  fond: () => montant(porteX, 30),
+  avant: (J, i, Js, P) => O.elastique([porteX + (porteX < 0 ? 5 : -5), 30], mainHaut(P), 2) +
+    `<circle cx="${n1(coudeHaut(P)[0] - 5.5)}" cy="${n1(coudeHaut(P)[1] + 1)}" r="3.6" fill="#f28b82" stroke="#c4554c"/>` +
+    (i === 0 ? rot(coudeHaut(P), 38, 90 - a0, 90 - a1, undefined, 1) : '')});
+const n1 = v => +v.toFixed(1);
+const rotExt = Object.assign(rotDessus(-58, 52, -62), {legendes: ['Coude collé au corps (serviette roulée), avant-bras devant le ventre', 'Pivote l\'avant-bras vers l\'extérieur, le coude ne bouge pas']});
+const rotInt = Object.assign(rotDessus(52, -58, 92), {legendes: ['Coude collé au corps, élastique tendu sur le côté', 'Ramène l\'avant-bras devant le ventre, lentement']});
 S.e0 = [{titre: 'Cercles de bras', poses: [cercle(0), cercle(90), cercle(180), cercle(270)], duree: .7, tenue: 0,
   avant: (J, i, Js) => rot(Js[0].epaule1, 64, 200, 520, undefined, 1), legendes: ['Grands cercles de bras, vers l\'avant puis vers l\'arrière', '', '', '']},
-  Object.assign({titre: 'Rotation externe à l\'élastique'}, rotExt), Object.assign({titre: 'Rotation interne à l\'élastique'}, rotInt)];
+  Object.assign({titre: 'Rotation externe à l\'élastique (vu d\'au-dessus de la tête)'}, rotExt), Object.assign({titre: 'Rotation interne à l\'élastique (vu d\'au-dessus de la tête)'}, rotInt)];
 
 // e1 : push-up plus sur les genoux
 const pompe = (hautBras, plus) => {
@@ -178,25 +206,27 @@ S.e2 = [{titre: 'Vu de dessus : les bras en Y', dessus: true, vue: 'face', poses
 
 // e3 : rowing à l'élastique, face à la porte
 const genouxF = {j1: [12, -10, 90], j2: [10, -12, 90]};
-S.e3 = {poses: [debout(Object.assign({b1: [88, 90, 90], b2: [86, 88, 88]}, genouxF)), debout(Object.assign({b1: [-38, 88, 90], b2: [-40, 86, 88], m1: 'poing', m2: 'poing'}, genouxF))], duree: 1.2, tenue: .7,
+S.e3 = {fantome: 0, poses: [debout(Object.assign({b1: [88, 90, 90], b2: [86, 88, 88]}, genouxF)), debout(Object.assign({b1: [-38, 88, 90], b2: [-40, 86, 88], m1: 'poing', m2: 'poing'}, genouxF))], duree: 1.2, tenue: .7,
   fond: () => O.porte(80), avant: J => O.elastique([77, -122], J.main1, 3),
   legendes: ['Face à la porte, bras tendus, élastique à hauteur de poitrine', 'Tire les coudes vers l\'arrière, collés au corps, serre les omoplates 1 s']};
 
 // e4 / e4b : rotations à 90/90 (le bras levé sur le côté, vers nous)
 const r90 = (a, o) => debout(Object.assign({b1: [90, a, a], ls: {bh1: .18}, b2: [-4, -2]}, o));
 const f90 = (a, ls) => face({b2: [90, a, a], ls, b1: [-6, -3]});
-const e4face = {titre: 'De face : le bras en position de bandeja', vue: 'face', poses: [f90(20, {ab2: .32, ma2: .5}), f90(180)], duree: 1, tenue: 1,
-  legendes: ['Coude à hauteur d\'épaule, plié à 90°, l\'avant-bras pointe devant toi', 'L\'avant-bras pivote : la main monte vers le plafond, le coude ne bouge pas']};
-S.e4 = [e4face, {titre: 'De profil, face à la porte', poses: [r90(90), r90(180)], duree: 1, tenue: 1, seq: [0, 1],
-  fond: () => O.porte(85), avant: J => O.elastique([82, -140], J.main1, 3),
+// vu de dessus : le bras sur le côté à hauteur d'épaule, l'avant-bras devant ; il se lève vers le plafond (vers nous)
+const e4haut = (a, b) => ({titre: 'Vu d\'au-dessus de la tête : coude à hauteur d\'épaule', custom: dessinHaut, dessus: true, poses: [haut({b2: [90, 1, 0, a]}), haut({b2: [90, 1, 0, b]})], duree: 1.1, tenue: 1, fantome: 0,
+  avant: (J, i, Js, P) => i === 0 && a > b ? O.texte(D.add(coudeHaut(P), [0, 44]), '↑ monte vers le plafond', 7) : ''});
+const e4face = Object.assign(e4haut(1, .12), {legendes: ['Bras sur le côté, coude à hauteur d\'épaule et plié à 90° : l\'avant-bras pointe devant toi', 'L\'avant-bras pivote vers le plafond (on ne voit plus que la main), le coude ne bouge pas']});
+S.e4 = [e4face, {titre: 'De profil, face à la porte', poses: [r90(90), r90(180)], duree: 1, tenue: 1, seq: [0, 1], fantome: 0,
+  fond: () => O.porte(85), avant: J => O.elastique([82, -140], J.main1, 3) + `<circle cx="${n1(J.coude1[0])}" cy="${n1(J.coude1[1])}" r="3" fill="#ff6b2c"/>`,
   legendes: ['Face à la porte, coude à hauteur d\'épaule plié à 90°, avant-bras vers la porte', 'Monte en 1 s : la main pointe vers le plafond. Redescends en 3-4 s']}];
-S.e4b = [Object.assign({}, e4face, {poses: [f90(180), f90(20, {ab2: .32, ma2: .5})], legendes: ['Départ main vers le plafond', 'Ramène l\'avant-bras vers l\'avant jusqu\'à l\'horizontale, coude toujours haut']}), {titre: 'De profil, dos à la porte', poses: [r90(180), r90(90)], duree: 1.2, tenue: .8,
-  fond: () => O.porte(-60), avant: J => O.elastique([-57, -150], J.main1, 3),
+S.e4b = [Object.assign(e4haut(.12, 1), {fantome: 0, legendes: ['Départ main vers le plafond (on ne voit que la main), coude à hauteur d\'épaule', 'Ramène l\'avant-bras vers l\'avant jusqu\'à l\'horizontale, coude toujours haut']}), {titre: 'De profil, dos à la porte', poses: [r90(180), r90(90)], duree: 1.2, tenue: .8, fantome: 0,
+  fond: () => O.porte(-60), avant: J => O.elastique([-57, -150], J.main1, 3) + `<circle cx="${n1(J.coude1[0])}" cy="${n1(J.coude1[1])}" r="3" fill="#ff6b2c"/>`,
   legendes: ['Dos à la porte, main vers le plafond, élastique tendu derrière', 'Ramène l\'avant-bras vers l\'avant jusqu\'à l\'horizontale, coude toujours haut']}];
 
 // e5 : rotation externe couché sur le côté droit (vu de face)
 const e5 = (a, ls) => face({x: 0, y: -22, sol: false, t: -90, h: -90, b1: [-92, -92, -92], b2: [90, a, a], j1: [96, 52, 52], j2: [94, 50, 50], ls: Object.assign({}, ls)});
-S.e5 = {vue: 'face', poses: [e5(4, {ab2: .45}), e5(180)], duree: 1.2, tenue: .9,
+S.e5 = {vue: 'face', vueTxt: 'vu de devant', poses: [e5(4, {ab2: .45}), e5(180)], duree: 1.2, tenue: .9, fantome: 0,
   fond: () => O.tapis(-110, 110),
   avant: J => O.haltere(J.main2, 0, .75) + `<circle cx="${J.coude2[0]}" cy="${J.coude2[1] + 5}" r="4" fill="#f28b82" stroke="#c4554c"/>`,
   legendes: ['Couché sur le côté droit, serviette sous le coude, haltère devant le ventre', 'Lève l\'avant-bras vers le plafond sans décoller le coude, redescends en 2-3 s']};
@@ -252,12 +282,12 @@ S.s5 = {poses: [s5(-3), s5(5)], duree: 2, tenue: 1, fond: (J, i, Js) => O.coussi
 // s6 : quadriceps couché sur le côté (vu de dessus)
 const s6 = () => { const P = {x: 0, y: 0, sol: false, t: -90, h: -90, b2: [-92, -92, -92], b1: [80, 60], j1: [102, -68, -150], j2: [91, 90, 90]};
   return ik(P, 'cote', 'b1', D.squelette(P, 'cote').cheville1, 1); };
-S.s6 = {dessus: true, poses: [s6()], ratio: 1.6, fond: () => '<rect x="-110" y="-40" width="220" height="70" rx="8" fill="#bfe3d6" opacity=".7"/>',
+S.s6 = {dessus: true, vueTxt: 'vu de dessus (couché sur le côté)', poses: [s6()], fond: () => '<rect x="-104" y="-34" width="214" height="62" rx="8" fill="#bfe3d6" opacity=".7"/>',
   avant: J => O.zone(mil(J.hanche1, J.genou1), 14), legendes: ['Attrape la cheville du dessus, talon vers la fesse. Les genoux restent l\'un à côté de l\'autre']};
 // s7 : arrière de la cuisse avec une sangle
 const s7 = a => { let P = surDos({j1: [a, a, a - 90], j2: [91, 90, 178]}); const J = D.squelette(D.prepare(P, 'cote'), 'cote');
   const m = mil(J.epaule1, J.cheville1, .62); P = ik(P, 'cote', 'b1', m, 1); return ik(P, 'cote', 'b2', dec(m, -2, 2), 1); };
-S.s7 = {poses: [s7(150), s7(172)], duree: 2.5, tenue: 1.2, fond: () => O.tapis(-80, 110),
+S.s7 = {fantome: 0, poses: [s7(150), s7(172)], duree: 2.5, tenue: 1.2, fond: () => O.tapis(-80, 110),
   avant: J => O.sangle(J.main1, dec(J.orteil1, -3, -2), 6) + O.zone(mil(J.hanche1, J.genou1, .5), 13),
   legendes: ['Sangle sous le pied, jambe vers le plafond, genou très légèrement plié', 'Monte doucement, le bassin et le bas du dos restent posés']};
 // s8 : fessier en 4
@@ -268,12 +298,12 @@ S.s8 = {poses: [s8(150), s8(172)], duree: 2.2, tenue: 1, fond: () => O.tapis(-80
 // s9 : mollets contre le mur
 const s9 = (plie) => { let P = {x: 0, y: -90, t: 162, h: 170, j1: plie ? [-6, -34, 90] : [-24, -24, 90], j2: [24, -6, 90]};
   const J = D.squelette(P, 'cote'); P = ik(P, 'cote', 'b1', [J.epaule1[0] + 46, J.epaule1[1] + 4], -1, 180); return ik(P, 'cote', 'b2', [J.epaule1[0] + 46, J.epaule1[1] + 6], -1, 180); };
-S.s9 = {poses: [s9(false), s9(true)], duree: 1.6, tenue: 1.4,
+S.s9 = {fantome: 0, poses: [s9(false), s9(true)], duree: 1.6, tenue: 1.4,
   fond: (J, i, Js) => O.mur(Js[0].main1[0] - 2, 1), avant: J => O.zone(mil(J.genou1, J.cheville1, .4), 12),
   legendes: ['Mains au mur, jambe arrière tendue, talon au sol : 30 s', 'Puis plie un peu le genou arrière, talon toujours au sol : 30 s']};
 // s10 : côté de la hanche, jambes croisées (de face)
 const s10 = k => face({t: 180 - 7 * k, h: 180 - 4 * k, x: -6 * k, j1: [10, 12, 12], j2: [-1, 0, 0], b1: hanchesF.b1, b2: k ? [168, -150, -150] : hanchesF.b2});
-S.s10 = {vue: 'face', poses: [s10(0), s10(1)], duree: 2, tenue: 1.2,
+S.s10 = {vue: 'face', poses: [s10(0), s10(1)], duree: 2, tenue: 1.2, fantome: 0,
   avant: (J, i, Js) => O.zone(dec(J.hanche1, -6, 4), 13) + (i === 0 ? fl(dec(Js[0].hanche1, -14, 0), dec(Js[0].hanche1, -30, 0), 0) : ''),
   legendes: ['Debout, croise la jambe droite derrière la gauche', 'Pousse doucement la hanche droite vers la droite, bras gauche au-dessus de la tête']};
 // s11 : papillon (de face)
@@ -286,12 +316,18 @@ const s12 = () => { let P = surDos({j1: [-150, 180, -90], j2: [-146, 178, -88], 
 S.s12 = {poses: [s12()], fond: () => O.tapis(-80, 60), avant: J => ondes(dec(J.bassin, -24, -22), 6), legendes: ['Attrape tes pieds, genoux vers les aisselles, le bas du dos reste posé']};
 // s14 : pectoraux contre une porte, bras bas
 const s14 = k => debout({x: 6 * k, t: 180 - 6 * k, h: 178, b1: [-62, 180, 180], b2: [6, 4], j1: k ? [-10, -10, 90] : [0, 0, 90], j2: k ? [22, 4, 90] : [0, 0, 90]});
-S.s14 = {poses: [s14(0), s14(1)], duree: 1.8, tenue: 1.2,
+const s14lat = {poses: [s14(0), s14(1)], duree: 1.8, tenue: 1.2,
   fond: (J, i, Js) => O.porte(Js[0].main1[0] - 4), avant: J => O.zone(dec(J.epaule1, 4, 6), 13),
   legendes: ['Avant-bras contre le montant de la porte, coude plus bas que l\'épaule', 'Avance doucement le buste jusqu\'à sentir l\'étirement devant la poitrine']};
+const cadre = (x, y) => `<rect x="${x}" y="${y - 4}" width="34" height="10" fill="#dde3ea" stroke="#aeb8c5" stroke-width="1.2"/><rect x="${x - 6}" y="${y - 6}" width="8" height="14" rx="1.5" fill="#d9c09a" stroke="#a98a5f" stroke-width="1.2"/>`;
+S.s14 = [{titre: 'Vu d\'au-dessus de la tête : dans l\'encadrement de la porte', custom: dessinHaut, dessus: true, poses: [haut({y: 0, b2: [90, .75, 0, .12]}), haut({y: 16, b2: [124, .9, 0, .12]})], duree: 1.8, tenue: 1.2, fantome: 0,
+  fond: () => cadre(44, -4) + `<path d="M-78 -4h34" stroke="#aeb8c5" stroke-width="10"/><rect x="-50" y="-10" width="8" height="14" rx="1.5" fill="#d9c09a" stroke="#a98a5f" stroke-width="1.2"/>`,
+  avant: (J, i, Js, P) => O.zone([12, P.y + 6], 12) + (i === 0 ? fl([-30, 4], [-30, 30], 0) : ''),
+  legendes: ['Avant-bras posé contre le montant, coude un peu plus bas que l\'épaule', 'Avance d\'un petit pas : la poitrine passe la porte, le bras reste en arrière']},
+  Object.assign({titre: 'De profil'}, s14lat)];
 // s15 : mains sur une table
 const s15 = k => { let P = debout({x: k ? -30 : 0, t: k ? 92 : 168, h: k ? 92 : 172}); return ik(ik(P, 'cote', 'b1', [64, -79], k ? -1 : -1, 95), 'cote', 'b2', [62, -79], -1, 95); };
-S.s15 = {poses: [s15(0), s15(1)], duree: 2, tenue: 1.2, fond: () => O.table(56, 120, 75),
+S.s15 = {fantome: 0, poses: [s15(0), s15(1)], duree: 2, tenue: 1.2, fond: () => O.table(56, 120, 75),
   legendes: ['Mains posées sur la table, recule les pieds', 'Laisse descendre la poitrine, fesses en arrière, dos long']};
 // s16 : cou et trapèzes, assis
 const s16 = k => face({y: -60, t: 180, h: 180 - 22 * k, j1: [-4, -2, 0], j2: [4, 2, 0], ls: {cu1: .2, cu2: .2}, b1: [-14, -4, -4], b2: [10, 4]});
