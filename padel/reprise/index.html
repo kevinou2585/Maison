@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>J'Padel · Bienvenue</title>
+<meta name="description" content="Bienvenue sur J'Padel : complète ton suivi de cours en deux minutes.">
+<meta name="theme-color" content="#0e1830">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icones/padel-192.png">
+<link rel="apple-touch-icon" href="../icones/padel-180.png">
+<meta property="og:title" content="J'Padel · Bienvenue dans la nouvelle appli de ton prof de padel">
+<meta property="og:site_name" content="J'Padel">
+<meta property="og:description" content="Deux minutes pour reprendre ton suivi : forfait, séances, paiements et prochains cours.">
+<meta property="og:image" content="https://beapp.be/jpadel/coach/icones/padel-partage.jpg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="600">
+<style>
+:root{--fond:#f1f4f9;--carte:#fff;--texte:#121a2b;--doux:#5b6678;--ligne:#dbe2ec;--neon:#c6f000;--neon-fonce:#5d7300;--nuit:#0e1830;--libre:#e9f8c2;--libre-bord:#9cc400;--pris:#eceff4;--err:#c0392b;--ok:#1e8a4c;--warn:#fdf0d5;--warn-bord:#e2a33a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--fond:#0a1120;--carte:#131d33;--texte:#e8eef8;--doux:#9aa7bd;--ligne:#26334d;--neon-fonce:#d4f53c;--libre:#22301a;--libre-bord:#9cc400;--pris:#1a2439;--err:#ff7a6b;--ok:#5fd08e;--warn:#3a2c12;--warn-bord:#f2b44a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--texte);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--nuit);color:#fff;padding:24px 16px 28px;text-align:center}
+header img{width:116px;height:116px;border-radius:26px;display:block;margin:0 auto 12px;box-shadow:0 0 0 3px var(--neon),0 8px 24px rgba(0,0,0,.4)}
+header h1{margin:0;font-size:24px}
+header p{margin:10px auto 0;color:#c9d3e6;max-width:600px}
+header .neon{color:var(--neon)}
+main{max-width:720px;margin:0 auto;padding:0 16px 40px}
+section{background:var(--carte);border:1px solid var(--ligne);border-radius:16px;padding:16px;margin-top:16px}
+section h2{margin:0 0 4px;font-size:19px;display:flex;align-items:center;gap:8px}
+section h2 .n{background:var(--neon);color:#111;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+.aide{color:var(--doux);font-size:14px;margin:0 0 8px}
+label{display:block;font-size:14px;font-weight:700;margin:12px 0 4px}
+label small{font-weight:400;color:var(--doux)}
+input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--ligne);border-radius:10px;background:var(--fond);color:var(--texte)}
+textarea{min-height:76px;resize:vertical}
+.deux{display:flex;gap:10px}.deux>div{flex:1;min-width:0}
+.trois{display:flex;gap:10px}.trois>div{flex:1;min-width:0}
+@media (max-width:480px){.trois{flex-wrap:wrap}.trois>div{flex:1 1 40%}}
+button{font:inherit;cursor:pointer}
+.go{width:100%;margin-top:18px;border:0;border-radius:12px;padding:15px;font-weight:800;font-size:17px;background:var(--neon);color:#111}
+.go:disabled{opacity:.6}
+.petit{border:1px solid var(--ligne);background:var(--fond);border-radius:9px;padding:7px 11px;font-weight:700;color:var(--texte)}
+.nav{border:1px solid var(--ligne);background:var(--carte);color:var(--texte);border-radius:10px;padding:7px 13px;font-weight:700}
+.nav:disabled{opacity:.35;cursor:default}
+.reste{background:var(--libre);border:1px solid var(--libre-bord);border-radius:12px;padding:10px 12px;margin-top:12px;font-weight:700}
+.reste.du{background:var(--warn);border-color:var(--warn-bord)}
+.err{color:var(--err);font-weight:700;margin:12px 0 0;min-height:1em}
+.piege{position:absolute;left:-5000px;width:1px;height:1px;overflow:hidden}
+.barre{display:flex;align-items:center;gap:8px;margin:10px 0}
+.barre .titre{flex:1;font-weight:800;text-align:center}
+.grille{display:grid;grid-template-columns:34px repeat(7,minmax(0,1fr));gap:3px;user-select:none}
+.grille .t{font-size:11px;text-align:center;color:var(--doux);font-weight:700;text-transform:capitalize;padding-bottom:2px}
+.grille .t b{display:block;font-size:15px;color:var(--texte)}
+.grille .hh{font-size:11px;color:var(--doux);text-align:right;padding-right:3px;line-height:30px}
+.grille button{height:30px;border:1px solid var(--ligne);background:var(--fond);border-radius:6px;padding:0;font-size:12px;font-weight:800;color:#111}
+.grille button.on{background:var(--neon);border-color:var(--libre-bord)}
+.grille button.autre{background:repeating-linear-gradient(45deg,var(--pris),var(--pris) 4px,var(--carte) 4px,var(--carte) 8px)}
+.grille button.autre.on{background:var(--neon);outline:2px solid var(--warn-bord)}
+.grille button:disabled{opacity:.3;cursor:default}
+.legende{font-size:13px;color:var(--doux);margin-top:8px}
+.legende i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin:0 4px 0 10px;border:1px solid var(--ligne)}
+.liste{margin:10px 0 0;padding-left:20px;font-size:14px}
+.alerte{background:var(--warn);border:1px solid var(--warn-bord);border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14px}
+.radios{display:flex;gap:8px;flex-wrap:wrap}
+.radios label{display:flex;gap:6px;align-items:center;margin:0;border:1px solid var(--ligne);border-radius:10px;padding:8px 12px;font-weight:600;background:var(--fond)}
+.radios label:has(input:checked){border-color:var(--libre-bord);background:var(--libre)}
+.radios input{width:auto;margin:0}
+.bravo{text-align:center;padding:30px 10px}
+.bravo .gros{font-size:60px}
+footer{text-align:center;color:var(--doux);font-size:13px;padding:0 16px 30px}
+</style>
+</head>
+<body>
+<header>
+  <img src="../icones/padel-192.png" alt="J'Padel">
+  <h1 id="h-titre">Bienvenue sur J'Padel</h1>
+  <p id="h-texte">Ton prof de padel lance <span class="neon">J'Padel</span>, sa nouvelle application pour gérer les cours, les réservations et les forfaits. Afin de reprendre ton suivi sans rien perdre, merci de prendre <b>deux minutes</b> pour compléter ce formulaire.</p>
+</header>
+<main id="vue"><section style="text-align:center">Chargement…</section></main>
+<footer id="pied">🔒 Tes informations sont confidentielles : elles ne sont visibles que par ton prof et servent uniquement au suivi de tes cours.</footer>
+<script>
+(() => {
+'use strict';
+// Même feuille Google que l'appli du prof (padel/app.js, const SCRIPT)
+const SCRIPT = 'https://script.google.com/macros/s/AKfycbw0XytRyRYY17LJxydy9XGXbYfLjI62OMvphvYHrrJt-Ppxf7XatO5VYXr1QtANmjB8/exec';
+const NIVEAUX = ['Je ne sais pas', 'Débutant', '50', '100', '200', '300', '400', '500', '700', '1000'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const p2 = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+const jourDe = s => new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+const ajJ = (s, n) => { const d = jourDe(s); d.setDate(d.getDate() + n); return iso(d); };
+const lundi = s => { const d = jourDe(s); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return iso(d); };
+const minDe = h => +h.slice(0, 2) * 60 + +h.slice(3, 5);
+const hTxt = h => h.replace(/^0/, '').replace(':00', 'h').replace(':', 'h');
+const JOURS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'], MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const dCourt = s => { const d = jourDe(s); return JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()]; };
+const euro = n => { n = Math.round((+n || 0) * 100) / 100; return (Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')) + ' €'; };
+const num = v => +String(v == null ? '' : v).replace(',', '.').replace(/[^\d.]/g, '') || 0;
+const ls = {get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }};
+const HEURES = []; for (let h = 8; h <= 21; h++) HEURES.push(p2(h) + ':00');
+const SEMAINES = 14;
+// ?prof : version du prof, qui remplit lui-même la fiche des élèves dont il est sûr (un élève après l'autre)
+const PROF = new URLSearchParams(location.search).has('prof');
+const T = (eleve, prof) => PROF ? prof : eleve;
+
+let G = null, auj = null, semaine = null;
+if (PROF) $('pied').textContent = '🔒 Ces informations ne sont visibles que par toi.';
+const moi = PROF ? {} : ls.get('padel-reprise:moi') || {};
+const coches = new Set(moi.creneaux || []); // « AAAA-MM-JJ|HH:MM »
+
+async function charger() {
+  try {
+    const r = await fetch(SCRIPT + '?a=reprise&_=' + Date.now());
+    G = await r.json(); if (!G.ok) throw new Error(G.err || 'erreur');
+  } catch (e) {
+    $('vue').innerHTML = '<section style="text-align:center">😕 Le formulaire ne se charge pas pour l\'instant. Réessaie dans un moment.<br><br><button class="petit" id="re">Réessayer</button></section>';
+    $('re').onclick = () => location.reload(); return;
+  }
+  auj = G.maintenant.slice(0, 10); semaine = lundi(auj);
+  const prof = G.prof || 'ton prof';
+  if (PROF) { $('h-titre').textContent = 'Fiche élève · ' + (G.prof || 'le prof'); $('h-texte').innerHTML = 'Remplis la fiche des élèves dont tu es sûr, un par un : forfait, séances faites, paiements et prochains cours. Tout arrive dans ta feuille Google et dans l\'appli (👥 Élèves › 📋 Reprise), avec la mention « rempli par toi ».'; document.title = 'J\'Padel · Fiche élève'; }
+  else if (G.prof) $('h-texte').innerHTML = `${esc(G.prof)} lance <span class="neon">J'Padel</span>, sa nouvelle application pour gérer les cours, les réservations et les forfaits. Afin de reprendre ton suivi sans rien perdre, merci de prendre <b>deux minutes</b> pour compléter ce formulaire : ton forfait en cours, tes séances déjà effectuées, tes paiements et tes prochains créneaux convenus avec ${esc(G.prof)}.`;
+  for (const k of [...coches]) if (k.slice(0, 10) < auj) coches.delete(k);
+  formulaire(prof);
+}
+
+const tarifDe = n => (G.tarifs || []).find(t => +t.pers === n);
+const FORMULES = [['cycle', 'Un forfait (cycle de séances)'], ['unite', 'Des séances à l\'unité'], ['autre', 'Autre arrangement'], ['inconnu', 'Je ne sais plus']];
+
+function formulaire(prof) {
+  $('vue').innerHTML = `<form id="f" novalidate>
+  <section><h2><span class="n">1</span>${T('Toi', 'L\'élève')}</h2>
+    <div class="deux"><div><label for="f-prenom">Prénom</label><input id="f-prenom" autocomplete="given-name" value="${esc(moi.prenom || '')}"></div><div><label for="f-nom">Nom</label><input id="f-nom" autocomplete="family-name" value="${esc(moi.nom || '')}"></div></div>
+    <label for="f-tel">Téléphone <small>(WhatsApp si possible)</small></label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" value="${esc(moi.tel || '')}" placeholder="0470 12 34 56">
+    <label for="f-mail">E-mail <small>(facultatif)</small></label><input id="f-mail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" value="${esc(moi.email || '')}">
+    <label for="f-niv">Niveau</label><select id="f-niv">${NIVEAUX.map(n => `<option${n === moi.niveau ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>
+  </section>
+  <section><h2><span class="n">2</span>${T('Tes cours et ton forfait', 'Ses cours et son forfait')}</h2>
+    <p class="aide">${T(`Indique ce qui est en cours aujourd'hui avec ${esc(prof)}. En cas de doute, mets ta meilleure estimation : ${esc(prof)} vérifiera.`, 'Ce qui est en cours aujourd\'hui pour cet élève.')}</p>
+    <label>${T('Tu as pris', 'Il a pris')}</label><div class="radios" id="f-formule">${FORMULES.map(([v, t]) => `<label><input type="radio" name="formule" value="${v}" ${v === (moi.formule || 'cycle') ? 'checked' : ''}>${t}</label>`).join('')}</div>
+    <div class="deux"><div><label for="f-pers">${T('Tu joues', 'Il joue')}</label><select id="f-pers">${[1, 2, 3, 4].map(n => `<option value="${n}"${n === (moi.pers || 1) ? ' selected' : ''}>${n === 1 ? T('Seul(e) avec le prof', 'Seul(e), en individuel') : 'À ' + n + ' joueurs'}</option>`).join('')}</select></div>
+      <div id="f-avec-l"><label for="f-avec">Avec qui ?</label><input id="f-avec" placeholder="Prénoms des autres joueurs" value="${esc(moi.avec || '')}"></div></div>
+    <div class="trois"><div id="f-seances-l"><label for="f-seances">Séances prévues</label><input id="f-seances" inputmode="numeric" value="${esc(moi.seances != null ? moi.seances : '')}" placeholder="ex. 10"></div>
+      <div><label for="f-faites">Déjà faites</label><input id="f-faites" inputmode="numeric" value="${esc(moi.faites != null ? moi.faites : '')}" placeholder="ex. 4"></div></div>
+    <div class="trois"><div><label for="f-total">Prix total (€)</label><input id="f-total" inputmode="decimal" value="${esc(moi.total != null ? moi.total : '')}" placeholder="ex. 450"></div>
+      <div><label for="f-paye">Déjà payé (€)</label><input id="f-paye" inputmode="decimal" value="${esc(moi.paye != null ? moi.paye : '')}" placeholder="ex. 225"></div></div>
+    <div class="reste" id="f-reste"></div>
+  </section>
+  <section><h2><span class="n">3</span>${T('Tes prochains cours déjà convenus', 'Ses prochains cours déjà convenus')}</h2>
+    <p class="aide">${T(`Coche les créneaux déjà fixés avec ${esc(prof)}`, 'Coche ses créneaux déjà fixés')} (pas ceux qui sont passés). Un cours qui revient chaque semaine ? Coche-le une fois puis « Répéter ».</p>
+    <label>${T('Durée de tes cours', 'Durée de ses cours')}</label><div class="radios">${[[60, '1h'], [90, '1h30']].map(([v, t]) => `<label><input type="radio" name="duree" value="${v}" ${v === (moi.duree || 60) ? 'checked' : ''}>${t}</label>`).join('')}</div>
+    <div class="barre"><button type="button" class="nav" id="prec" aria-label="Semaine précédente">◀</button><span class="titre" id="g-titre"></span><button type="button" class="nav" id="suiv" aria-label="Semaine suivante">▶</button></div>
+    <div class="grille" id="g"></div>
+    <div class="legende"><i style="background:var(--neon)"></i>${T('mon cours', 'ses cours')}<i style="background:repeating-linear-gradient(45deg,var(--pris),var(--pris) 3px,var(--carte) 3px,var(--carte) 6px)"></i>déjà indiqué par un autre élève</div>
+    <div class="deux" style="margin-top:10px;align-items:flex-end"><div><label for="f-rep">Répéter les cours de cette semaine</label><select id="f-rep">${[2, 3, 4, 5, 6, 8, 10, 12].map(n => `<option value="${n}">sur les ${n} semaines suivantes</option>`).join('')}</select></div><div style="flex:none"><button type="button" class="petit" id="f-repok" style="padding:11px 14px">🔁 Répéter</button></div></div>
+    <div id="g-liste"></div>
+  </section>
+  <section><h2><span class="n">4</span>${T('Un mot pour ' + esc(prof) + ' ?', 'Une note ?')} <small style="font-weight:400;color:var(--doux);font-size:14px">(facultatif)</small></h2>
+    <textarea id="f-msg" placeholder="Ex. je préfère les cours le soir, un paiement en attente…">${esc(moi.msg || '')}</textarea>
+    <div class="piege" aria-hidden="true"><label>Ne pas remplir<input id="f-piege" tabindex="-1" autocomplete="off"></label></div>
+    <p class="err" id="f-err"></p>
+    <button class="go" id="f-ok">${T('Envoyer à ' + esc(prof), '💾 Enregistrer cet élève')}</button>
+  </section></form>`;
+  const pers = () => +$('f-pers').value, formule = () => (document.querySelector('[name=formule]:checked') || {}).value;
+  let totalAuto = moi.total == null;
+  const majForfait = () => {
+    $('f-avec-l').style.visibility = pers() > 1 ? 'visible' : 'hidden';
+    const t = tarifDe(pers()), f = formule();
+    if (f === 'cycle' && t && t.cycle) { if (!$('f-seances').value) $('f-seances').value = t.cycle; if (totalAuto) $('f-total').value = t.prixCycle; }
+    else if (f === 'unite' && t && totalAuto && $('f-seances').value) $('f-total').value = Math.round(t.prix * num($('f-seances').value) * 100) / 100;
+    majReste();
+  };
+  const majReste = () => {
+    const s = num($('f-seances').value), fa = num($('f-faites').value), tot = num($('f-total').value), pa = num($('f-paye').value), r = Math.round((tot - pa) * 100) / 100;
+    $('f-reste').className = 'reste' + (r > 0 ? ' du' : '');
+    $('f-reste').innerHTML = (s ? `🎾 Séances restantes : <b>${Math.max(0, s - fa)}</b> sur ${s}<br>` : '') + (tot || pa ? (r > 0 ? `💶 Reste à payer : <b>${euro(r)}</b>` : r < 0 ? `💶 Payé en avance : <b>${euro(-r)}</b>` : '💶 Tout est payé ✓') : '💶 Indique le prix total et ce que tu as déjà payé.');
+  };
+  document.querySelectorAll('[name=formule]').forEach(i => i.onchange = majForfait);
+  $('f-pers').onchange = majForfait;
+  $('f-total').oninput = () => { totalAuto = false; majReste(); };
+  ['f-seances', 'f-faites', 'f-paye'].forEach(i => $(i).oninput = () => { if (i === 'f-seances' && formule() === 'unite') majForfait(); else majReste(); });
+  majForfait();
+  // Agenda des prochains cours
+  const dureeSel = () => +(document.querySelector('[name=duree]:checked') || {}).value || 60;
+  const autres = k => { const [d, h] = k.split('|'), a = minDe(h), b = a + dureeSel(); return (G.pris || []).some(x => x.d === d && minDe(x.h) < b && a < minDe(x.h) + (x.dur || 60)); };
+  const dessinerG = () => {
+    const J = []; for (let i = 0; i < 7; i++) J.push(ajJ(semaine, i));
+    const a = jourDe(J[0]), b = jourDe(J[6]);
+    $('g-titre').textContent = 'Semaine du ' + a.getDate() + (a.getMonth() !== b.getMonth() ? ' ' + MOIS[a.getMonth()] : '') + ' au ' + b.getDate() + ' ' + MOIS[b.getMonth()];
+    $('prec').disabled = semaine <= lundi(auj); $('suiv').disabled = ajJ(semaine, 7) > ajJ(auj, SEMAINES * 7);
+    let h = '<div></div>' + J.map(d => `<div class="t">${JOURS[jourDe(d).getDay()]}<b>${jourDe(d).getDate()}</b></div>`).join('');
+    HEURES.forEach(hh => { h += `<div class="hh">${hTxt(hh)}</div>` + J.map(d => { const k = d + '|' + hh, on = coches.has(k), au = autres(k); return `<button type="button" data-k="${k}" class="${on ? 'on' : ''} ${au ? 'autre' : ''}" ${d < auj ? 'disabled' : ''} aria-label="${dCourt(d)} ${hTxt(hh)}" aria-pressed="${on}">${on ? '✓' : ''}</button>`; }).join(''); });
+    $('g').innerHTML = h;
+    $('g').querySelectorAll('[data-k]').forEach(b2 => b2.onclick = () => { const k = b2.dataset.k; if (coches.has(k)) coches.delete(k); else coches.add(k); dessinerG(); });
+    const L = [...coches].sort();
+    const conf = L.filter(autres);
+    $('g-liste').innerHTML = L.length ? `<p style="margin:12px 0 0;font-weight:700">${L.length} cours coché${L.length > 1 ? 's' : ''} :</p><ul class="liste">${L.map(k => { const [d, hh] = k.split('|'); return `<li>${esc(dCourt(d))} à ${hTxt(hh)}${autres(k) ? ' ⚠️' : ''}</li>`; }).join('')}</ul>`
+      + (conf.length ? `<div class="alerte">⚠️ ${conf.length === 1 ? T('Un de tes créneaux a', 'Un de ses créneaux a') : conf.length + T(' de tes créneaux ont', ' de ses créneaux ont')} déjà été indiqué${conf.length > 1 ? 's' : ''} par un autre élève. ${T("Vérifie l'heure ; s'il n'y a pas d'erreur, envoie quand même : " + esc(prof) + ' regardera.', "Normal si c'est un cours à plusieurs ; sinon, vérifie l'heure.")}</div>` : '') : '';
+  };
+  document.querySelectorAll('[name=duree]').forEach(i => i.onchange = dessinerG);
+  $('prec').onclick = () => { semaine = ajJ(semaine, -7); dessinerG(); };
+  $('suiv').onclick = () => { semaine = ajJ(semaine, 7); dessinerG(); };
+  $('f-repok').onclick = () => {
+    const n = +$('f-rep').value, J = new Set(); for (let i = 0; i < 7; i++) J.add(ajJ(semaine, i));
+    const S = [...coches].filter(k => J.has(k.slice(0, 10)));
+    if (!S.length) { alert('Coche d\'abord tes cours de cette semaine.'); return; }
+    S.forEach(k => { for (let i = 1; i <= n; i++) { const d = ajJ(k.slice(0, 10), 7 * i); if (d <= ajJ(auj, SEMAINES * 7)) coches.add(d + k.slice(10)); } });
+    dessinerG();
+  };
+  dessinerG();
+  $('f').onsubmit = async e => {
+    e.preventDefault();
+    const o = {a: 'reprise', prenom: $('f-prenom').value.trim(), nom: $('f-nom').value.trim(), tel: $('f-tel').value.trim(), email: $('f-mail').value.trim(),
+      niveau: $('f-niv').value === NIVEAUX[0] ? '' : $('f-niv').value, formule: (FORMULES.find(x => x[0] === formule()) || [, ''])[1], pers: pers(), avec: pers() > 1 ? $('f-avec').value.trim() : '',
+      seances: num($('f-seances').value), faites: num($('f-faites').value), total: num($('f-total').value), paye: num($('f-paye').value), duree: dureeSel(),
+      creneaux: [...coches].sort().map(k => ({d: k.slice(0, 10), h: k.slice(11)})), msg: $('f-msg').value.trim(), piege: $('f-piege').value, par: PROF ? 'prof' : ''};
+    const err = t => { $('f-err').textContent = t; };
+    if (!o.prenom || !o.nom) { err('Indique ton prénom et ton nom.'); $('f-prenom').focus(); return; }
+    if (o.tel.replace(/\D/g, '').length < 8) { err('Indique un numéro de téléphone complet.'); $('f-tel').focus(); return; }
+    if (o.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o.email)) { err('Cette adresse e-mail ne semble pas complète.'); return; }
+    if (o.faites > o.seances && o.seances) { err('Les séances déjà faites dépassent les séances prévues : vérifie.'); return; }
+    if (!PROF) ls.set('padel-reprise:moi', {prenom: o.prenom, nom: o.nom, tel: o.tel, email: o.email, niveau: o.niveau, formule: formule(), pers: o.pers, avec: o.avec,
+      seances: $('f-seances').value, faites: $('f-faites').value, total: $('f-total').value, paye: $('f-paye').value, duree: o.duree, creneaux: [...coches], msg: o.msg});
+    $('f-ok').disabled = true; $('f-ok').textContent = 'Envoi…'; err('');
+    try {
+      const r = await fetch(SCRIPT, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(o)});
+      const x = await r.json(); if (!x.ok) throw new Error(x.err || 'erreur');
+    } catch (ex) {
+      $('f-ok').disabled = false; $('f-ok').textContent = T('Envoyer à ' + prof, '💾 Enregistrer cet élève');
+      err(String(ex.message) === 'telephone' ? 'Indique un numéro de téléphone complet.' : 'Ça n\'est pas parti (connexion ?). Réessaie.'); return;
+    }
+    scrollTo(0, 0);
+    if (PROF) {
+      (G.pris = G.pris || []).push(...o.creneaux.map(x => ({d: x.d, h: x.h, dur: o.duree})));
+      $('vue').innerHTML = `<section class="bravo"><div class="gros">✅</div><h2 style="display:block;font-size:22px">${esc(o.prenom + ' ' + o.nom)} est enregistré</h2>
+        <p>${o.creneaux.length} prochain${o.creneaux.length > 1 ? 's cours' : ' cours'} noté${o.creneaux.length > 1 ? 's' : ''}.</p><button class="go" id="suivant">➕ Élève suivant</button></section>`;
+      $('suivant').onclick = () => { coches.clear(); semaine = lundi(auj); formulaire(prof); scrollTo(0, 0); };
+      return;
+    }
+    $('vue').innerHTML = `<section class="bravo"><div class="gros">🎾</div><h2 style="display:block;font-size:22px">Merci ${esc(o.prenom)} !</h2>
+      <p>Tes informations sont bien arrivées chez ${esc(prof)}.${o.creneaux.length ? '<br>' + o.creneaux.length + ' prochain' + (o.creneaux.length > 1 ? 's cours notés' : ' cours noté') + '.' : ''}</p>
+      <p style="color:var(--doux)">Une erreur ? Rouvre ce lien et renvoie le formulaire : ta nouvelle réponse remplacera l'ancienne.</p>
+      <p>À très vite sur le terrain !</p></section>`;
+  };
+}
+charger();
+})();
+</script>
+</body>
+</html>

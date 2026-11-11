@@ -1,10 +1,10 @@
 // Fait marcher l'appli sans internet. Changer VERSION à chaque mise en ligne pour rafraîchir le cache.
 // Le Drive (script.google.com) n'est jamais mis en cache : la synchro passe toujours par internet.
-const VERSION = 'maison-v59';
+const VERSION = 'maison-v84';
 const FICHIERS = [
   './', './index.html', './manifest.webmanifest', './sync.js', './citations.js', './sauvegarde.js',
-  './jardin/', './courses/', './todo/', './terrain/', './mdp/', './notes/', './installer/', './le-fist/', './essai.html', './renfo/', './renfo/programme.js', './renfo/schemas.js', './renfo/schemas-ex.js', './renfo/app.js',
-  './jdb/', './jdb/donnees.js', './jdb/moteur.js', './jdb/echanges.js', './jdb/app.js', './jdb/plan.html',
+  './jardin/', './courses/', './todo/', './terrain/', './mdp/', './notes/', './installer/', './le-fist/', './essai.html', './renfo/', './renfo/programme.js', './renfo/schemas.js', './renfo/schemas-ex.js', './renfo/app.js', './padel/', './padel/app.js', './padel/manifest.webmanifest', './padel/google/', './padel/google/Code.gs', './padel/icones/padel-180.png', './padel/icones/padel-192.png', './padel/icones/padel-512.png',
+  './jdb/', './jdb/donnees.js', './jdb/moteur.js', './jdb/conservation.js', './jdb/echanges.js', './jdb/app.js', './jdb/plan.html',
   './icones/maison-180.png', './icones/maison-192.png', './icones/maison-512.png',
   './icones/jardin-180.png', './icones/jardin-192.png', './icones/jardin-512.png',
   './icones/courses-180.png', './icones/courses-192.png', './icones/courses-512.png',

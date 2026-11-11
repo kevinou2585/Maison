@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script Google · Padel</title>
+<style>body{margin:0 auto;max-width:900px;padding:16px;font:16px/1.4 system-ui,sans-serif;background:#f2f6f8;color:#14212b}button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:12px 18px;background:#0b6e8f;color:#fff}pre{background:#fff;border:1px solid #d8e1e7;border-radius:12px;padding:12px;overflow:auto;font-size:12.5px;max-height:70vh}@media (prefers-color-scheme:dark){body{background:#0e161c;color:#e6eef3}pre{background:#17222b;border-color:#2a3a46}a{color:#4fb3d6}}</style></head>
+<body><p><a href="../">‹ Padel</a></p><h1>Script de la feuille Google</h1>
+<p>Copie tout ce texte et colle-le dans <b>Extensions › Apps Script</b> de ta feuille « Padel ». Le mot de passe (ligne <code>CLE</code>) est <code>jean1000</code> : tu peux le laisser ou le changer.</p>
+<p><button id="c">📋 Copier le script</button> <span id="m"></span></p><pre id="p">Chargement…</pre>
+<script>
+fetch('Code.gs',{cache:'no-cache'}).then(r=>r.text()).then(t=>{document.getElementById('p').textContent=t});
+document.getElementById('c').onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById('p').textContent);document.getElementById('m').textContent='Copié ✓'}catch(e){document.getElementById('m').textContent='Sélectionne le texte et copie-le à la main.'}};
+</script></body></html>

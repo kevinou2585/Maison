@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>J'Padel · Réserver un cours de padel</title>
+<meta name="description" content="Les créneaux encore libres pour un cours de padel : choisis-en un et envoie ta demande.">
+<meta name="theme-color" content="#0e1830">
+<link rel="icon" href="../icones/padel-192.png">
+<link rel="apple-touch-icon" href="../icones/padel-180.png">
+<meta property="og:title" content="J'Padel · Réserver un cours de padel avec Jean">
+<meta property="og:site_name" content="J'Padel">
+<meta name="apple-mobile-web-app-title" content="J'Padel">
+<meta property="og:description" content="Choisis un créneau libre et envoie ta demande.">
+<meta property="og:image" content="https://beapp.be/jpadel/coach/icones/padel-partage.jpg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="600">
+<style>
+:root{--fond:#f1f4f9;--carte:#fff;--texte:#121a2b;--doux:#5b6678;--ligne:#dbe2ec;--neon:#c6f000;--neon-fonce:#5d7300;--nuit:#0e1830;--libre:#e9f8c2;--libre-bord:#9cc400;--pris:#eceff4;--err:#c0392b;--ok:#1e8a4c;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--fond:#0a1120;--carte:#131d33;--texte:#e8eef8;--doux:#9aa7bd;--ligne:#26334d;--neon-fonce:#d4f53c;--libre:#22301a;--libre-bord:#9cc400;--pris:#1a2439;--err:#ff7a6b;--ok:#5fd08e;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--texte);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--nuit);color:#fff;padding:22px 16px 26px;text-align:center}
+header img{width:116px;height:116px;border-radius:26px;display:block;margin:0 auto 10px;box-shadow:0 0 0 3px var(--neon),0 8px 24px rgba(0,0,0,.4)}
+header h1{margin:0;font-size:24px;letter-spacing:.2px}
+header p{margin:6px auto 0;color:#c9d3e6;max-width:560px}
+header .neon{color:var(--neon)}
+main{max-width:1100px;margin:0 auto;padding:0 16px 40px}
+.barre{display:flex;align-items:center;gap:8px;margin:16px 0 10px;flex-wrap:wrap}
+.barre .titre{flex:1;font-weight:800;font-size:18px;min-width:160px}
+button{font:inherit;cursor:pointer}
+.nav{border:1px solid var(--ligne);background:var(--carte);color:var(--texte);border-radius:10px;padding:8px 14px;font-weight:700}
+.nav:disabled{opacity:.35;cursor:default}
+.aide{color:var(--doux);font-size:14px;margin:0 0 10px}
+.aide i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin:0 4px 0 10px}
+.semaine{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.jour{background:var(--carte);border:1px solid var(--ligne);border-radius:14px;padding:8px;min-width:0}
+.jour h3{margin:0 0 8px;font-size:14px;text-align:center;text-transform:capitalize}
+.jour h3 b{display:block;font-size:20px}
+.jour.auj h3{color:var(--neon-fonce)}
+.cr{display:block;width:100%;margin:0 0 6px;border-radius:9px;padding:8px 4px;font-size:14px;font-weight:700;text-align:center;border:1px solid transparent}
+.cr.libre{background:var(--libre);border-color:var(--libre-bord);color:var(--texte)}
+.cr.libre:hover,.cr.libre:focus-visible{background:var(--neon);color:#111;outline:none}
+.cr.pris{background:var(--pris);color:var(--doux);cursor:default;font-weight:500}
+.cr.pris small{display:block;font-size:11px}
+.vide{color:var(--doux);font-size:13px;text-align:center;padding:10px 0}
+.bande{display:none}
+@media (max-width:760px){
+  .semaine{display:block}
+  .jour{display:none}
+  .jour.on{display:block}
+  .jour h3{display:none}
+  .bande{display:flex;gap:4px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px}
+  .bande button{flex:1 0 44px;border:1px solid var(--ligne);background:var(--carte);color:var(--texte);border-radius:12px;padding:6px 1px;font-size:12px}
+  .bande button span{text-transform:capitalize}
+  .bande button b{display:block;font-size:18px}
+  .bande button i{display:block;font-style:normal;font-size:11px;color:var(--neon-fonce);font-weight:700;min-height:14px}
+  .bande button.on{background:var(--nuit);color:#fff;border-color:var(--nuit)}
+  .bande button.on i{color:var(--neon)}
+  .jour .cr{padding:12px 6px;font-size:16px}
+  .jour.on{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .jour.on .cr{margin:0}
+  .jour.on .vide{grid-column:1/-1}
+}
+.message{background:var(--carte);border:1px solid var(--ligne);border-radius:14px;padding:18px;text-align:center;margin-top:16px}
+#fond{position:fixed;inset:0;background:rgba(5,10,20,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+#fond[hidden]{display:none}
+#fen{background:var(--carte);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:600px){#fond{align-items:center}#fen{border-radius:18px}}
+#fen h2{margin:0 0 4px;font-size:20px;display:flex;gap:8px;align-items:flex-start}
+#fen h2 span{flex:1}
+#fen h2 button{border:0;background:none;color:var(--doux);font-size:20px;padding:0 4px}
+.quand{background:var(--libre);border:1px solid var(--libre-bord);border-radius:12px;padding:10px 12px;font-weight:700;margin:10px 0}
+label{display:block;font-size:14px;font-weight:700;margin:12px 0 4px}
+label small{font-weight:400;color:var(--doux)}
+input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--ligne);border-radius:10px;background:var(--fond);color:var(--texte)}
+textarea{min-height:76px;resize:vertical}
+.deux{display:flex;gap:10px}.deux>div{flex:1;min-width:0}
+.go{width:100%;margin-top:16px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:17px;background:var(--neon);color:#111}
+.go:disabled{opacity:.6}
+.err{color:var(--err);font-weight:700;margin:10px 0 0;min-height:1em}
+.piege{position:absolute;left:-5000px;width:1px;height:1px;overflow:hidden}
+.bravo{text-align:center;padding:10px 0}
+.bravo .gros{font-size:54px}
+.tarifs{margin-top:22px}
+.tarifs h2{font-size:19px;margin:0 0 4px}
+.tarifs p.aide{margin-bottom:10px}
+.cartes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.tarif{background:var(--carte);border:1px solid var(--ligne);border-radius:14px;padding:14px}
+.tarif h3{margin:0 0 6px;font-size:16px}
+.tarif .px{font-size:22px;font-weight:800}
+.tarif .px small{font-size:13px;font-weight:500;color:var(--doux)}
+.tarif .cyc{margin-top:8px;padding-top:8px;border-top:1px dashed var(--ligne)}
+.tarif .cyc b{color:var(--neon-fonce)}
+.formules{display:grid;gap:8px;margin-top:4px}
+.seances{border:1px solid var(--libre-bord);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--carte)}
+.seances h4{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.seances ol{margin:0;padding-left:22px}.seances li{padding:3px 0}.seances li button{border:0;background:none;color:var(--err);font-size:15px;padding:0 6px;cursor:pointer}
+.seances .manque{color:var(--neon-fonce);font-weight:700;margin:6px 0 0;font-size:14px}
+.choix{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:220px;overflow:auto}
+.choix button{border:1px solid var(--libre-bord);background:var(--libre);border-radius:9px;padding:6px 9px;font-size:13px;font-weight:700;color:var(--texte);cursor:pointer}
+.choix .jr{width:100%;font-size:12px;color:var(--doux);font-weight:700;margin-top:4px;text-transform:capitalize}
+button.cr.pris{cursor:pointer}button.cr.pris:hover small{color:var(--texte)}
+.petit{border:1px solid var(--ligne);background:var(--fond);border-radius:9px;padding:6px 10px;font-weight:700;cursor:pointer;color:var(--texte)}
+.formules label{display:flex;gap:10px;align-items:flex-start;margin:0;font-weight:600;border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--fond)}
+.formules label:has(input:checked){border-color:var(--libre-bord);background:var(--libre)}
+.formules input{width:auto;margin:3px 0 0}
+.formules small{display:block;font-weight:400;color:var(--doux)}
+footer{text-align:center;color:var(--doux);font-size:13px;padding:0 16px 30px}
+</style>
+</head>
+<body>
+<header>
+  <img src="../icones/padel-192.png" alt="">
+  <h1 id="h-titre">Réserver un cours de padel</h1>
+  <p id="h-sous">Choisis un créneau <span class="neon">libre</span> et envoie ta demande : tu reçois la confirmation par WhatsApp ou par e-mail.</p>
+</header>
+<main id="vue"><div class="message">Chargement des créneaux…</div></main>
+<footer id="pied"></footer>
+<div id="fond" hidden><div id="fen" role="dialog" aria-modal="true"></div></div>
+<script>
+(() => {
+'use strict';
+// Même feuille Google que l'appli du prof (padel/app.js, const SCRIPT)
+const SCRIPT = 'https://script.google.com/macros/s/AKfycbw0XytRyRYY17LJxydy9XGXbYfLjI62OMvphvYHrrJt-Ppxf7XatO5VYXr1QtANmjB8/exec';
+const NIVEAUX = ['Je ne sais pas', 'Débutant', '50', '100', '200', '300', '400', '500', '700', '1000'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const p2 = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+const jourDe = s => new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+const ajJ = (s, n) => { const d = jourDe(s); d.setDate(d.getDate() + n); return iso(d); };
+const lundi = s => { const d = jourDe(s); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return iso(d); };
+const minDe = h => +h.slice(0, 2) * 60 + +h.slice(3, 5);
+const hDe = m => p2(Math.floor(m / 60)) + ':' + p2(m % 60);
+const hTxt = h => h.replace(/^0/, '').replace(':00', 'h').replace(':', 'h');
+const JOURS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'], JOURSL = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'], MOISL = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const dLong = s => { const d = jourDe(s); return JOURSL[d.getDay()] + ' ' + d.getDate() + ' ' + MOISL[d.getMonth()]; };
+const ls = {get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }};
+
+let G = null, semaine = null, jourChoisi = null;
+
+async function charger() {
+  try {
+    const r = await fetch(SCRIPT + '?a=dispo&_=' + Date.now());
+    const o = await r.json(); if (!o.ok) throw new Error(o.err || 'erreur');
+    G = o;
+  } catch (e) {
+    $('vue').innerHTML = '<div class="message">😕 Les créneaux ne se chargent pas pour l\'instant. Réessaie dans un moment.<br><br><button class="nav" id="re">Réessayer</button></div>';
+    $('re').onclick = () => { $('vue').innerHTML = '<div class="message">Chargement des créneaux…</div>'; charger(); };
+    return;
+  }
+  const prof = G.prof || '';
+  if (prof) { $('h-titre').textContent = 'Réserver un cours de padel avec ' + prof; document.title = 'J\'Padel · Cours de padel avec ' + prof; }
+  if (G.texte) $('h-sous').textContent = G.texte;
+  $('pied').textContent = (G.lieu ? '📍 ' + G.lieu + ' · ' : '') + 'Cours de ' + (G.duree === 90 ? '1h30' : '1h') + '. Ta demande est confirmée par ' + (prof || 'le prof') + '.';
+  const auj = G.maintenant.slice(0, 10);
+  semaine = semaine || lundi(auj);
+  dessiner();
+}
+
+// Créneaux d'un jour : ceux que le prof a ouverts (« pris » = déjà un cours ou une demande)
+function creneaux(d) {
+  if (d > ajJ(G.maintenant.slice(0, 10), (G.semaines || 5) * 7)) return null;
+  const duree = G.duree || 60;
+  return (G.creneaux || []).filter(x => x.d === d).map(x => ({h: x.h, fin: hDe(minDe(x.h) + duree), pris: !!x.pris})).sort((a, b) => a.h.localeCompare(b.h));
+}
+
+function dessiner() {
+  const auj = G.maintenant.slice(0, 10), fin = ajJ(auj, (G.semaines || 5) * 7);
+  if (!G.ouvert) { $('vue').innerHTML = '<div class="message">Les demandes de cours en ligne sont fermées pour le moment.<br>Contacte directement ' + esc(G.prof || 'le prof') + '.</div>'; return; }
+  const jours = []; for (let i = 0; i < 7; i++) jours.push(ajJ(semaine, i));
+  const a = jourDe(jours[0]), b = jourDe(jours[6]);
+  const titre = 'Semaine du ' + a.getDate() + (a.getMonth() !== b.getMonth() ? ' ' + MOIS[a.getMonth()] : '') + ' au ' + b.getDate() + ' ' + MOIS[b.getMonth()];
+  let h = `<div class="barre"><button class="nav" id="prec" ${semaine <= lundi(auj) ? 'disabled' : ''} aria-label="Semaine précédente">◀</button><span class="titre">${titre}</span><button class="nav" id="suiv" ${ajJ(semaine, 7) > fin ? 'disabled' : ''} aria-label="Semaine suivante">▶</button></div>`;
+  h += `<p class="aide">Touche un créneau libre pour demander ce cours.<i style="background:var(--libre);border:1px solid var(--libre-bord)"></i>libre<i style="background:var(--pris)"></i>pas disponible (touche-le pour être averti s'il se libère)</p>`;
+  const C = {}; jours.forEach(d => { C[d] = d < auj ? [] : creneaux(d); });
+  // Au téléphone : le premier jour qui a encore un créneau libre
+  if (!jours.includes(jourChoisi)) jourChoisi = jours.find(d => (C[d] || []).some(c => !c.pris)) || jours.find(d => d >= auj) || jours[0];
+  h += '<div class="bande">' + jours.map(d => { const n = (C[d] || []).filter(x => !x.pris).length; return `<button data-j="${d}" class="${d === jourChoisi ? 'on' : ''}"><span>${JOURS[jourDe(d).getDay()]}</span><b>${jourDe(d).getDate()}</b><i>${n ? n + ' libre' + (n > 1 ? 's' : '') : ''}</i></button>`; }).join('') + '</div>';
+  h += '<div class="semaine">' + jours.map(d => {
+    const L = C[d], dd = jourDe(d);
+    let x = `<div class="jour ${d === jourChoisi ? 'on' : ''} ${d === auj ? 'auj' : ''}"><h3>${JOURS[dd.getDay()]}<b>${dd.getDate()}</b></h3>`;
+    if (L === null) x += '<div class="vide">Pas encore ouvert</div>';
+    else if (!L.length) x += `<div class="vide">${d < auj ? 'Passé' : 'Pas de créneau'}</div>`;
+    else x += L.map(c => c.pris ? `<button class="cr pris" data-ad="${d}" data-ah="${c.h}" title="Être prévenu si ce créneau se libère">${hTxt(c.h)}<small>pas disponible · 🔔 m'avertir</small></button>` : `<button class="cr libre" data-d="${d}" data-h="${c.h}">${hTxt(c.h)} – ${hTxt(c.fin)}</button>`).join('');
+    return x + '</div>';
+  }).join('') + '</div>';
+  if (!jours.some(d => (C[d] || []).some(c => !c.pris))) h += `<div class="message">Pas de créneau libre cette semaine-là.${ajJ(semaine, 7) <= fin ? ' Regarde la semaine suivante ▶' : ''}</div>`;
+  h += tarifsHtml();
+  $('vue').innerHTML = h;
+  $('prec').onclick = () => { semaine = ajJ(semaine, -7); jourChoisi = null; dessiner(); };
+  $('suiv').onclick = () => { semaine = ajJ(semaine, 7); jourChoisi = null; dessiner(); };
+  document.querySelectorAll('[data-j]').forEach(b => b.onclick = () => { jourChoisi = b.dataset.j; dessiner(); });
+  document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => formulaire(b.dataset.d, b.dataset.h));
+  document.querySelectorAll('[data-ad]').forEach(b => b.onclick = () => attente(b.dataset.ad, b.dataset.ah));
+}
+
+const euro = n => { n = Math.round((+n || 0) * 100) / 100; return (Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')) + ' €'; };
+const tarifDe = n => { const T = (G.tarifs || []).slice().sort((a, b) => a.pers - b.pers); return T.find(t => t.pers === n) || T.filter(t => t.pers <= n).pop() || T[0]; };
+function tarifsHtml() {
+  const T = G.tarifs || []; if (!T.length) return '';
+  return `<section class="tarifs"><h2>💶 Tarifs</h2><p class="aide">Prix par personne, pour une séance d'1h. Tu peux demander un forfait en réservant : ton premier cours en fait déjà partie.</p><div class="cartes">` +
+    T.map(t => `<div class="tarif"><h3>${esc(t.pers === 1 ? '🎾 Cours individuel' : '👥 ' + t.nom)}</h3><div class="px">${euro(t.prix)} <small>la séance${t.pers > 1 ? ', par personne' : ''}</small></div>
+      ${t.cycle && t.prixCycle ? `<div class="cyc">Forfait ${t.cycle} séances : <b>${euro(t.prixCycle)}</b>${t.pers > 1 ? ' par personne' : ''}<br><small style="color:var(--doux)">soit ${euro(t.prixCycle / t.cycle)} la séance</small></div>` : ''}</div>`).join('') + '</div></section>';
+}
+
+function fermer() { $('fond').hidden = true; $('fen').innerHTML = ''; document.body.style.overflow = ''; }
+$('fond').addEventListener('click', e => { if (e.target === $('fond')) fermer(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') fermer(); });
+
+function formulaire(d, h) {
+  const moi = ls.get('padel-resa:moi') || {}, duree = G.duree || 60;
+  const quand = dLong(d) + ' · ' + hTxt(h) + ' – ' + hTxt(hDe(minDe(h) + duree));
+  $('fen').innerHTML = `<h2><span>Demander ce cours</span><button type="button" id="x" aria-label="Fermer">✕</button></h2>
+    <div class="quand">📅 ${esc(quand[0].toUpperCase() + quand.slice(1))}</div>
+    <form id="f" novalidate>
+      <label for="f-nom">Prénom et nom</label><input id="f-nom" autocomplete="name" value="${esc(moi.nom || '')}" required>
+      <label for="f-tel">Téléphone <small>(WhatsApp si possible)</small></label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" value="${esc(moi.tel || '')}" placeholder="0470 12 34 56" required>
+      <label for="f-mail">E-mail <small>(facultatif)</small></label><input id="f-mail" type="email" inputmode="email" autocomplete="email" value="${esc(moi.email || '')}" autocapitalize="off">
+      <div class="deux"><div><label for="f-pers">Vous serez</label><select id="f-pers">${[1, 2, 3, 4].map(n => `<option value="${n}"${n === (moi.pers || 1) ? ' selected' : ''}>${n === 1 ? '1 (cours individuel)' : n + ' personnes'}</option>`).join('')}</select></div>
+      <div><label for="f-niv">Niveau</label><select id="f-niv">${NIVEAUX.map(n => `<option${n === moi.niveau ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div></div>
+      <div id="f-form-l"><label>Formule</label><div class="formules" id="f-formules"></div><div id="f-seances"></div></div>
+      <label for="f-msg">Un message ? <small>(facultatif)</small></label><textarea id="f-msg" placeholder="Ex. je voudrais travailler le smash"></textarea>
+      <div class="piege" aria-hidden="true"><label>Ne pas remplir<input id="f-piege" tabindex="-1" autocomplete="off"></label></div>
+      <p class="err" id="f-err"></p>
+      <button class="go" id="f-ok">Envoyer ma demande</button>
+    </form>`;
+  $('fond').hidden = false; document.body.style.overflow = 'hidden';
+  $('x').onclick = fermer;
+  const formules = () => {
+    const t = tarifDe(+$('f-pers').value), was = (document.querySelector('[name=f-formule]:checked') || {}).value || moi.formule || 'seance';
+    if (!t) { $('f-form-l').hidden = true; return; }
+    const par = +$('f-pers').value > 1 ? ' par personne' : '';
+    $('f-formules').innerHTML = `<label><input type="radio" name="f-formule" value="seance" ${was !== 'cycle' ? 'checked' : ''}><span>Une séance<small>${euro(t.prix)}${par}</small></span></label>` +
+      (t.cycle && t.prixCycle ? `<label><input type="radio" name="f-formule" value="cycle" ${was === 'cycle' ? 'checked' : ''}><span>Forfait ${t.cycle} séances<small>${euro(t.prixCycle)}${par}, soit ${euro(t.prixCycle / t.cycle)} la séance. Ce cours est le 1er.</small></span></label>` : '');
+  };
+  // Forfait : la liste des séances. Au départ, le même jour et la même heure les semaines suivantes (si ouverts et libres).
+  let seances = null, ajout = false;
+  const libresTous = () => (G.creneaux || []).filter(x => !x.pris && (x.d > d || (x.d === d && x.h !== h)));
+  const chevauche = (a, b) => a.d === b.d && Math.abs(minDe(a.h) - minDe(b.h)) < duree;
+  const nbCycle = () => { const t = tarifDe(+$('f-pers').value); return (t && t.cycle) || 10; };
+  const auto = () => {
+    const L = [{d, h}], n = nbCycle();
+    for (let k = 1; L.length < n && k <= (G.semainesCycle || 14); k++) { const d2 = ajJ(d, 7 * k), c = (G.creneaux || []).find(x => x.d === d2 && x.h === h); if (c && !c.pris) L.push({d: d2, h}); }
+    return L;
+  };
+  const txtS = x => { const t = dLong(x.d) + ' · ' + hTxt(x.h); return t[0].toUpperCase() + t.slice(1); };
+  const dessinerSeances = () => {
+    const cyc = (document.querySelector('[name=f-formule]:checked') || {}).value === 'cycle';
+    if (!cyc) { $('f-seances').innerHTML = ''; return; }
+    if (!seances) seances = auto();
+    const n = nbCycle(), manque = n - seances.length;
+    seances.sort((a, b) => (a.d + a.h).localeCompare(b.d + b.h));
+    let x = `<div class="seances"><h4><span>📅 Tes ${n} séances (${seances.length}/${n})</span>${seances.length > 1 ? '<button type="button" class="petit" id="s-auto">↺ Recommencer</button>' : ''}</h4><ol>` +
+      seances.map((y, i) => `<li>${esc(txtS(y))}${y.d === d && y.h === h ? ' <small>(1er cours)</small>' : ` <button type="button" data-sx="${i}" aria-label="Retirer">✕</button>`}</li>`).join('') + '</ol>';
+    const libres = libresTous().filter(y => !seances.some(z => chevauche(y, z)));
+    if (manque > 0) x += `<p class="manque">${seances.length === 1 && !libres.length ? 'Les semaines suivantes ne sont pas encore ouvertes.' : seances.length < 2 ? 'Les ' + JOURSL[jourDe(d).getDay()] + 's suivants à ' + hTxt(h) + ' ne sont pas libres.' : 'Il manque ' + manque + ' séance' + (manque > 1 ? 's' : '') + '.'} ${libres.length ? 'Choisis d\'autres créneaux libres :' : (G.prof || 'Le prof') + ' complétera les autres dates avec toi.'}</p>`;
+    if (manque > 0 && libres.length) {
+      if (!ajout) x += '<button type="button" class="petit" id="s-plus" style="margin-top:6px">+ Ajouter des créneaux</button>';
+      else { let jr = ''; x += '<div class="choix">' + libres.slice(0, 120).map(y => { const t = (y.d !== jr ? `<div class="jr">${esc(dLong(y.d))}</div>` : ''); jr = y.d; return t + `<button type="button" data-sa="${y.d}|${y.h}">${hTxt(y.h)}</button>`; }).join('') + '</div>'; }
+    }
+    $('f-seances').innerHTML = x + '</div>';
+    $('f-seances').querySelectorAll('[data-sx]').forEach(b => b.onclick = () => { seances.splice(+b.dataset.sx, 1); dessinerSeances(); });
+    $('f-seances').querySelectorAll('[data-sa]').forEach(b => b.onclick = () => { const [dd, hh] = b.dataset.sa.split('|'); seances.push({d: dd, h: hh}); dessinerSeances(); });
+    if ($('s-plus')) $('s-plus').onclick = () => { ajout = true; dessinerSeances(); };
+    if ($('s-auto')) $('s-auto').onclick = () => { seances = auto(); ajout = false; dessinerSeances(); };
+  };
+  const formules0 = formules;
+  const formules2 = () => { formules0(); seances = null; dessinerSeances(); $('f-formules').querySelectorAll('input').forEach(i => i.onchange = dessinerSeances); };
+  formules2(); $('f-pers').onchange = formules2;
+  setTimeout(() => (moi.nom ? $('f-msg') : $('f-nom')).focus(), 50);
+  $('f').onsubmit = async e => {
+    e.preventDefault();
+    const o = {a: 'demande', date: d, debut: h, nom: $('f-nom').value.trim(), tel: $('f-tel').value.trim(), email: $('f-mail').value.trim(),
+      pers: +$('f-pers').value, niveau: $('f-niv').value === NIVEAUX[0] ? '' : $('f-niv').value, msg: $('f-msg').value.trim(), piege: $('f-piege').value, formule: (document.querySelector('[name=f-formule]:checked') || {}).value === 'cycle' ? 'cycle' : 'seance'};
+    if (o.formule === 'cycle' && seances) o.seances = seances.map(x => ({d: x.d, h: x.h}));
+    const err = t => { $('f-err').textContent = t; };
+    if (o.nom.length < 2) return err('Indique ton prénom et ton nom.');
+    if (o.tel.replace(/\D/g, '').length < 8) return err('Indique un numéro de téléphone complet.');
+    if (o.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o.email)) return err('Cette adresse e-mail ne semble pas complète.');
+    ls.set('padel-resa:moi', {nom: o.nom, tel: o.tel, email: o.email, pers: o.pers, niveau: o.niveau, formule: o.formule});
+    $('f-ok').disabled = true; $('f-ok').textContent = 'Envoi…'; err('');
+    try {
+      const r = await fetch(SCRIPT, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(o)});
+      const x = await r.json();
+      if (!x.ok) throw new Error(x.err || 'erreur');
+    } catch (ex) {
+      $('f-ok').disabled = false; $('f-ok').textContent = 'Envoyer ma demande';
+      const m = String(ex.message);
+      if (m === 'pris') { err('Ce créneau vient d\'être pris. Choisis-en un autre.'); setTimeout(() => { fermer(); charger(); }, 1800); }
+      else if (m === 'trop') err('Tu as déjà des demandes en attente : attends la réponse avant d\'en envoyer d\'autres.');
+      else if (m === 'creneau') { err('Ce créneau n\'est plus proposé. Choisis-en un autre.'); setTimeout(() => { fermer(); charger(); }, 1800); }
+      else if (m === 'ferme') err('Les demandes en ligne sont fermées pour le moment.');
+      else if (m === 'double') err('Deux de tes séances tombent en même temps : retires-en une.');
+      else if (m === 'telephone') err('Indique un numéro de téléphone complet.');
+      else if (m === 'email') err('Cette adresse e-mail ne semble pas complète.');
+      else err('La demande n\'est pas partie (connexion ?). Réessaie.');
+      return;
+    }
+    const prof = G.prof || 'le prof';
+    $('fen').innerHTML = `<div class="bravo"><div class="gros">🎾</div><h2 style="display:block">Demande envoyée !</h2>
+      <p>${esc(quand[0].toUpperCase() + quand.slice(1))}${o.formule === 'cycle' ? '<br>avec un forfait (ce cours est le 1er)' + (o.seances && o.seances.length > 1 ? ' : ' + o.seances.length + ' séances choisies' : '') : ''}</p><p>${esc(prof)} va regarder et te confirme le cours par ${o.email ? 'WhatsApp ou par e-mail' : 'WhatsApp ou par SMS'}.</p>
+      <button class="go" id="fini">OK</button></div>`;
+    $('fini').onclick = () => { fermer(); charger(); };
+    (o.seances || [{d, h}]).forEach(s2 => (G.creneaux || []).forEach(x => { if (x.d === s2.d && minDe(x.h) < minDe(s2.h) + (G.duree || 60) && minDe(s2.h) < minDe(x.h) + (G.duree || 60)) x.pris = true; })); dessiner();
+  };
+}
+// Liste d'attente : le visiteur laisse son numéro, le prof le prévient si le créneau se libère
+function attente(d, h) {
+  const moi = ls.get('padel-resa:moi') || {}, duree = G.duree || 60, prof = G.prof || 'le prof';
+  const quand = dLong(d) + ' · ' + hTxt(h) + ' – ' + hTxt(hDe(minDe(h) + duree));
+  $('fen').innerHTML = `<h2><span>🔔 M'avertir si ça se libère</span><button type="button" id="x" aria-label="Fermer">✕</button></h2>
+    <div class="quand" style="background:var(--pris);border-color:var(--ligne)">📅 ${esc(quand[0].toUpperCase() + quand.slice(1))} · pas disponible</div>
+    <p style="margin:0 0 6px">Ce créneau est déjà pris. Laisse tes coordonnées : si le cours n'a finalement pas lieu, ${esc(prof)} te prévient en priorité par WhatsApp ou e-mail.</p>
+    <form id="f" novalidate>
+      <label for="f-nom">Prénom et nom</label><input id="f-nom" autocomplete="name" value="${esc(moi.nom || '')}" required>
+      <label for="f-tel">Téléphone <small>(WhatsApp si possible)</small></label><input id="f-tel" type="tel" inputmode="tel" autocomplete="tel" value="${esc(moi.tel || '')}" placeholder="0470 12 34 56" required>
+      <label for="f-mail">E-mail <small>(facultatif)</small></label><input id="f-mail" type="email" inputmode="email" autocomplete="email" value="${esc(moi.email || '')}" autocapitalize="off">
+      <div class="piege" aria-hidden="true"><label>Ne pas remplir<input id="f-piege" tabindex="-1" autocomplete="off"></label></div>
+      <p class="err" id="f-err"></p>
+      <button class="go" id="f-ok">🔔 M'avertir</button>
+    </form>`;
+  $('fond').hidden = false; document.body.style.overflow = 'hidden';
+  $('x').onclick = fermer;
+  $('f').onsubmit = async e => {
+    e.preventDefault();
+    const o = {a: 'attente', date: d, debut: h, nom: $('f-nom').value.trim(), tel: $('f-tel').value.trim(), email: $('f-mail').value.trim(), piege: $('f-piege').value};
+    const err = t => { $('f-err').textContent = t; };
+    if (o.nom.length < 2) return err('Indique ton prénom et ton nom.');
+    if (o.tel.replace(/\D/g, '').length < 8) return err('Indique un numéro de téléphone complet.');
+    if (o.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o.email)) return err('Cette adresse e-mail ne semble pas complète.');
+    ls.set('padel-resa:moi', Object.assign({}, moi, {nom: o.nom, tel: o.tel, email: o.email}));
+    $('f-ok').disabled = true; $('f-ok').textContent = 'Envoi…'; err('');
+    try {
+      const r = await fetch(SCRIPT, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(o)});
+      const x = await r.json(); if (!x.ok) throw new Error(x.err || 'erreur');
+    } catch (ex) {
+      $('f-ok').disabled = false; $('f-ok').textContent = '🔔 M\'avertir';
+      const m = String(ex.message);
+      if (m === 'libre') { err('Bonne nouvelle : ce créneau vient de se libérer ! Tu peux le demander.'); setTimeout(() => { fermer(); charger(); }, 1800); }
+      else if (m === 'trop') err('Tu es déjà sur plusieurs listes d\'attente.');
+      else if (m === 'creneau') err('Ce créneau n\'est plus proposé.');
+      else err('Ça n\'est pas parti (connexion ?). Réessaie.');
+      return;
+    }
+    $('fen').innerHTML = `<div class="bravo"><div class="gros">🔔</div><h2 style="display:block">C'est noté !</h2>
+      <p>${esc(quand[0].toUpperCase() + quand.slice(1))}</p><p>Si ce créneau se libère, ${esc(prof)} te prévient en priorité.</p><button class="go" id="fini">OK</button></div>`;
+    $('fini').onclick = fermer;
+  };
+}
+charger();
+})();
+</script>
+</body>
+</html>

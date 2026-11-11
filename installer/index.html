@@ -56,6 +56,9 @@ a.grand span{display:block;margin-top:4px;font-size:14px;opacity:.92}
 .choix input{width:20px;height:20px;accent-color:var(--accent)}
 .choix img{width:30px;height:30px;border-radius:8px}
 .cache-appli{display:none!important}
+.avec-pastille{position:relative}
+.nb-urgent{position:absolute;top:2px;left:calc(50% + 18px);min-width:24px;height:24px;padding:0 6px;box-sizing:border-box;border-radius:12px;background:#e53935;color:#fff;font:700 14px/24px system-ui,sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px var(--bg)}
+@media (min-width:640px){.nb-urgent{left:calc(50% + 24px)}}
 #installe-bloc{margin-top:8px!important}
 h2{font-size:17px;margin:30px 0 8px}
 details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
@@ -89,11 +92,13 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
   <a href="jdb/#verger/mois">🍎 Verger</a><a href="jdb/#potager/mois">🥕 Potager</a><a href="jdb/#ornement/mois">🌸 Ornement</a><a href="terrain/">🚜 Terrain</a><a href="jdb/#projets">🏗️ Projets</a><a href="jdb/#pensees">💬 Pensées</a>
 </div>
 <div class="petites">
-  <a href="todo/"><img src="icones/todo-192.png" alt=""><b>To do</b></a>
+  <a href="todo/" class="avec-pastille"><img src="icones/todo-192.png" alt=""><i id="nb-urgent" class="nb-urgent" hidden></i><b>To do</b></a>
   <a href="courses/"><img src="icones/courses-192.png" alt=""><b>Courses</b></a>
   <a href="mdp/"><img src="icones/mdp-192.png" alt=""><b>Mots de passe</b></a>
   <a href="le-fist/"><img src="icones/le-fist-192.png" alt=""><b>Le Fist</b></a>
   <a href="notes/"><img src="icones/notes-192.png" alt=""><b>Notes</b></a>
+  <a href="renfo/"><img src="icones/renfo-192.png" alt=""><b>Renfo</b></a>
+  <a href="padel/"><img src="padel/icones/padel-192.png" alt=""><b>Padel</b></a>
 </div>
 
 <div class="pied"><button type="button" id="b-param" aria-expanded="false">⚙️ Paramètres</button></div>
@@ -255,6 +260,29 @@ if ('serviceWorker' in navigator) {
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && navigator.onLine) reg.update().catch(() => {}); });
   }).catch(() => {});
 }
+</script>
+<script>
+// Pastille rouge sur la tuile To do : nombre de tâches urgentes pas encore faites (lieux ouverts sur cet appareil)
+(() => {
+  const chalet = l => /^(maxime|camille-chalet|commun-chalet)$/.test(l);
+  function maj() {
+    let n = 0;
+    try {
+      const T = JSON.parse(localStorage.getItem('maison:todo') || '{}');
+      Object.values(T).forEach(t => {
+        if (!t || t.del || t.type !== 'tache' || t.fait || t.niveau !== 'urgent') return;
+        if (!Maison.lieu.ouvert(chalet(t.liste || 'commun') ? 'chalet' : 'maison')) return;
+        n++;
+      });
+    } catch (e) {}
+    const b = document.getElementById('nb-urgent');
+    b.textContent = n > 99 ? '99+' : n; b.hidden = !n;
+    b.setAttribute('aria-label', n + ' urgent' + (n > 1 ? 's' : ''));
+  }
+  maj();
+  addEventListener('pageshow', maj); addEventListener('focus', maj); addEventListener('storage', maj);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) maj(); });
+})();
 </script>
 </body>
 </html>

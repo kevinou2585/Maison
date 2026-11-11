@@ -19,11 +19,19 @@ const J = (() => {
   // s surveillance, t traitements, pc conseils potager, pl tableau légumes, cc conseils compost, ct problèmes compost
   const CLE = {c: (a, i, m) => m + '.' + i, p: (a, i, m) => m + '.' + i, f: a => a[1], o: a => a[1], lg: a => a[0], r: (a, i) => i, s: a => a[0], t: a => a[0], pc: (a, i) => i, pl: a => a[0], cc: (a, i) => i, ct: a => a[0]};
   const BASE = () => ({f: F, o: O, lg: LG, r: RF, s: SV, t: TR, pc: PGC, pl: PLT, cc: CMC, ct: CTT});
+  // Fiches fruitiers : cases 8 et 9 = conservation et meilleur moment pour manger (conservation.js),
+  // tant que Kevin ne les a pas écrites lui-même dans la fiche.
+  const cons = (kind, a) => {
+    if (kind !== 'f' || a[8] != null) return a;
+    const c = (typeof CONS !== 'undefined' && CONS[a[1]]) || ['', ''], b = a.slice();
+    while (b.length < 8) b.push('');
+    return b.concat(c);
+  };
   function liste(kind, m) {
     const u = U(), o = [];
     const base = kind === 'c' ? M[m][3] : kind === 'p' ? PM[m][1] : BASE()[kind];
-    base.forEach((a, i) => { const id = kind + ':' + CLE[kind](a, i, m); if (!u.del[id]) o.push({id, a: u.ed[id] || a, u: 0, k: kind}); });
-    (u.add[kind] || []).forEach(x => { if (u.del[x.id] || ((kind === 'c' || kind === 'p') && x.m != m)) return; o.push({id: x.id, a: u.ed[x.id] || x.a, u: 1, k: kind, m: x.m}); });
+    base.forEach((a, i) => { const id = kind + ':' + CLE[kind](a, i, m); if (!u.del[id]) o.push({id, a: cons(kind, u.ed[id] || a), u: 0, k: kind}); });
+    (u.add[kind] || []).forEach(x => { if (u.del[x.id] || ((kind === 'c' || kind === 'p') && x.m != m)) return; o.push({id: x.id, a: cons(kind, u.ed[x.id] || x.a), u: 1, k: kind, m: x.m}); });
     return o;
   }
   function modifier(id, a) { const u = U(); u.ed[id] = a; ecrit(UK, u); }

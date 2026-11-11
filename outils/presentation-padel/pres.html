@@ -1,0 +1,212 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>J'Padel · Présentation</title>
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,'DejaVu Sans',sans-serif;color:#14212b;font-size:11pt;line-height:1.45}
+.page{width:210mm;height:297mm;padding:16mm 15mm 14mm;position:relative;overflow:hidden;page-break-after:always;background:#fff}
+.page:last-child{page-break-after:auto}
+.pied{position:absolute;bottom:8mm;left:15mm;right:15mm;display:flex;justify-content:space-between;font-size:8.5pt;color:#7a8a96;border-top:1px solid #e1e8ed;padding-top:3mm}
+h1{font-family:'Inter Display',Inter;font-size:30pt;line-height:1.05;margin:0 0 4mm;letter-spacing:-.5px}
+h2{font-family:'Inter Display',Inter;font-size:20pt;margin:0 0 2mm;letter-spacing:-.3px;color:#0b4f68}
+.num{display:inline-block;background:#d6ff3c;color:#0b2230;border-radius:6px;padding:0 6px;margin-right:6px;font-size:13pt;vertical-align:4px}
+.chapo{font-size:12pt;color:#41535f;margin:0 0 6mm}
+.tels{display:flex;gap:6mm;justify-content:center;margin:5mm 0}
+.tel{width:56mm;text-align:center;font-size:9pt;color:#41535f}
+.tel img{width:100%;border-radius:7mm;border:2.2mm solid #111;box-shadow:0 2mm 5mm rgba(0,0,0,.18);display:block;margin-bottom:2.5mm}
+.pc img{width:100%;border-radius:3mm;border:1px solid #cfd9df;box-shadow:0 1.5mm 4mm rgba(0,0,0,.12)}
+.pc{margin:4mm 0;font-size:9pt;color:#41535f;text-align:center}
+ul.pts{margin:0;padding:0;list-style:none}
+ul.pts li{padding:1.6mm 0 1.6mm 7mm;position:relative}
+ul.pts li::before{content:'';position:absolute;left:0;top:3.6mm;width:3mm;height:3mm;border-radius:50%;background:#0b6e8f}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:4mm}
+.carte{background:#f2f6f8;border-radius:4mm;padding:4mm 5mm}
+.carte b{display:block;font-size:12pt;margin-bottom:1mm}
+.chemin{background:#e2f1f6;border-radius:3mm;padding:2.5mm 4mm;font-size:10pt;margin-top:3mm}
+.couv{background:radial-gradient(circle at 75% 20%,#1b6f8f 0,#0b2a3a 55%,#071a24 100%);color:#fff}
+.couv h1{font-size:40pt;color:#fff;margin-top:6mm}
+.couv .chapo{color:#cfe3ec;font-size:14pt}
+.couv .logo{width:66mm;height:66mm;border-radius:14mm;box-shadow:0 0 0 1.5mm #d6ff3c,0 4mm 12mm rgba(0,0,0,.4);margin:18mm 0 8mm}
+.couv .cle{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm;margin-top:12mm}
+.couv .cle div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:4mm;padding:5mm;font-size:10.5pt;color:#e6f1f5}
+.couv .cle b{display:block;font-size:13pt;color:#d6ff3c;margin-bottom:1.5mm}
+.couv .adr{position:absolute;bottom:16mm;left:15mm;right:15mm;font-size:10.5pt;color:#cfe3ec}
+.couv .adr code{color:#d6ff3c;font-family:Inter;font-weight:600}
+table.t{width:100%;border-collapse:collapse;margin-top:3mm;font-size:10.5pt}
+table.t th,table.t td{padding:2.4mm 3mm;border-bottom:1px solid #e1e8ed;text-align:left}table.t th{background:#0b4f68;color:#fff}
+table.t td.n,table.t th.n{text-align:right}
+.etapes{counter-reset:e;list-style:none;padding:0;margin:4mm 0}
+.etapes li{counter-increment:e;padding:3mm 0 3mm 13mm;position:relative;border-bottom:1px solid #e9eef1}
+.etapes li::before{content:counter(e);position:absolute;left:0;top:2.6mm;width:9mm;height:9mm;border-radius:50%;background:#0b6e8f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+</style></head><body>
+
+<section class="page couv">
+  <img class="logo" src="img/icone.png">
+  <h1>J'Padel<br>l'appli de Jean</h1>
+  <p class="chapo">Tout ton métier de prof de padel dans ta poche : l'agenda, les élèves, les forfaits, l'argent et une page où tes élèves réservent eux-mêmes leurs cours.</p>
+  <div class="cle">
+    <div><b>📅 Organisé</b>Agenda de la journée, de la semaine et du mois. Cours privés, académie, rendez-vous.</div>
+    <div><b>💶 Payé</b>Forfaits, paiements, qui doit quoi. Tes tarifs calculent les prix tout seuls.</div>
+    <div><b>🌐 Réservé</b>Tes élèves choisissent un créneau libre sur ta page et tu acceptes en un geste.</div>
+  </div>
+  <div class="adr">Ton appli : <code>beapp.be/jpadel/coach/</code><br>Ta page de réservation (à partager) : <code>beapp.be/jpadel/</code></div>
+</section>
+
+<section class="page">
+  <h2>En bref</h2>
+  <p class="chapo">Une appli qui s'installe sur ton téléphone comme une vraie appli, marche même sans internet, et garde une copie de tout dans ta feuille Google.</p>
+  <div class="grille">
+    <div class="carte"><b>📅 Agenda</b>Tes cours, l'académie des jeunes et tes rendez-vous. Ajouter, déplacer, répéter chaque semaine, annuler.</div>
+    <div class="carte"><b>👥 Élèves</b>Une fiche par élève : téléphone, niveau, cours donnés et à venir, forfaits, paiements, suivi.</div>
+    <div class="carte"><b>💶 Forfaits et paiements</b>Vends un cycle de 10 séances, encaisse en cash, virement, Payconiq ou Bancontact. Les séances se décomptent seules.</div>
+    <div class="carte"><b>📊 Compte</b>Leçons données, heures, argent encaissé, qui doit encore payer, forfaits presque finis.</div>
+    <div class="carte"><b>🌐 Page de réservation</b>Une page internet avec tes créneaux libres et tes tarifs. Les demandes arrivent dans l'appli et par e-mail.</div>
+    <div class="carte"><b>💬 Messages tout prêts</b>Rappel de cours, retard, réponse à une demande : WhatsApp, SMS ou e-mail en un geste.</div>
+    <div class="carte"><b>📝 Comptes rendus</b>Dicte à voix haute ce que vous avez travaillé. Ça suit l'élève de semaine en semaine.</div>
+    <div class="carte"><b>☁️ Sauvegarde</b>Tout est copié dans ta feuille Google, téléchargeable en Excel. Change de téléphone sans rien perdre.</div>
+  </div>
+  <h3 style="margin:8mm 0 2mm">📲 L'installer sur ton téléphone</h3>
+  <div class="grille" style="margin-top:0"><div class="carte"><b>iPhone</b>Ouvre l'adresse dans <b>Safari</b> › bouton Partager ⬆️ › « Sur l'écran d'accueil ».</div><div class="carte"><b>Android</b>Ouvre l'adresse dans <b>Chrome</b> › ⋮ › « Installer l'application ».</div></div>
+  <p style="margin-top:4mm">À la première ouverture, entre ton <b>code d'entrée</b>. Tu peux le changer quand tu veux dans ⚙️ Réglages.</p>
+  <div class="pied"><span>J'Padel · présentation</span><span>2</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">1</span>L'agenda</h2>
+  <p class="chapo">Ta semaine d'un coup d'œil. Chaque couleur dit combien de joueurs sont sur le terrain. En vert pointillé : les créneaux ouverts sur ta page de réservation. Rayé : l'académie (🎓) et tes autres occupations (📌).</p>
+  <div class="pc"><img src="img/pc-semaine.jpg"><br>Vue semaine sur ordinateur : on glisse un cours à la souris pour le déplacer.</div>
+  <ul class="pts">
+    <li><b>Jour, Semaine, Mois</b> : choisis ta vue. ◀ ▶ pour avancer, « Aujourd'hui » pour revenir. L'agenda n'a pas de fin.</li>
+    <li><b>En bas de la semaine</b> : nombre de cours, heures de terrain, valeur des cours et créneaux encore libres.</li>
+  </ul>
+  <div class="pied"><span>J'Padel · présentation</span><span>3</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">2</span>Ajouter dans l'agenda</h2>
+  <p class="chapo">Touche une heure libre : trois choix. Un <b>cours privé</b> avec 1 à 4 élèves, l'<b>académie</b> des jeunes, ou <b>autre chose</b> (rendez-vous, réunion, match…).</p>
+  <div class="tels">
+    <div class="tel"><img src="img/tel-ajout.jpg">Cours privé : élèves, jour, heure, durée. Le prix se met tout seul.</div>
+    <div class="tel"><img src="img/tel-academie.jpg">Académie : répétée chaque semaine, jusqu'à 40 semaines (une saison).</div>
+    <div class="tel"><img src="img/tel-mois.jpg">Vue du mois : tout le planning d'un coup d'œil.</div>
+  </div>
+  <ul class="pts">
+    <li>Un cours qui revient chaque semaine ? Choisis « Répéter chaque semaine ». Chaque séance prend une place du forfait de l'élève.</li>
+    <li>Nouvel élève ? Ajoute-le directement depuis le cours, sans passer par l'onglet Élèves.</li>
+    <li>Deux choses en même temps ? L'appli te prévient.</li>
+  </ul>
+  <div class="pied"><span>J'Padel · présentation</span><span>4</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">3</span>Avant, pendant et après le cours</h2>
+  <p class="chapo">Touche un cours : tout ce qu'il faut est là.</p>
+  <div class="tels">
+    <div class="tel"><img src="img/tel-detail.jpg">Le cours : déplacer, modifier, rappel, retard, annuler ou « absent mais facturé ».</div>
+    <div class="tel"><img src="img/tel-retard.jpg">⏰ En retard ? Choisis les minutes : message WhatsApp tout prêt pour chaque élève.</div>
+    <div class="tel"><img src="img/tel-cr.jpg">📝 Compte rendu dicté à voix haute : le suivi de l'élève, cours après cours.</div>
+  </div>
+  <ul class="pts">
+    <li><b>💬 Rappel</b> : un message avec le jour, l'heure et le lieu s'ouvre dans WhatsApp.</li>
+    <li><b>Annuler (gratuit)</b> : le cours reste dans l'historique mais n'est pas compté, et le créneau redevient libre.</li>
+  </ul>
+  <div class="pied"><span>J'Padel · présentation</span><span>5</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">4</span>Les élèves</h2>
+  <p class="chapo">Tous tes élèves, avec ce qu'ils doivent, leur prochain cours et les séances encore à planifier.</p>
+  <div class="tels">
+    <div class="tel"><img src="img/tel-eleves.jpg">La liste : 🔎 chercher par nom ou par téléphone.</div>
+    <div class="tel"><img src="img/tel-fiche.jpg">La fiche : cours, forfaits (séances restantes), paiements, suivi.</div>
+  </div>
+  <ul class="pts">
+    <li><b>📄 Relevé PDF</b> : la liste de ses cours, forfaits et paiements (et le suivi si tu veux), à envoyer à l'élève ou aux parents.</li>
+    <li>Un élève arrête ? Range-le dans les <b>anciens élèves</b> : son historique est gardé.</li>
+    <li>Niveaux : Débutant, 50, 100, 200, 300, 400, 500, 700, 1000.</li>
+  </ul>
+  <div class="pied"><span>J'Padel · présentation</span><span>6</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">5</span>Forfaits, paiements et compte</h2>
+  <p class="chapo">Vends un cycle, encaisse, et vois tout de suite qui doit encore payer.</p>
+  <div class="tels">
+    <div class="tel"><img src="img/tel-forfait.jpg">Vendre un forfait : le prix se calcule avec tes tarifs (modifiable).</div>
+    <div class="tel"><img src="img/tel-paiement.jpg">Encaisser : Cash, Virement, Payconiq, Bancontact.</div>
+    <div class="tel"><img src="img/tel-compte.jpg">📊 Compte : leçons données, encaissé, qui doit payer.</div>
+  </div>
+  <ul class="pts">
+    <li>Les séances du forfait se décomptent toutes seules à chaque cours.</li>
+    <li><b>Forfaits presque finis</b> : l'appli te montre quand proposer un nouveau cycle (2 séances ou moins).</li>
+    <li>Période au choix : semaine, mois, mois passé, année, depuis le début.</li>
+  </ul>
+  <div class="pied"><span>J'Padel · présentation</span><span>7</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">6</span>Les tarifs</h2>
+  <p class="chapo">Tes prix par personne, pour une séance d'une heure. Dès 10 séances, c'est le prix du cycle. Tu les changes quand tu veux (📊 Compte › 💶 Tarifs).</p>
+  <table class="t"><tr><th>Formule</th><th class="n">1 séance</th><th class="n">Cycle de 10</th><th class="n">soit par séance</th></tr>
+    <tr><td>Individuel</td><td class="n">50 €</td><td class="n">450 €</td><td class="n">45 €</td></tr>
+    <tr><td>À 2 (par personne)</td><td class="n">30 €</td><td class="n">270 €</td><td class="n">27 €</td></tr>
+    <tr><td>À 3 (par personne)</td><td class="n">20 €</td><td class="n">180 €</td><td class="n">18 €</td></tr>
+    <tr><td>À 4 (par personne)</td><td class="n">15 €</td><td class="n">140 €</td><td class="n">14 €</td></tr></table>
+  <div class="tels" style="margin-top:7mm">
+    <div class="tel"><img src="img/tel-tarifs.jpg">« Proposer un prix » : combien de joueurs, combien de séances, et un message tout prêt à copier.</div>
+  </div>
+  <div class="pied"><span>J'Padel · présentation</span><span>8</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">7</span>La page de réservation (côté élève)</h2>
+  <p class="chapo">Une page internet à toi, sans code, à donner à tes élèves et futurs élèves. Ils voient tes créneaux libres et tes tarifs, et t'envoient une demande. Jamais le nom des autres : un créneau pris est juste « pas disponible ».</p>
+  <div class="tels">
+    <div class="tel"><img src="img/pub-agenda.jpg">Les créneaux libres de la semaine.</div>
+    <div class="tel"><img src="img/pub-form.jpg">La demande : nom, téléphone, e-mail, une séance ou un forfait.</div>
+    <div class="tel"><img src="img/pub-envoye.jpg">C'est envoyé : tu confirmes par WhatsApp ou SMS.</div>
+  </div>
+  <div class="chemin">👉 Adresse à partager : <b>beapp.be/jpadel/</b></div>
+  <div class="pied"><span>J'Padel · présentation</span><span>9</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">8</span>La page de réservation (côté prof)</h2>
+  <p class="chapo">C'est toi qui décides quand tu es disponible. Ouvre tes créneaux, reçois les demandes, accepte en un geste.</p>
+  <div class="pc" style="margin:2mm 0"><img src="img/pc-creneaux.jpg" style="height:78mm;object-fit:cover;object-position:top"><br>🟢 Créneaux : touche les heures pour les ouvrir ou les fermer. « Ouvrir plusieurs heures… » et « Copier la semaine d'avant » vont plus vite.</div>
+  <div class="tels" style="margin-top:2mm">
+    <div class="tel" style="width:44mm"><img src="img/tel-demande.jpg">📩 Une demande : ✅ Accepter (le cours va dans l'agenda) ou ❌ Refuser.</div>
+    <div class="tel" style="width:44mm"><img src="img/tel-partage.jpg">🔗 Envoyer ta page à un élève, ou à un numéro inconnu.</div>
+  </div>
+  <div class="pied"><span>J'Padel · présentation</span><span>10</span></div>
+</section>
+
+<section class="page">
+  <h2><span class="num">9</span>Réglages, sauvegarde et aide</h2>
+  <p class="chapo">Tout se règle dans ⚙️ en haut à droite. Une FAQ répond à toutes les questions, avec le chemin exact à suivre.</p>
+  <div class="tels">
+    <div class="tel"><img src="img/tel-reglages.jpg">⚙️ Réglages : ton prénom, tes heures, tes lieux, ta page de réservation, le code.</div>
+    <div class="tel"><img src="img/tel-faq.jpg">❓ FAQ : touche une question, la réponse et le chemin s'affichent.</div>
+  </div>
+  <ul class="pts">
+    <li><b>☁️ Le nuage en haut</b> : ✓ = tout est copié dans ta feuille Google (onglets Agenda, Élèves, Paiements, Forfaits, Tarifs, Demandes).</li>
+    <li><b>Plusieurs appareils</b> : téléphone et ordinateur, même code, tout se suit.</li>
+    <li><b>⬇️ Tout en Excel</b> et <b>💾 Sauvegarde (fichier)</b> à garder où tu veux.</li>
+  </ul>
+  <div class="pied"><span>J'Padel · présentation</span><span>11</span></div>
+</section>
+
+<section class="page">
+  <h2>Démarrer en 6 étapes</h2>
+  <p class="chapo">Un quart d'heure pour être prêt.</p>
+  <ol class="etapes">
+    <li><b>Installe l'appli</b> sur ton téléphone (Safari › Partager › Sur l'écran d'accueil) et entre ton code.</li>
+    <li><b>⚙️ Réglages › Le prof</b> : ton prénom, tes heures de cours, tes clubs.</li>
+    <li><b>📊 Compte › 💶 Tarifs</b> : vérifie tes prix.</li>
+    <li><b>📅 Agenda</b> : mets l'académie (🎓, répétée chaque semaine) et tes cours déjà prévus.</li>
+    <li><b>📅 Agenda › 🟢 Créneaux</b> : ouvre les heures où tu veux bien donner cours.</li>
+    <li><b>🔗 Envoyer ma page de réservation</b> (en bas de l'agenda) à tes élèves, ou mets le lien sur Instagram et Facebook.</li>
+  </ol>
+  <div class="carte" style="margin-top:8mm"><b>Une question ?</b>⚙️ Réglages › ❓ FAQ : plus de 80 questions, avec à chaque fois le chemin à suivre dans l'appli.</div>
+  <div class="pied"><span>J'Padel · présentation</span><span>12</span></div>
+</section>
+</body></html>
