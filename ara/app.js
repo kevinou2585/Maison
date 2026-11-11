@@ -105,13 +105,16 @@
 
   function entete(titre, sous, retour) {
     $('titre').textContent = titre; $('sous-titre').textContent = sous || '';
-    $('retour').hidden = !retour; $('logo').hidden = !!retour;
-    $('retour').onclick = () => { location.hash = retour; };
+    const versHappiness = retour === '../';
+    $('retour').hidden = !retour; $('logo').hidden = !!retour && !versHappiness;
+    $('retour').setAttribute('aria-label', versHappiness ? 'Revenir à Happiness' : 'Retour');
+    $('retour').textContent = versHappiness ? '🏠' : '‹';
+    $('retour').onclick = () => { if (versHappiness) location.href = '../'; else location.hash = retour; };
   }
 
   function accueil() {
     jour = auj();
-    entete('ARA', 'Suivi des élèves');
+    entete('ARA', 'Suivi des élèves', '../');
     const p = perActuelle(), P = periodes(), per = P[p];
     vue.innerHTML = `
       <p class="periode-du-jour">Aujourd'hui : <b>${esc(joli(auj()))}</b> · période en cours : <b>${esc(per.nom)}</b></p>
