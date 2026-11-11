@@ -181,9 +181,10 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px}
     catch (e) { dire('⚠️ ' + e.message); }
     occupe(false);
   };
-  $('s-rest').onclick = async () => { if (await verifier()) $('s-fich').click(); };
+  // iPhone : le choix du fichier doit s'ouvrir tout de suite au toucher (pas après une attente), le code est vérifié ensuite
+  $('s-rest').onclick = () => { if (!$('s-code').value.trim()){ verifier(); return; } $('s-fich').click(); };
   $('s-fich').onchange = async () => {
-    const f = $('s-fich').files[0]; $('s-fich').value = ''; if (!f) return;
+    const f = $('s-fich').files[0]; $('s-fich').value = ''; if (!f) return; if (!(await verifier())) return;
     if (!confirm('Remettre les données de « ' + f.name + ' » ? Ce qui est plus récent dans l\'appli est gardé.')) return;
     occupe(true);
     try { const r = await Sauvegarde.restaurer(f, dire); dire(`✓ Sauvegarde du ${new Date(r.date).toLocaleDateString('fr-BE')} remise : ${r.n} éléments${r.drive ? ', aussi envoyés au Drive' : ". Relie cet appareil au Drive pour qu'ils y repartent"}.`); }
