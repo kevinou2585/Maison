@@ -5,7 +5,7 @@
  * Installation (une seule fois, sur l'ordinateur) :
  * 1. Crée une feuille Google vide sur ton Drive (sheets.new), nomme-la « ARA ».
  * 2. Menu Extensions > Apps Script. Efface tout et colle ce fichier.
- * 3. Choisis un mot de passe à la ligne CLE ci-dessous (à la place de change-moi), puis 💾 Enregistrer.
+ * 3. Ligne CLE ci-dessous : mets LE MÊME mot de passe que dans le script de Happiness (à la place de change-moi), puis 💾 Enregistrer.
  * 4. Déployer > Nouveau déploiement > roue dentée > « Application Web » :
  *      Exécuter en tant que : Moi ; Qui a accès : Tout le monde. Déployer, puis autorise l'accès.
  * 5. Copie l'adresse qui finit par /exec. Dans ARA : ⚙️ Réglages > Feuille Google : colle l'adresse et le mot de passe.

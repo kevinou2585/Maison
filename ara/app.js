@@ -14,6 +14,14 @@
   };
   const QS = Object.keys(QUOI);
   const CFG = 'ara:drive';   // adresse + mot de passe de la feuille Google ARA (à part de Happiness)
+  // Adresse /exec de la feuille ARA de kevin. Le mot de passe (ligne CLE) est le même que celui de Happiness :
+  // un appareil où Happiness est déjà reliée se relie tout seul à ARA.
+  const SCRIPT = 'https://script.google.com/macros/s/AKfycbzLKw-bk5YQz97B-7IU7OohJKpWbpl9blIiPw7S9ve8BnvcYLyZw--95yHaKTy9mMuL/exec';
+  const cfgHappiness = () => { try { return JSON.parse(localStorage.getItem('maison:drive')) || {}; } catch (e) { return {}; } };
+  try {
+    const c = JSON.parse(localStorage.getItem(CFG) || '{}'), h = cfgHappiness();
+    if (SCRIPT && !(c.url && c.cle) && h.cle) localStorage.setItem(CFG, JSON.stringify({url: SCRIPT, cle: h.cle}));
+  } catch (e) {}
 
   // ---------- Dates ----------
   const deux = n => String(n).padStart(2, '0');
@@ -301,14 +309,14 @@
       <div class="carte">
         ${ok ? '<p style="margin-top:0"><b>✅ Ce téléphone est relié à la feuille ARA.</b><br><span class="note">Chaque croix y part toute seule (onglets « ARA bilan » et « ARA journal »).</span></p>' : '<p class="note" style="margin-top:0">Les croix restent dans ce téléphone. Relie-le à la feuille Google « ARA » pour les garder aussi sur le Drive (une feuille rien que pour ARA).</p>'}
         <details ${ok ? '' : 'open'}><summary style="font-weight:600;cursor:pointer">${ok ? 'Modifier ou délier' : 'Relier ce téléphone'}</summary>
-          <label class="l" for="d-url">Adresse du script</label><input class="champ" id="d-url" value="${esc(c.url || '')}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
-          <label class="l" for="d-cle">Mot de passe (ligne CLE du script)</label><input class="champ" id="d-cle" value="${esc(c.cle || '')}" autocapitalize="off" spellcheck="false" autocomplete="off">
+          <label class="l" for="d-url">Adresse du script</label><input class="champ" id="d-url" value="${esc(c.url || SCRIPT)}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
+          <label class="l" for="d-cle">Mot de passe (le même que celui du Drive de Happiness)</label><input class="champ" id="d-cle" value="${esc(c.cle || cfgHappiness().cle || '')}" autocapitalize="off" spellcheck="false" autocomplete="off">
           <div class="btns"><button class="btn go" id="d-ok" type="button">Relier</button>${ok ? '<button class="btn" id="d-non" type="button">Délier ce téléphone</button>' : ''}</div>
           <p class="note" id="d-etat"></p>
           <details><summary style="cursor:pointer">Première fois : créer la feuille (sur l'ordinateur)</summary><ol class="note">
             <li>Ouvre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> et nomme la feuille « ARA ».</li>
             <li>Menu <b>Extensions › Apps Script</b>. Efface tout et colle <a href="google/" target="_blank">ce script</a> (bouton « Copier »).</li>
-            <li>Ligne <code>const CLE</code> : remplace <code>change-moi</code> par ton mot de passe, puis 💾.</li>
+            <li>Ligne <code>const CLE</code> : remplace <code>change-moi</code> par <b>le même mot de passe que Happiness</b>, puis 💾.</li>
             <li><b>Déployer › Nouveau déploiement</b>, roue dentée › <b>Application Web</b>. Exécuter en tant que : <b>Moi</b>. Qui a accès : <b>Tout le monde</b>. Déployer, puis autorise l'accès.</li>
             <li>Copie l'adresse qui finit par <code>/exec</code> et colle-la ici avec le mot de passe. Pareil sur chaque téléphone.</li></ol></details>
         </details>
