@@ -121,9 +121,21 @@
     $('retour').onclick = () => { if (versHappiness) location.href = '../'; else location.hash = retour; };
   }
 
+  // Accueil d'ARA : deux sous-applis (le suivi des élèves et le cahier de matière, sur beapp.be/cahier/)
+  function hub() {
+    entete('ARA', 'Mes cours de maths', '../');
+    const n = classes().reduce((t, c) => t + eleves(c).filter(e => total(aNoter(e.id)) > 0).length, 0);
+    vue.innerHTML = `
+      <div class="hub">
+        <a href="#suivi"><span class="ico">📋</span><span><b>Suivi des élèves</b><small>Prépa, perturbe, pas son cours · période ${esc(periodes()[perActuelle()].nom)}${n ? ' · ' + n + ' à noter' : ''}</small></span></a>
+        <a href="../../cahier/"><span class="ico">📘</span><span><b>Cahier de matière</b><small>Le programme et le PDF du cahier</small></span></a>
+      </div>
+      <div class="btns"><a class="btn" href="#reglages" style="text-decoration:none">⚙️ Réglages</a><a class="btn" href="../" style="text-decoration:none">🏠 Happiness</a></div>`;
+  }
+
   function accueil() {
     jour = auj();
-    entete('ARA', 'Suivi des élèves', '../');
+    entete('Suivi des élèves', 'ARA', '#');
     const p = perActuelle(), P = periodes(), per = P[p];
     vue.innerHTML = `
       <p class="periode-du-jour">Aujourd'hui : <b>${esc(joli(auj()))}</b> · période en cours : <b>${esc(per.nom)}</b></p>
@@ -134,7 +146,7 @@
       ${S.tous('eleve').length ? '' : `<div class="carte" style="border-color:var(--prepa)"><b>📋 Les listes d'élèves arrivent de la feuille ARA</b><p class="note" style="margin:4px 0 0">${(() => { try { const c = JSON.parse(localStorage.getItem(CFG) || '{}'); return c.url && c.cle; } catch (e) { return false; } })() ? 'Un instant, elles se téléchargent…' : 'Relie ce téléphone au Drive (⚙️ Réglages › Feuille Google « ARA ») pour les recevoir.'}</p></div>`}
       <p class="note" style="margin-top:14px">Touche une classe, puis les boutons à côté de chaque élève :<br>📝 n'a pas fait sa prépa · 📢 a perturbé le cours · 📚 n'a pas son cours.<br>Touche le nom d'un élève pour voir tout son récapitulatif.</p>
       ${p < NOMS_PER.length - 1 ? `<button class="btn" id="fin-per" type="button" style="width:100%;margin-top:6px">🏁 La ${esc(per.nom)} est finie : passer à la ${esc(NOMS_PER[p + 1])}</button>` : ''}
-      <div class="btns"><a class="btn" href="#reglages" style="text-decoration:none">⚙️ Réglages</a><a class="btn" href="../" style="text-decoration:none">🏠 Happiness</a></div>`;
+      <div class="btns"><a class="btn" href="#reglages" style="text-decoration:none">⚙️ Réglages</a></div>`;
     if ($('fin-per')) $('fin-per').onclick = terminerPeriode;
   }
 
@@ -153,9 +165,9 @@
   }
 
   function classe(c) {
-    if (!classes().includes(c)) { location.hash = ''; return; }
+    if (!classes().includes(c)) { location.hash = '#suivi'; return; }
     const p = perActuelle(), per = periodes()[p];
-    entete(c, eleves(c).length + ' élèves · ' + (per ? per.nom : ''), '#');
+    entete(c, eleves(c).length + ' élèves · ' + (per ? per.nom : ''), '#suivi');
     const estAuj = jour === auj();
     vue.innerHTML = `
       <div class="barre">
@@ -346,7 +358,8 @@
     if (h.startsWith('c/')) classe(h.slice(2));
     else if (h.startsWith('f/')) fiche(h.slice(2));
     else if (h === 'reglages') reglages();
-    else accueil();
+    else if (h === 'suivi') accueil();
+    else hub();
   }
 
   vue.addEventListener('click', ev => {
