@@ -2,7 +2,7 @@
 // et restauration de ce fichier. Les données viennent du Drive (feuille Google) quand l'appareil y est
 // relié, complétées par ce qui est sur cet appareil ; la plus récente gagne, élément par élément.
 (() => {
-  const MODULES = ['jardin', 'courses', 'todo', 'terrain', 'mdp', 'notes'];
+  const MODULES = ['jardin', 'courses', 'todo', 'terrain', 'mdp', 'notes', 'ara'];
   const DEPOT = 'kevinou2585/Maison';
   const enc = new TextEncoder(), dec = new TextDecoder();
 
@@ -145,7 +145,7 @@ DANS CE FICHIER
     const D = JSON.parse(dec.decode(j)); let n = 0;
     // Réglages de l'appareil (si celui-ci n'en a pas encore)
     Object.entries(D.appareil || {}).forEach(([k, v]) => {
-      if (/^maison:(sync:|derniere|jardin:t$|courses$|todo$|terrain$|mdp$|notes$)/.test(k)) return;
+      if (/^maison:(sync:|derniere|jardin:t$|courses$|todo$|terrain$|mdp$|notes$|ara$)/.test(k)) return;
       if (localStorage.getItem(k) == null) try { localStorage.setItem(k, v); } catch (e) {}
     });
     const pret = relie() && navigator.onLine;
@@ -173,9 +173,9 @@ DANS CE FICHIER
         localStorage.setItem('maison:' + m, JSON.stringify(L));
       }
       // Synchro de cette appli remise à zéro ; sans Drive pour l'instant, tout partira à la prochaine synchro
-      const sale = {}; if (!pret) recs.forEach(r => { sale[r.id] = 1; });
+      let sale = {}; if (!pret) recs.forEach(r => { sale[r.id] = 1; });
       localStorage.setItem('maison:sync:' + m, JSON.stringify({r: 0, sale, h: '', init: false}));
-      if (pret && recs.length) { dire('J\'envoie au Drive : ' + m + '…'); await versDrive(m, recs); }
+      if (pret && recs.length) { dire('J\'envoie au Drive : ' + m + '…'); try { await versDrive(m, recs); } catch (e) { if (!/module inconnu/.test(e.message)) throw e; sale = {}; recs.forEach(r => { sale[r.id] = 1; }); localStorage.setItem('maison:sync:' + m, JSON.stringify({r: 0, sale, h: '', init: false})); } }
       n += recs.filter(r => !r.del).length;
     }
     return {n, drive: pret, date: D.date};
