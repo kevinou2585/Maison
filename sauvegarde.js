@@ -89,7 +89,7 @@
     for (const m of MODULES) {
       dire('Je récupère les données : ' + m + '…');
       let dr = [];
-      if (relie() && navigator.onLine) { try { dr = await duDrive(m); } catch (e) { if (/mot de passe/.test(e.message)) throw new Error('Le mot de passe du Drive est refusé. Vérifie-le dans « Sauvegarde sur le Drive ».'); D.drive = false; } }
+      if (m !== 'ara' && relie() && navigator.onLine) { try { dr = await duDrive(m); } catch (e) { if (/mot de passe/.test(e.message)) throw new Error('Le mot de passe du Drive est refusé. Vérifie-le dans « Sauvegarde sur le Drive ».'); D.drive = false; } }
       D.modules[m] = fusion(dr, locaux(m));
     }
     for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!/^maison:sync:/.test(k)) D.appareil[k] = localStorage.getItem(k); }
@@ -153,7 +153,7 @@ DANS CE FICHIER
       let recs = D.modules[m] || [];
       dire('Je remets : ' + m + '…');
       let vide = false;
-      if (pret) { try { vide = !(await duDrive(m)).length; } catch (e) { if (/mot de passe/.test(e.message)) throw new Error('Le mot de passe du Drive est refusé. Vérifie-le dans « Sauvegarde sur le Drive ».'); } }
+      if (pret && m !== 'ara') { try { vide = !(await duDrive(m)).length; } catch (e) { if (/mot de passe/.test(e.message)) throw new Error('Le mot de passe du Drive est refusé. Vérifie-le dans « Sauvegarde sur le Drive ».'); } }
       if (m === 'notes') {   // fichiers joints : remis dans l'appareil ; renvoyés au Drive si la feuille est neuve
         for (const nt of recs) for (const f of (nt.fichiers || [])) {
           const d = Z['donnees/fichiers/' + (f.lid || f.id)]; if (!d) continue;
@@ -173,9 +173,10 @@ DANS CE FICHIER
         localStorage.setItem('maison:' + m, JSON.stringify(L));
       }
       // Synchro de cette appli remise à zéro ; sans Drive pour l'instant, tout partira à la prochaine synchro
-      let sale = {}; if (!pret) recs.forEach(r => { sale[r.id] = 1; });
+      const sale = {}; if (!pret || m === 'ara') recs.forEach(r => { sale[r.id] = 1; });
       localStorage.setItem('maison:sync:' + m, JSON.stringify({r: 0, sale, h: '', init: false}));
-      if (pret && recs.length) { dire('J\'envoie au Drive : ' + m + '…'); try { await versDrive(m, recs); } catch (e) { if (!/module inconnu/.test(e.message)) throw e; sale = {}; recs.forEach(r => { sale[r.id] = 1; }); localStorage.setItem('maison:sync:' + m, JSON.stringify({r: 0, sale, h: '', init: false})); } }
+      // ARA a sa propre feuille Google : ses données y repartent toutes seules à la prochaine synchro
+      if (pret && m !== 'ara' && recs.length) { dire('J\'envoie au Drive : ' + m + '…'); await versDrive(m, recs); }
       n += recs.filter(r => !r.del).length;
     }
     return {n, drive: pret, date: D.date};

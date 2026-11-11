@@ -1,5 +1,5 @@
 // ARA : suivi des élèves pendant les cours (prépa pas faite, a perturbé le cours, pas son cours).
-// Données : Maison.store('ara') (téléphone + feuille Google de Happiness, onglets « ARA bilan » et « ARA journal »).
+// Données : Maison.store('ara') (téléphone + feuille Google « ARA » à part, réglage ara:drive ; onglets « ARA bilan » et « ARA journal »).
 // Éléments : eleve {classe, nom, prenom, ordre, parti?}, fait {eleve, quoi, date, cree},
 //            note {eleve, quand, date, compte, texte} (= « c'est noté sur l'appli de l'école »).
 // Chaque croix et chaque note retient sa période (per : 'P1', 'P2', 'P3'). Pas de dates : la période en cours
@@ -13,6 +13,7 @@
     cours: {ico: '📚', court: 'Cours', long: "N'a pas son cours", cl: 'cours'}
   };
   const QS = Object.keys(QUOI);
+  const CFG = 'ara:drive';   // adresse + mot de passe de la feuille Google ARA (à part de Happiness)
 
   // ---------- Dates ----------
   const deux = n => String(n).padStart(2, '0');
@@ -282,12 +283,13 @@
   function reglages() {
     entete('Réglages', 'ARA', '#');
     const P = periodes(), pa = perActuelle();
+    const c = (() => { try { return JSON.parse(localStorage.getItem(CFG)) || {}; } catch (e) { return {}; } })(), ok = !!(c.url && c.cle);
     vue.innerHTML = `
       <h2>📅 Les périodes de l'école</h2>
       <div class="carte">
         <p style="margin-top:0">Période en cours : <b>${esc(P[pa].nom)}</b></p>
         ${pa < NOMS_PER.length - 1 ? `<button class="btn go" id="fin-per" type="button">🏁 La ${esc(P[pa].nom)} est finie : passer à la ${esc(NOMS_PER[pa + 1])}</button>` : '<p class="note">C\'est la dernière période de l\'année.</p>'}
-        ${pa > 0 ? `<p class="note" style="margin:14px 0 4px">Touché par erreur ?</p><button class="btn" id="retour-per" type="button">↩️ Revenir à la ${esc(NOMS_PER[pa - 1])}</button>` : ''}
+        ${pa > 0 && P[pa - 1].clos ? `<p class="note" style="margin:14px 0 4px">Touché par erreur ?</p><button class="btn" id="retour-per" type="button">↩️ Revenir à la ${esc(NOMS_PER[pa - 1])}</button>` : ''}
       </div>
       <h2>📲 Mettre ARA sur l'écran d'accueil</h2>
       <div class="carte note" style="margin-top:0">
@@ -295,8 +297,31 @@
         <b>Android</b> : dans <b>Chrome</b>, menu <b>⋮</b> puis <b>« Ajouter à l'écran d'accueil »</b>.<br>
         L'icône ARA ouvre directement le suivi des élèves. Ça marche aussi sans internet.
       </div>
-      <h2>☁️ Sauvegarde sur le Drive</h2>
-      <div class="carte note" style="margin-top:0">Les croix restent dans ce téléphone. Si Happiness est reliée au Drive sur ce téléphone, tout part aussi dans la feuille Google (onglets « ARA bilan » et « ARA journal »).<br><a href="../#drive">Relier le Drive</a></div>`;
+      <h2>☁️ Feuille Google « ARA »</h2>
+      <div class="carte">
+        ${ok ? '<p style="margin-top:0"><b>✅ Ce téléphone est relié à la feuille ARA.</b><br><span class="note">Chaque croix y part toute seule (onglets « ARA bilan » et « ARA journal »).</span></p>' : '<p class="note" style="margin-top:0">Les croix restent dans ce téléphone. Relie-le à la feuille Google « ARA » pour les garder aussi sur le Drive (une feuille rien que pour ARA).</p>'}
+        <details ${ok ? '' : 'open'}><summary style="font-weight:600;cursor:pointer">${ok ? 'Modifier ou délier' : 'Relier ce téléphone'}</summary>
+          <label class="l" for="d-url">Adresse du script</label><input class="champ" id="d-url" value="${esc(c.url || '')}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" spellcheck="false">
+          <label class="l" for="d-cle">Mot de passe (ligne CLE du script)</label><input class="champ" id="d-cle" value="${esc(c.cle || '')}" autocapitalize="off" spellcheck="false" autocomplete="off">
+          <div class="btns"><button class="btn go" id="d-ok" type="button">Relier</button>${ok ? '<button class="btn" id="d-non" type="button">Délier ce téléphone</button>' : ''}</div>
+          <p class="note" id="d-etat"></p>
+          <details><summary style="cursor:pointer">Première fois : créer la feuille (sur l'ordinateur)</summary><ol class="note">
+            <li>Ouvre <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> et nomme la feuille « ARA ».</li>
+            <li>Menu <b>Extensions › Apps Script</b>. Efface tout et colle <a href="google/" target="_blank">ce script</a> (bouton « Copier »).</li>
+            <li>Ligne <code>const CLE</code> : remplace <code>change-moi</code> par ton mot de passe, puis 💾.</li>
+            <li><b>Déployer › Nouveau déploiement</b>, roue dentée › <b>Application Web</b>. Exécuter en tant que : <b>Moi</b>. Qui a accès : <b>Tout le monde</b>. Déployer, puis autorise l'accès.</li>
+            <li>Copie l'adresse qui finit par <code>/exec</code> et colle-la ici avec le mot de passe. Pareil sur chaque téléphone.</li></ol></details>
+        </details>
+      </div>`;
+    $('d-ok').onclick = async () => {
+      const n = {url: $('d-url').value.trim(), cle: $('d-cle').value.trim()}, e = $('d-etat');
+      if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(n.url)) { e.textContent = 'Colle l\'adresse complète du script (elle commence par https://script.google.com).'; return; }
+      if (!n.cle) { e.textContent = 'Il manque le mot de passe.'; return; }
+      e.textContent = 'Vérification…';
+      try { await Maison.tester(n, 'ara'); localStorage.setItem(CFG, JSON.stringify(n)); Maison.toutSynchro(); e.textContent = 'C\'est relié ✓'; setTimeout(reglages, 700); }
+      catch (err) { e.textContent = /mot de passe/.test(err.message) ? 'Mot de passe refusé (celui de la ligne CLE du script).' : /module/.test(err.message) ? 'Ce n\'est pas le script d\'ARA : colle le script de cette page.' : 'Le script ne répond pas. Vérifie l\'adresse et l\'accès « Tout le monde ».'; }
+    };
+    if ($('d-non')) $('d-non').onclick = () => { if (confirm('Délier ce téléphone ? Les croix restent dessus.')) { try { localStorage.removeItem(CFG); } catch (er) {} reglages(); } };
     if ($('fin-per')) $('fin-per').onclick = terminerPeriode;
     if ($('retour-per')) $('retour-per').onclick = () => {
       const b = NOMS_PER[pa - 1];
@@ -325,8 +350,8 @@
   });
   addEventListener('hashchange', route);
 
-  S = Maison.store('ara', {graines, tables, recu: () => { if (!document.querySelector('.fond')) route(); }});
-  Maison.pastille('../#drive');
+  S = Maison.store('ara', {cfg: CFG, graines, tables, recu: () => { if (!document.querySelector('.fond')) route(); }});
+  Maison.pastille('#reglages', CFG);
   route();
 
   // Hors ligne et mises à jour : le service worker de Happiness s'occupe aussi d'ARA.

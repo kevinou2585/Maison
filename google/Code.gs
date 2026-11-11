@@ -25,7 +25,7 @@ const APPLI = 'https://kevinou2585.github.io/Maison/todo/';
 const DONNEES = '_donnees';
 const MORCEAU = 40000; // une cellule Google Sheets accepte 50 000 caractères au maximum
 const ENTETE = ['Module', 'Id', 'Rev', 'T', 'Partie', 'Données'];
-const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do', terrain: 'Gestion du terrain', mdp: 'Mots de passe', notes: 'Notes', ara: 'ARA (élèves en maths)'};
+const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do', terrain: 'Gestion du terrain', mdp: 'Mots de passe', notes: 'Notes'};
 
 function doGet(e) {
   return repondre(() => {
@@ -137,8 +137,7 @@ function ecrire(tout) {
 // Couleurs de chaque partie : [titres, lignes paires, onglet]
 const COULEURS = {jardin: ['#2e6b3f', '#eef6ef', '#4f9a5c'], courses: ['#b8541f', '#fdf1e8', '#e07b3c'],
   todo: ['#2f5ea8', '#eef3fb', '#4a7fd1'], mdp: ['#4b3d8c', '#f2effa', '#7a68c8'],
-  notes: ['#8a6d1d', '#fbf6e6', '#d4a72c'], terrain: ['#4f6b17', '#f3f7e6', '#8bb33a'],
-  ara: ['#4c34b8', '#f1eefb', '#7b3fc0']};
+  notes: ['#8a6d1d', '#fbf6e6', '#d4a72c'], terrain: ['#4f6b17', '#f3f7e6', '#8bb33a']};
 
 /** Onglet lisible : lignes[0] = titres de colonnes. */
 function tableau(nom, lignes, m) {
