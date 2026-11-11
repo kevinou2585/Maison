@@ -29,9 +29,3 @@ const ARA_LISTES = {
     ['Verset', 'Noah'], ['Willocq', 'Nathan']
   ]
 };
-// Périodes de l'école (P1, P2, P3) : dates PROVISOIRES, à corriger dans ⚙️ Réglages.
-const ARA_PERIODES = [
-  {nom: 'P1', debut: '2026-08-31', fin: '2026-12-23'},
-  {nom: 'P2', debut: '2026-12-24', fin: '2027-03-31'},
-  {nom: 'P3', debut: '2027-04-01', fin: '2027-07-09'}
-];

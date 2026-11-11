@@ -1,7 +1,9 @@
 // ARA : suivi des élèves pendant les cours (prépa pas faite, a perturbé le cours, pas son cours).
 // Données : Maison.store('ara') (téléphone + feuille Google de Happiness, onglets « ARA bilan » et « ARA journal »).
 // Éléments : eleve {classe, nom, prenom, ordre, parti?}, fait {eleve, quoi, date, cree},
-//            note {eleve, quand, date, compte, texte} (= « c'est noté sur l'appli de l'école »), reglage « periodes ».
+//            note {eleve, quand, date, compte, texte} (= « c'est noté sur l'appli de l'école »).
+// Chaque croix et chaque note retient sa période (per : 'P1', 'P2', 'P3'). Pas de dates : la période en cours
+// change quand on touche « Terminer la P2 » (réglage « periodes » : {courante, clos: {P2: date}}).
 (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -27,19 +29,18 @@
   const graines = [];
   ARA_CLASSES.forEach(c => (ARA_LISTES[c] || []).forEach(([nom, prenom], i) =>
     graines.push({id: 'e-' + c + '-' + deux(i + 1), type: 'eleve', classe: c, nom, prenom, ordre: i + 1})));
-  graines.push({id: 'periodes', type: 'reglage', p: ARA_PERIODES, provisoire: true});
+  graines.push({id: 'periodes', type: 'reglage', courante: 'P2', clos: {}});
 
   let S = null;
   const eleve = id => S.get(id);
   const eleves = classe => S.tous('eleve').filter(e => e.classe === classe && !e.parti).sort((a, b) => (a.ordre || 0) - (b.ordre || 0) || a.nom.localeCompare(b.nom, 'fr'));
   const classes = () => { const l = ARA_CLASSES.slice(); S.tous('eleve').forEach(e => { if (!l.includes(e.classe)) l.push(e.classe); }); return l; };
-  const periodes = () => { const r = S.get('periodes'); return (r && r.p && r.p.length) ? r.p : ARA_PERIODES; };
-  const perDe = date => periodes().findIndex(p => date >= p.debut && date <= p.fin);
-  // Période « en cours » pour une date : celle qui la contient, sinon la dernière commencée (vacances), sinon la première.
-  const perActuelle = (date = auj()) => {
-    const P = periodes(), i = perDe(date); if (i >= 0) return i;
-    let k = -1; P.forEach((p, j) => { if (p.debut <= date) k = j; }); return k >= 0 ? k : 0;
-  };
+  const NOMS_PER = ['P1', 'P2', 'P3'];
+  const regPer = () => S.get('periodes') || {courante: 'P2', clos: {}};
+  const periodes = () => { const c = regPer().clos || {}; return NOMS_PER.map(nom => ({nom, clos: c[nom] || ''})); };
+  const perActuelle = () => Math.max(0, NOMS_PER.indexOf(regPer().courante));
+  // Période d'une croix ou d'une note (les anciennes sans période comptent dans la période en cours)
+  const perDe = r => { const i = NOMS_PER.indexOf(r.per); return i >= 0 ? i : perActuelle(); };
   const faits = id => S.tous('fait').filter(f => f.eleve === id);
   const notes = id => S.tous('note').filter(n => n.eleve === id).sort((a, b) => a.quand - b.quand);
   const derniereNote = id => { const n = notes(id); return n.length ? n[n.length - 1] : null; };
@@ -47,8 +48,8 @@
   const total = c => QS.reduce((s, q) => s + c[q], 0);
   // À noter = ce qui a été coché dans la période en cours depuis la dernière fois que c'est passé sur l'appli de l'école.
   function aNoterListe(id, p = perActuelle()) {
-    const per = periodes()[p], dn = derniereNote(id), depuis = dn ? dn.quand : 0;
-    return faits(id).filter(f => per && f.date >= per.debut && f.date <= per.fin && (f.cree || f.t || 0) > depuis);
+    const dn = derniereNote(id), depuis = dn ? dn.quand : 0;
+    return faits(id).filter(f => perDe(f) === p && (f.cree || f.t || 0) > depuis);
   }
   const aNoter = (id, p) => compte(aNoterListe(id, p));
   const resume = c => QS.filter(q => c[q]).map(q => QUOI[q].ico + ' ' + c[q]).join(' · ');
@@ -57,7 +58,7 @@
   // Onglets lisibles dans la feuille Google
   function tables(recs) {
     const E = recs.filter(r => r.type === 'eleve'), F = recs.filter(r => r.type === 'fait'), N = recs.filter(r => r.type === 'note');
-    const P = (recs.find(r => r.id === 'periodes') || {}).p || ARA_PERIODES;
+    const P = NOMS_PER.map(nom => ({nom})), pc = perActuelle(), pdi = r => { const i = NOMS_PER.indexOf(r.per); return i >= 0 ? i : pc; };
     const cls = ARA_CLASSES.slice(); E.forEach(e => { if (!cls.includes(e.classe)) cls.push(e.classe); });
     const tri = (a, b) => cls.indexOf(a.classe) - cls.indexOf(b.classe) || (a.ordre || 0) - (b.ordre || 0);
     const nomDe = e => e ? e.nom + ' ' + e.prenom : '?';
@@ -69,18 +70,17 @@
     E.slice().sort(tri).forEach(e => {
       const fe = F.filter(f => f.eleve === e.id), ne = N.filter(n => n.eleve === e.id).sort((a, b) => a.quand - b.quand);
       const l = [e.classe, nomDe(e) + (e.parti ? ' (parti)' : '')];
-      P.forEach(p => { const c = compte(fe.filter(f => f.date >= p.debut && f.date <= p.fin)); QS.forEach(q => l.push(c[q] || '')); });
+      P.forEach((p, i) => { const c = compte(fe.filter(f => pdi(f) === i)); QS.forEach(q => l.push(c[q] || '')); });
       const dn = ne[ne.length - 1], depuis = dn ? dn.quand : 0;
-      const pc = P[perActuelle()] || P[0];
-      const an = compte(fe.filter(f => pc && f.date >= pc.debut && f.date <= pc.fin && (f.cree || f.t || 0) > depuis));
+      const an = compte(fe.filter(f => pdi(f) === pc && (f.cree || f.t || 0) > depuis));
       l.push(dn ? dmy(dn.date) : '', resumeLong(an));
       bilan.push(l);
     });
     const journal = [['Date', 'Période', 'Classe', 'Élève', 'Quoi']];
     const lignes = [];
-    F.forEach(f => { const e = E.find(x => x.id === f.eleve); const i = P.findIndex(p => f.date >= p.debut && f.date <= p.fin);
+    F.forEach(f => { const e = E.find(x => x.id === f.eleve); const i = pdi(f);
       lignes.push({k: f.date + (f.cree || 0), l: [dmy(f.date), i >= 0 ? P[i].nom : '', e ? e.classe : '', nomDe(e), QUOI[f.quoi] ? QUOI[f.quoi].long : f.quoi]}); });
-    N.forEach(n => { const e = E.find(x => x.id === n.eleve); const i = P.findIndex(p => n.date >= p.debut && n.date <= p.fin);
+    N.forEach(n => { const e = E.find(x => x.id === n.eleve); const i = pdi(n);
       lignes.push({k: n.date + n.quand, l: [dmy(n.date), i >= 0 ? P[i].nom : '', e ? e.classe : '', nomDe(e), '✅ Noté sur l\'appli de l\'école' + (n.compte ? ' (' + resumeLong(n.compte) + ')' : '') + (n.texte ? ' : ' + n.texte : '')]}); });
     lignes.sort((a, b) => a.k < b.k ? 1 : -1).forEach(x => journal.push(x.l));
     return {'ARA bilan': bilan, 'ARA journal': journal};
@@ -113,21 +113,35 @@
     jour = auj();
     entete('ARA', 'Suivi des élèves');
     const p = perActuelle(), P = periodes(), per = P[p];
-    const prov = (S.get('periodes') || {}).provisoire;
     vue.innerHTML = `
-      <p class="periode-du-jour">Aujourd'hui : <b>${esc(joli(auj()))}</b> · période <b>${esc(per ? per.nom : '?')}</b>${per ? ' (jusqu\'au ' + esc(court(per.fin)) + ')' : ''}</p>
+      <p class="periode-du-jour">Aujourd'hui : <b>${esc(joli(auj()))}</b> · période en cours : <b>${esc(per.nom)}</b></p>
       <div class="classes">${classes().map(c => {
         const l = eleves(c), n = l.filter(e => total(aNoter(e.id, p)) > 0).length;
         return `<a href="#c/${encodeURIComponent(c)}"><b>${esc(c)}</b><span>${l.length} élèves</span>${n ? `<span class="anoter">${n} à noter</span>` : ''}</a>`;
       }).join('')}</div>
       <p class="note" style="margin-top:14px">Touche une classe, puis les boutons à côté de chaque élève :<br>📝 n'a pas fait sa prépa · 📢 a perturbé le cours · 📚 n'a pas son cours.<br>Touche le nom d'un élève pour voir tout son récapitulatif.</p>
-      ${prov ? '<div class="carte" style="border-color:var(--prepa)"><b>📅 Dates des périodes à vérifier</b><p class="note" style="margin:4px 0 0">Les dates de P1, P2 et P3 sont provisoires. Corrige-les dans ⚙️ Réglages.</p></div>' : ''}
+      ${p < NOMS_PER.length - 1 ? `<button class="btn" id="fin-per" type="button" style="width:100%;margin-top:6px">🏁 La ${esc(per.nom)} est finie : passer à la ${esc(NOMS_PER[p + 1])}</button>` : ''}
       <div class="btns"><a class="btn" href="#reglages" style="text-decoration:none">⚙️ Réglages</a><a class="btn" href="../" style="text-decoration:none">🏠 Happiness</a></div>`;
+    if ($('fin-per')) $('fin-per').onclick = terminerPeriode;
+  }
+
+  // 🏁 Fin de période : tout ce qui est coché ensuite compte dans la période suivante. Rien n'est effacé.
+  function terminerPeriode() {
+    const p = perActuelle(), P = periodes(); if (p >= NOMS_PER.length - 1) return;
+    const a = P[p].nom, b = NOMS_PER[p + 1];
+    fenetre(`<h3>🏁 Terminer la ${esc(a)} ?</h3>
+      <p class="note">À partir de maintenant, tout ce que tu coches compte dans la <b>${esc(b)}</b> et les compteurs repartent à zéro. Tout ce qui s'est passé en ${esc(a)} reste dans la fiche de chaque élève.</p>
+      <div class="btns"><button class="btn go" id="ok-per" type="button">Oui, passer à la ${esc(b)}</button><button class="btn" data-fermer type="button">Annuler</button></div>`, (f, fermer) => {
+      f.querySelector('#ok-per').onclick = () => {
+        const r = regPer(); S.put({id: 'periodes', type: 'reglage', courante: b, clos: Object.assign({}, r.clos, {[a]: auj()})});
+        fermer(); bulle('C\'est parti pour la ' + b + ' 🎉'); route();
+      };
+    });
   }
 
   function classe(c) {
     if (!classes().includes(c)) { location.hash = ''; return; }
-    const p = perActuelle(jour), per = periodes()[p];
+    const p = perActuelle(), per = periodes()[p];
     entete(c, eleves(c).length + ' élèves · ' + (per ? per.nom : ''), '#');
     const estAuj = jour === auj();
     vue.innerHTML = `
@@ -150,7 +164,7 @@
   }
 
   function ligneEleve(e) {
-    const p = perActuelle(jour), an = aNoter(e.id, p), dn = derniereNote(e.id);
+    const p = perActuelle(), an = aNoter(e.id, p), dn = derniereNote(e.id);
     const ici = faits(e.id).filter(f => f.date === jour);
     const bouton = q => {
       const on = ici.some(f => f.quoi === q), n = an[q];
@@ -166,7 +180,7 @@
     const deja = faits(id).find(f => f.date === jour && f.quoi === q);
     if (deja) { S.del(deja.id); bulle('Enlevé'); }
     else {
-      S.put({id: S.id(), type: 'fait', eleve: id, quoi: q, date: jour, cree: Date.now()});
+      S.put({id: S.id(), type: 'fait', eleve: id, quoi: q, date: jour, cree: Date.now(), per: NOMS_PER[perActuelle()]});
       const e = eleve(id); bulle(QUOI[q].ico + ' ' + (e ? e.prenom : '') + ' : ' + QUOI[q].long.toLowerCase());
     }
     const l = $('l-' + id);
@@ -183,7 +197,7 @@
       f.querySelector('#ok-noter').onclick = () => {
         const ids = [...f.querySelectorAll('input:checked')].map(i => i.value);
         const t = Date.now();
-        ids.forEach(id => S.put({id: S.id(), type: 'note', eleve: id, quand: t, date: auj(), compte: aNoter(id, p), texte: ''}));
+        ids.forEach(id => S.put({id: S.id(), type: 'note', eleve: id, quand: t, date: auj(), compte: aNoter(id, p), texte: '', per: NOMS_PER[p]}));
         fermer(); bulle(ids.length + ' élève' + (ids.length > 1 ? 's' : '') + ' noté' + (ids.length > 1 ? 's' : '') + ' ✅'); classe(c);
       };
     });
@@ -197,7 +211,7 @@
       <textarea id="txt" rows="3" placeholder="Ex. : remarque au journal de classe"></textarea>
       <div class="btns"><button class="btn ok" id="ok-noter" type="button">C'est noté</button><button class="btn" data-fermer type="button">Annuler</button></div>`, (f, fermer) => {
       f.querySelector('#ok-noter').onclick = () => {
-        S.put({id: S.id(), type: 'note', eleve: id, quand: Date.now(), date: auj(), compte: an, texte: f.querySelector('#txt').value.trim()});
+        S.put({id: S.id(), type: 'note', eleve: id, quand: Date.now(), date: auj(), compte: an, texte: f.querySelector('#txt').value.trim(), per: NOMS_PER[perActuelle()]});
         fermer(); bulle('Noté ✅'); fiche(id);
       };
     });
@@ -212,19 +226,18 @@
     const ligneF = f => `<div class="ligne"><span class="d">${esc(joli(f.date))}</span><span class="q">${QUOI[f.quoi] ? QUOI[f.quoi].ico + ' ' + esc(QUOI[f.quoi].long) : esc(f.quoi)}</span><button class="x" type="button" data-sup="${esc(f.id)}" aria-label="Supprimer">✕</button></div>`;
     const ligneN = n => `<div class="ligne notif"><span class="q">✅ Noté sur l'appli de l'école le ${esc(joli(n.date))}${n.compte && total(n.compte) ? ' : ' + esc(resume(n.compte)) : ''}${n.texte ? `<small>« ${esc(n.texte)} »</small>` : ''}</span><button class="x" type="button" data-supn="${esc(n.id)}" aria-label="Supprimer">✕</button></div>`;
     const blocs = P.map((p, i) => {
-      const fp = F.filter(f => f.date >= p.debut && f.date <= p.fin), np = N.filter(n => n.date >= p.debut && n.date <= p.fin);
+      const fp = F.filter(f => perDe(f) === i), np = N.filter(n => perDe(n) === i);
       // Tout, du plus récent au plus ancien ; une note « noté à l'école » se place à son moment
       const l = fp.map(f => ({k: f.date + '|' + String(f.cree || f.t || 0).padStart(15, '0'), h: ligneF(f)}))
         .concat(np.map(n => ({k: n.date + '|' + String(n.quand).padStart(15, '0') + 'z', h: ligneN(n)})))
         .sort((a, b) => a.k < b.k ? 1 : -1);
-      if (i > pa && !l.length) return '';
+      if (i !== pa && !l.length) return '';
       return `<div class="carte per${i === pa ? ' actuelle' : ''}">
-        <div class="per-tete"><b>${esc(p.nom)}${i === pa ? ' · en cours' : ''}</b><span>du ${esc(court(p.debut))} au ${esc(court(p.fin))}</span></div>
+        <div class="per-tete"><b>${esc(p.nom)}${i === pa ? ' · en cours' : ''}</b><span>${p.clos ? 'finie le ' + esc(court(p.clos)) : i < pa ? 'finie' : ''}</span></div>
         ${cpt(compte(fp))}
         ${l.length ? l.map(x => x.h).join('') : '<p class="note" style="margin:6px 0 0">Rien pendant cette période 👍</p>'}
       </div>`;
     }).join('');
-    const hors = F.filter(f => perDe(f.date) < 0);
     vue.innerHTML = `
       <div class="fiche-tete"><div class="avatar">${esc(initiales(e))}</div><div><h2>${esc(e.prenom)} ${esc(e.nom)}</h2><span class="note">${esc(e.classe)}</span></div></div>
       <div class="anoter-bloc">
@@ -235,7 +248,6 @@
       <h2>Toute l'année</h2>
       ${cpt(tout)}
       ${blocs}
-      ${hors.length ? `<div class="carte"><b>En dehors des périodes</b>${hors.map(ligneF).join('')}</div>` : ''}
       <div class="btns"><button class="btn" id="modif" type="button">✏️ Modifier le nom ou la classe</button></div>`;
     $('noter').onclick = () => noterEleve(id);
     $('modif').onclick = () => modifierEleve(id);
@@ -266,15 +278,13 @@
 
   function reglages() {
     entete('Réglages', 'ARA', '#');
-    const r = S.get('periodes') || {}, P = periodes();
+    const P = periodes(), pa = perActuelle();
     vue.innerHTML = `
       <h2>📅 Les périodes de l'école</h2>
       <div class="carte">
-        ${r.provisoire ? '<p class="note" style="margin-top:0">⚠️ Dates provisoires : mets les vraies dates puis Enregistrer.</p>' : ''}
-        <div class="per-edit"><span></span><span class="note">Début</span><span class="note">Fin</span></div>
-        ${P.map((p, i) => `<div class="per-edit"><b>${esc(p.nom)}</b><input type="date" data-i="${i}" data-k="debut" value="${esc(p.debut)}"><input type="date" data-i="${i}" data-k="fin" value="${esc(p.fin)}"></div>`).join('')}
-        <div class="btns"><button class="btn go" id="sv-per" type="button">Enregistrer</button></div>
-        <p class="note" id="msg-per"></p>
+        <p style="margin-top:0">Période en cours : <b>${esc(P[pa].nom)}</b></p>
+        ${pa < NOMS_PER.length - 1 ? `<button class="btn go" id="fin-per" type="button">🏁 La ${esc(P[pa].nom)} est finie : passer à la ${esc(NOMS_PER[pa + 1])}</button>` : '<p class="note">C\'est la dernière période de l\'année.</p>'}
+        ${pa > 0 ? `<p class="note" style="margin:14px 0 4px">Touché par erreur ?</p><button class="btn" id="retour-per" type="button">↩️ Revenir à la ${esc(NOMS_PER[pa - 1])}</button>` : ''}
       </div>
       <h2>📲 Mettre ARA sur l'écran d'accueil</h2>
       <div class="carte note" style="margin-top:0">
@@ -284,13 +294,12 @@
       </div>
       <h2>☁️ Sauvegarde sur le Drive</h2>
       <div class="carte note" style="margin-top:0">Les croix restent dans ce téléphone. Si Happiness est reliée au Drive sur ce téléphone, tout part aussi dans la feuille Google (onglets « ARA bilan » et « ARA journal »).<br><a href="../#drive">Relier le Drive</a></div>`;
-    $('sv-per').onclick = () => {
-      const N = P.map(p => Object.assign({}, p));
-      vue.querySelectorAll('.per-edit input').forEach(i => { N[+i.dataset.i][i.dataset.k] = i.value; });
-      const faux = N.find((p, i) => !p.debut || !p.fin || p.fin < p.debut || (i && p.debut <= N[i - 1].fin));
-      if (faux) { $('msg-per').textContent = '⚠️ Vérifie ' + faux.nom + ' : la fin doit être après le début, et chaque période après la précédente.'; return; }
-      S.put({id: 'periodes', type: 'reglage', p: N, provisoire: false});
-      $('msg-per').textContent = '✅ Enregistré.'; bulle('Périodes enregistrées');
+    if ($('fin-per')) $('fin-per').onclick = terminerPeriode;
+    if ($('retour-per')) $('retour-per').onclick = () => {
+      const b = NOMS_PER[pa - 1];
+      if (!confirm('Revenir à la ' + b + ' ? Ce qui a déjà été coché en ' + P[pa].nom + ' reste en ' + P[pa].nom + '.')) return;
+      const r = regPer(), clos = Object.assign({}, r.clos); delete clos[b];
+      S.put({id: 'periodes', type: 'reglage', courante: b, clos}); bulle('Retour à la ' + b); reglages();
     };
   }
 
