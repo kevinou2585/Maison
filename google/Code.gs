@@ -28,8 +28,12 @@ const ENTETE = ['Module', 'Id', 'Rev', 'T', 'Partie', 'Données'];
 const MODULES = {jardin: 'Jardin du Bonheur', courses: 'Courses', todo: 'To-Do', terrain: 'Gestion du terrain', mdp: 'Mots de passe', notes: 'Notes'};
 
 function doGet(e) {
+  const q = e.parameter || {};
+  // Lien « Accepter / Refuser » de l'e-mail de demande d'accès : page lisible, pas du JSON
+  if (q.a === 'accepter' || q.a === 'refuser') return decider(q);
   return repondre(() => {
     const p = e.parameter || {};
+    if (p.a === 'acces') return acces(p);   // demande d'accès d'un nouvel appareil : sans mot de passe
     verifier(p.cle);
     if (p.a === 'fichier') {
       const f = DriveApp.getFileById(p.id), d = dossier().getId(), par = f.getParents();
@@ -248,4 +252,81 @@ function rappelDuMatin(essai) {
         (html || '<p>Rien d\'urgent aujourd\'hui. Le rappel arrivera chaque matin vers 9 h quand il y aura quelque chose.</p>') +
         '<p style="margin-top:20px"><a href="' + APPLI + '#' + qui + '" style="background:#3567b8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:bold">Ouvrir ma To do</a></p></div>'});
   });
+}
+
+// ---------- Accès à Happiness : un nouvel appareil demande, kevin accepte par e-mail ----------
+// Onglet « Accès » : une ligne par appareil. Pour retirer l'accès à quelqu'un, écris « refusé » dans sa colonne État.
+const ACCES = 'Accès', ACCES_TETE = ['Prénom', 'Appareil', 'Demandé le', 'État', 'Id', 'Jeton'];
+
+function feuilleAcces() {
+  const sh = feuille(ACCES);
+  if (sh.getLastRow() < 1) {
+    sh.getRange(1, 1, 1, ACCES_TETE.length).setValues([ACCES_TETE]).setFontWeight('bold').setFontColor('#ffffff').setBackground('#c2185b');
+    sh.setFrozenRows(1); sh.setTabColor('#c2185b'); sh.setColumnWidth(1, 160); sh.setColumnWidth(2, 260); sh.setColumnWidth(3, 140);
+    try { sh.hideColumns(5, 2); } catch (err) {}
+  }
+  return sh;
+}
+
+function ligneAcces(sh, id) {
+  if (sh.getLastRow() < 2) return 0;
+  const ids = sh.getRange(2, 5, sh.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) return i + 2;
+  return 0;
+}
+
+const etatDe = t => /accept|^ok|oui/i.test(t) ? 'ok' : /refus|non|bloqu/i.test(t) ? 'refuse' : 'attente';
+
+function acces(p) {
+  const id = String(p.id || '');
+  if (!/^[a-z0-9]{10,40}$/.test(id)) throw new Error('appareil inconnu');
+  const verrou = LockService.getScriptLock();
+  verrou.waitLock(20000);
+  try {
+    const sh = feuilleAcces(), n = ligneAcces(sh, id);
+    if (n) return {ok: true, etat: etatDe(String(sh.getRange(n, 4).getValue()))};
+    const nom = String(p.nom || '').trim().slice(0, 40);
+    if (!nom) return {ok: true, etat: 'inconnu'};
+    // Pas plus de 20 demandes en attente (au cas où quelqu'un s'amuse à en envoyer plein)
+    const etats = sh.getLastRow() > 1 ? sh.getRange(2, 4, sh.getLastRow() - 1, 1).getValues().map(l => etatDe(String(l[0]))) : [];
+    if (etats.filter(x => x === 'attente').length >= 20) throw new Error('trop de demandes');
+    const jeton = Utilities.getUuid().replace(/-/g, '');
+    const quand = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Brussels', 'dd/MM/yyyy HH:mm');
+    sh.appendRow([nom, String(p.app || '').slice(0, 80), quand, 'en attente', id, jeton]);
+    const url = ScriptApp.getService().getUrl(), lien = a => url + '?a=' + a + '&id=' + id + '&j=' + jeton;
+    const esc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+    try {
+      MailApp.sendEmail({to: Session.getEffectiveUser().getEmail(), name: 'Happiness', subject: '🔐 Happiness : ' + nom + ' demande l\'accès',
+        htmlBody: '<div style="font:16px/1.5 Arial,sans-serif;color:#222"><p><b>' + esc(nom) + '</b> demande à ouvrir Happiness.</p>' +
+          '<p style="color:#666;font-size:14px">Appareil : ' + esc(p.app || '?') + '<br>Le ' + quand + '</p>' +
+          '<p><a href="' + lien('accepter') + '" style="display:inline-block;background:#2e7d32;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">✅ Accepter</a> &nbsp; ' +
+          '<a href="' + lien('refuser') + '" style="display:inline-block;background:#c62828;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">❌ Refuser</a></p>' +
+          '<p style="color:#666;font-size:13px">Tu ne connais pas cette personne ? Touche Refuser ou ignore cet e-mail. La liste est dans l\'onglet « Accès » de ta feuille Happiness.</p></div>'});
+    } catch (err) {}
+    return {ok: true, etat: 'attente'};
+  } finally {
+    verrou.releaseLock();
+  }
+}
+
+function decider(q) {
+  let msg;
+  try {
+    const sh = feuilleAcces(), n = ligneAcces(sh, String(q.id || ''));
+    if (!n || String(sh.getRange(n, 6).getValue()) !== String(q.j || '')) msg = 'Ce lien n\'est plus valable.';
+    else {
+      const nom = String(sh.getRange(n, 1).getValue());
+      sh.getRange(n, 4).setValue(q.a === 'accepter' ? 'accepté' : 'refusé');
+      msg = q.a === 'accepter' ? '✅ ' + nom + ' peut maintenant ouvrir Happiness.' : '❌ Accès refusé pour ' + nom + '.';
+    }
+  } catch (err) { msg = 'Erreur : ' + err.message; }
+  return HtmlService.createHtmlOutput('<div style="font:20px/1.5 Arial,sans-serif;padding:40px;text-align:center">' + msg.replace(/[<>]/g, '') +
+    '<p style="font-size:15px;color:#666">Tu peux fermer cette page. Pour changer d\'avis plus tard : onglet « Accès » de la feuille Happiness, colonne État.</p></div>')
+    .setTitle('Happiness · accès');
+}
+
+/** À lancer une fois depuis l'éditeur (▶ Exécuter) : autorise l'envoi des e-mails de demande d'accès. */
+function autoriserAcces() {
+  feuilleAcces();
+  MailApp.sendEmail(Session.getEffectiveUser().getEmail(), 'Happiness : demandes d\'accès activées', 'Tu recevras un e-mail à chaque nouvelle demande, avec Accepter / Refuser.');
 }

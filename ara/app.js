@@ -131,6 +131,7 @@
         const l = eleves(c), n = l.filter(e => total(aNoter(e.id, p)) > 0).length;
         return `<a href="#c/${encodeURIComponent(c)}"><b>${esc(c)}</b><span>${l.length} élèves</span>${n ? `<span class="anoter">${n} à noter</span>` : ''}</a>`;
       }).join('')}</div>
+      ${S.tous('eleve').length ? '' : `<div class="carte" style="border-color:var(--prepa)"><b>📋 Les listes d'élèves arrivent de la feuille ARA</b><p class="note" style="margin:4px 0 0">${(() => { try { const c = JSON.parse(localStorage.getItem(CFG) || '{}'); return c.url && c.cle; } catch (e) { return false; } })() ? 'Un instant, elles se téléchargent…' : 'Relie ce téléphone au Drive (⚙️ Réglages › Feuille Google « ARA ») pour les recevoir.'}</p></div>`}
       <p class="note" style="margin-top:14px">Touche une classe, puis les boutons à côté de chaque élève :<br>📝 n'a pas fait sa prépa · 📢 a perturbé le cours · 📚 n'a pas son cours.<br>Touche le nom d'un élève pour voir tout son récapitulatif.</p>
       ${p < NOMS_PER.length - 1 ? `<button class="btn" id="fin-per" type="button" style="width:100%;margin-top:6px">🏁 La ${esc(per.nom)} est finie : passer à la ${esc(NOMS_PER[p + 1])}</button>` : ''}
       <div class="btns"><a class="btn" href="#reglages" style="text-decoration:none">⚙️ Réglages</a><a class="btn" href="../" style="text-decoration:none">🏠 Happiness</a></div>`;
@@ -359,6 +360,17 @@
   addEventListener('hashchange', route);
 
   S = Maison.store('ara', {cfg: CFG, graines, tables, recu: () => { if (!document.querySelector('.fond')) route(); }});
+  // Les listes d'élèves ne sont plus dans le code du site : un appareil qui les avait déjà (anciennes versions)
+  // les envoie une fois dans la feuille ARA, après la première synchro (si personne ne les a changées entre-temps).
+  setTimeout(() => {
+    try {
+      const c = JSON.parse(localStorage.getItem(CFG) || '{}');
+      if (!(c.url && c.cle) || localStorage.getItem('ara:listes-envoyees')) return;
+      const l = S.tous('eleve').filter(e => (+e.t || 0) <= 1);
+      if (l.length) S.putTous(l.map(e => Object.assign({}, e)));
+      localStorage.setItem('ara:listes-envoyees', '1');
+    } catch (e) {}
+  }, 8000);
   Maison.pastille('#reglages', CFG);
   route();
 
